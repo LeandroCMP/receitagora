@@ -207,43 +207,77 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
   Widget _buildHeader(ThemeData theme, bool hasRecipes) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 28, 26, 30),
+        padding: const EdgeInsets.fromLTRB(28, 30, 28, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: theme.colorScheme.primary.withOpacity(0.18),
-                  ),
-                  child: Icon(Icons.auto_awesome, color: theme.colorScheme.primary),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    hasRecipes
-                        ? 'Sugestões suaves para o seu momento agora'
-                        : 'Vamos tentar novamente?',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary.withOpacity(0.65),
+                        theme.colorScheme.primary.withOpacity(0.2),
+                      ],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
                     ),
+                  ),
+                  child: const Icon(Icons.auto_awesome, color: Colors.white),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        hasRecipes
+                            ? 'Sugestões sob medida para agora'
+                            : 'Vamos tentar novamente?',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (_args.message != null) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          _args.message!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.65),
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             if (_args.ingredients.isNotEmpty)
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 children: _args.ingredients
                     .map(
-                      (ingredient) => Chip(
-                        label: Text(ingredient),
+                      (ingredient) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.16),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Text(
+                          ingredient,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                                letterSpacing: 0.2,
+                              ),
+                        ),
                       ),
                     )
                     .toList(),
@@ -252,22 +286,11 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
               Text(
                 'Ajuste os ingredientes quando quiser para explorar novas combinações.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.64),
+                  color: theme.colorScheme.onSurface.withOpacity(0.65),
                   height: 1.45,
                 ),
               ),
-            if (_args.message != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  _args.message!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.64),
-                    height: 1.45,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
             FilledButton.icon(
               onPressed: () => Get.back(),
               icon: const Icon(Icons.search),

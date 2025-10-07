@@ -110,14 +110,18 @@ class _OverviewCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            RecipeCover(
-              theme: theme,
-              recipe: recipe,
-              position: args.position,
-              heroTag: args.heroTag,
-              height: 210,
+            Align(
+              alignment: Alignment.center,
+              child: RecipeCover(
+                theme: theme,
+                recipe: recipe,
+                position: args.position,
+                heroTag: args.heroTag,
+                size: 180,
+                showLabel: false,
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -125,18 +129,22 @@ class _OverviewCard extends StatelessWidget {
                 _OverviewPill(
                   icon: Icons.auto_awesome,
                   label: recipe.difficulty,
+                  accent: theme.colorScheme.primary,
                 ),
                 _OverviewPill(
                   icon: Icons.schedule_rounded,
                   label: recipe.duration,
+                  accent: theme.colorScheme.secondary,
                 ),
                 _OverviewPill(
                   icon: Icons.restaurant_menu,
                   label: '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
+                  accent: theme.colorScheme.primary.withOpacity(0.8),
                 ),
                 _OverviewPill(
                   icon: Icons.format_list_numbered,
                   label: '${recipe.steps.length} etapa${recipe.steps.length == 1 ? '' : 's'}',
+                  accent: theme.colorScheme.primary.withOpacity(0.8),
                 ),
               ],
             ),
@@ -161,32 +169,32 @@ class _OverviewPill extends StatelessWidget {
   const _OverviewPill({
     required this.icon,
     required this.label,
+    required this.accent,
   });
 
   final IconData icon;
   final String label;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Color.alphaBlend(
-          theme.colorScheme.primary.withOpacity(0.12),
-          theme.colorScheme.surface,
-        ),
-        borderRadius: BorderRadius.circular(18),
+        color: accent.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
+          Icon(icon, size: 16, color: accent.withOpacity(0.95)),
+          const SizedBox(width: 10),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.74),
+              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              letterSpacing: 0.2,
             ),
           ),
         ],

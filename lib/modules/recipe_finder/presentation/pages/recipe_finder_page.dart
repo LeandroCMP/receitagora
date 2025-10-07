@@ -106,11 +106,11 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final topBlend = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.04),
+      theme.colorScheme.primary.withOpacity(0.08),
       background,
     );
     final bottomBlend = Color.alphaBlend(
-      theme.colorScheme.secondary.withOpacity(0.03),
+      Colors.black.withOpacity(0.12),
       background,
     );
 
@@ -168,14 +168,14 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 ),
               ),
               Positioned(
-                top: -140,
-                right: -80,
-                child: _BackgroundOrb(color: theme.colorScheme.primary.withOpacity(0.28)),
+                top: -160,
+                right: -90,
+                child: _BackgroundOrb(color: theme.colorScheme.primary.withOpacity(0.24)),
               ),
               Positioned(
-                bottom: -160,
-                left: -60,
-                child: _BackgroundOrb(color: theme.colorScheme.secondary.withOpacity(0.22)),
+                bottom: -190,
+                left: -70,
+                child: _BackgroundOrb(color: theme.colorScheme.secondary.withOpacity(0.18)),
               ),
               LayoutBuilder(
                 builder: (context, constraints) {
@@ -240,55 +240,85 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
   }
 
   Widget _buildHeroHeader(ThemeData theme) {
+    final user = controller.sessionService.user;
+    final name = user?.displayName?.trim();
+    final rawGreeting = name != null && name.isNotEmpty ? name.split(' ').first : 'convidado';
+    final sanitized = rawGreeting.trim();
+    final greeting = sanitized.isNotEmpty
+        ? '${sanitized[0].toUpperCase()}${sanitized.length > 1 ? sanitized.substring(1) : ''}'
+        : 'Convidado';
+
     final gradient = LinearGradient(
       colors: [
-        theme.colorScheme.primary.withOpacity(0.9),
-        theme.colorScheme.secondary.withOpacity(0.85),
+        theme.colorScheme.primary.withOpacity(0.55),
+        theme.colorScheme.primary.withOpacity(0.08),
       ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+      begin: Alignment.topRight,
+      end: Alignment.bottomLeft,
     );
 
     return Card(
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(32),
           gradient: gradient,
         ),
-        padding: const EdgeInsets.fromLTRB(28, 32, 28, 34),
+        padding: const EdgeInsets.fromLTRB(28, 32, 28, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.16),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Text(
-                'Descubra agora'.toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Olá, $greeting',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Pronto para descobrir algo delicioso hoje? Informe os ingredientes e nós cuidamos do resto.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withOpacity(0.85),
+                          height: 1.45,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 18),
+                Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.18),
+                  ),
+                  child: Icon(
+                    Icons.restaurant_menu,
+                    color: Colors.white.withOpacity(0.9),
+                    size: 32,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              'Inspire-se com combinações feitas sob medida.',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Informe os ingredientes que estão disponíveis e receba receitas suaves para hoje.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withOpacity(0.88),
-                height: 1.5,
-              ),
+            const SizedBox(height: 26),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: const [
+                _CategoryChip(label: 'Café da manhã'),
+                _CategoryChip(label: 'Almoço'),
+                _CategoryChip(label: 'Jantar'),
+                _CategoryChip(label: 'Snacks'),
+              ],
             ),
           ],
         ),
@@ -314,18 +344,18 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
 
       return Card(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: accentColor.withOpacity(0.18),
+                  color: accentColor.withOpacity(0.16),
                 ),
-                child: Icon(icon, color: accentColor, size: 22),
+                child: Icon(icon, color: accentColor, size: 24),
               ),
               const SizedBox(width: 18),
               Expanded(
@@ -335,14 +365,15 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                     Text(
                       hasQuota ? 'Limite diário disponível' : 'Limite diário atingido',
                       style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Text(
                       message,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withOpacity(0.72),
                         height: 1.5,
                       ),
                     ),
@@ -469,6 +500,31 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
           onPressed:
               controller.isLoading.value ? null : controller.fetchRecipes,
         ),
+      ),
+    );
+  }
+}
+
+class _CategoryChip extends StatelessWidget {
+  const _CategoryChip({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
       ),
     );
   }

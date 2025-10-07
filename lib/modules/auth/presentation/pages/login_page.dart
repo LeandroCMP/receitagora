@@ -10,18 +10,17 @@ class LoginPage extends GetView<LoginController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
-    final highlight = theme.colorScheme.primary.withOpacity(0.12);
 
     return Scaffold(
       body: Stack(
         children: [
-          Container(
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.12), background),
+                  Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.08), background),
                   background,
-                  Color.alphaBlend(theme.colorScheme.secondary.withOpacity(0.08), background),
+                  Color.alphaBlend(Colors.black.withOpacity(0.15), background),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -29,56 +28,52 @@ class LoginPage extends GetView<LoginController> {
             ),
           ),
           Positioned(
-            top: -120,
-            left: -80,
-            child: _BlurOrb(color: theme.colorScheme.primary.withOpacity(0.32)),
+            top: -140,
+            right: -80,
+            child: _BlurOrb(color: theme.colorScheme.primary.withOpacity(0.28)),
           ),
           Positioned(
-            bottom: -140,
-            right: -60,
-            child: _BlurOrb(color: theme.colorScheme.secondary.withOpacity(0.28)),
+            bottom: -180,
+            left: -60,
+            child: _BlurOrb(color: theme.colorScheme.secondary.withOpacity(0.18)),
           ),
           SafeArea(
             child: Center(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final maxWidth = constraints.maxWidth > 520 ? 460.0 : constraints.maxWidth;
+                  final maxWidth = constraints.maxWidth > 520 ? 470.0 : constraints.maxWidth;
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxWidth),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _BrandHeader(theme: theme),
-                          const SizedBox(height: 36),
+                          _HeroCard(theme: theme),
+                          const SizedBox(height: 28),
                           Card(
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 36),
+                              padding: const EdgeInsets.fromLTRB(28, 32, 28, 30),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Text(
-                                    'Comece agora',
+                                    'Entre para explorar',
                                     style: theme.textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.w700,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
-                                  const SizedBox(height: 10),
+                                  const SizedBox(height: 12),
                                   Text(
-                                    'Explore ideias com um toque de chef no modo visitante enquanto o login social não chega.',
+                                    'Modo visitante com buscas limitadas ou conecte-se com o Google quando estiver disponível.',
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.onSurface.withOpacity(0.68),
+                                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                                       height: 1.5,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
-                                  const SizedBox(height: 30),
+                                  const SizedBox(height: 28),
                                   Obx(
                                     () => FilledButton(
                                       onPressed: controller.isLoading.value
@@ -110,7 +105,7 @@ class LoginPage extends GetView<LoginController> {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 14),
                                   Obx(
                                     () => OutlinedButton.icon(
                                       icon: _GoogleBadge(theme: theme),
@@ -120,24 +115,17 @@ class LoginPage extends GetView<LoginController> {
                                           : controller.signInWithGoogle,
                                     ),
                                   ),
-                                  const SizedBox(height: 28),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-                                    decoration: BoxDecoration(
-                                      color: highlight,
-                                      borderRadius: BorderRadius.circular(22),
-                                    ),
-                                    child: _GuestQuotaHint(theme: theme),
-                                  ),
+                                  const SizedBox(height: 26),
+                                  _GuestQuotaHint(theme: theme),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 26),
                           Text(
-                            'Receitas sob medida com uma experiência acolhedora e moderna para inspirar o seu cardápio.',
+                            'Receitas elegantes, sugestões rápidas e uma experiência inspirada em apps premium de culinária.',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onBackground.withOpacity(0.65),
+                              color: theme.colorScheme.onBackground.withOpacity(0.62),
                               height: 1.5,
                             ),
                             textAlign: TextAlign.center,
@@ -156,8 +144,8 @@ class LoginPage extends GetView<LoginController> {
   }
 }
 
-class _BrandHeader extends StatelessWidget {
-  const _BrandHeader({required this.theme});
+class _HeroCard extends StatelessWidget {
+  const _HeroCard({required this.theme});
 
   final ThemeData theme;
 
@@ -165,50 +153,122 @@ class _BrandHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final gradient = LinearGradient(
       colors: [
-        theme.colorScheme.primary.withOpacity(0.95),
-        theme.colorScheme.secondary.withOpacity(0.85),
+        theme.colorScheme.primary.withOpacity(0.55),
+        theme.colorScheme.primary.withOpacity(0.15),
       ],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+      begin: Alignment.topRight,
+      end: Alignment.bottomLeft,
     );
 
-    return Column(
-      children: [
-        Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            gradient: gradient,
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.35),
-                blurRadius: 42,
-                offset: const Offset(0, 24),
+    return Card(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(32),
+          gradient: gradient,
+        ),
+        padding: const EdgeInsets.fromLTRB(28, 32, 28, 30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.15),
+                  ),
+                  child: const Icon(Icons.person_rounded, color: Colors.white, size: 30),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Olá, convidado',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white.withOpacity(0.92),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pronto para cozinhar algo especial hoje?',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withOpacity(0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.18),
+                  ),
+                  child: Icon(Icons.favorite_border, color: Colors.white.withOpacity(0.9)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 28),
+            Text(
+              'Descubra receitas',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
               ),
-            ],
-          ),
-          child: const Icon(Icons.restaurant_rounded, size: 40, color: Colors.white),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Combine ingredientes e receba sugestões elegantes em segundos.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: Colors.white.withOpacity(0.85),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 28),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: const [
+                _HeroPill(label: 'Jantar'),
+                _HeroPill(label: 'Fácil'),
+                _HeroPill(label: 'Conforto'),
+              ],
+            ),
+          ],
         ),
-        const SizedBox(height: 28),
-        Text(
-          'Receita Agora',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Descubra combinações perfeitas em poucos toques.',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onBackground.withOpacity(0.64),
-            height: 1.45,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class _HeroPill extends StatelessWidget {
+  const _HeroPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.16),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+            ),
+      ),
     );
   }
 }
@@ -220,40 +280,49 @@ class _GuestQuotaHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: theme.colorScheme.onSurface.withOpacity(0.08),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.black26,
+            ),
+            child: Icon(Icons.hourglass_bottom_rounded, color: theme.colorScheme.primary),
           ),
-          child: Icon(Icons.hourglass_bottom_rounded, color: theme.colorScheme.primary),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Modo visitante',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Modo visitante',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Até 3 buscas por dia e 2 receitas por consulta. O login Google destravará favoritos em breve.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                  height: 1.45,
+                const SizedBox(height: 8),
+                Text(
+                  'Até 3 buscas por dia com duas receitas por vez. Entre com o Google futuramente para salvar favoritos.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.72),
+                    height: 1.45,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
