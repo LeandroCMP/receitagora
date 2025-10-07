@@ -30,18 +30,20 @@ informadas.
    flutter run
    ```
 
-> **Atenção:** a geração das receitas depende de credenciais válidas da OpenAI.
-> Sem a configuração da chave a aplicação exibirá um alerta informando que não
-> foi possível se conectar ao ChatGPT.
+> **Dica:** mesmo sem acesso à OpenAI o aplicativo continua funcionando graças
+> a um gerador local de receitas. Ainda assim, configurar uma chave válida
+> garante resultados mais criativos produzidos pela IA.
 
-### Erros comuns
+### Erros comuns e fallback
 
-- **HTTP 429 ao gerar receitas:** pode indicar tanto excesso de requisições em
-  um curto período quanto falta de créditos ou limite de faturamento alcançado
-  na conta da OpenAI. A aplicação exibirá mensagens diferentes para cada
-  situação. Caso o problema seja de cota, verifique o painel de billing da
-  OpenAI. Para rate limits temporários, aguarde alguns instantes e tente
-  novamente.
+- **Sem chave ou falha de rede:** o app automaticamente gera receitas locais
+  com base nos ingredientes informados. A experiência continua fluindo, mas
+  vale revisar a configuração para aproveitar as sugestões da OpenAI quando
+  estiver disponível.
+- **HTTP 429 ao gerar receitas:** indica excesso de requisições em um curto
+  período ou falta de créditos/limite de faturamento. As respostas da IA são
+  tentadas com repetição exponencial; caso o limite persista o app alterna para
+  receitas locais para que você não fique sem sugestões.
 - **HTTP 400** com mensagem sobre `response_format`: o modelo configurado não
   suporta o modo JSON. Ajuste a variável `OPENAI_MODEL` para um modelo
   compatível, como `gpt-4o-mini`.

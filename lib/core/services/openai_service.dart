@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -13,12 +14,36 @@ class OpenAIService {
   final EnvironmentConfig config;
 
   Future<String> generateRecipes(List<String> ingredients) async {
-    if (!config.hasValidCredentials) {
-      throw const AppException(
-        'Configure sua chave da OpenAI para gerar receitas com a IA.',
-      );
+    final sanitized = ingredients
+        .map((ingredient) => ingredient.trim())
+        .where((ingredient) => ingredient.isNotEmpty)
+        .toList();
+
+    AppException? failure;
+
+    if (config.hasValidCredentials) {
+      try {
+        final content = await _requestRecipesFromOpenAI(sanitized);
+        if (content != null && content.trim().isNotEmpty) {
+          return content;
+        }
+        failure = const AppException('Resposta vazia da OpenAI');
+      } on AppException catch (error) {
+        failure = error;
+      } catch (error) {
+        failure = AppException(
+          'Falha ao comunicar com a OpenAI',
+          details: error.toString(),
+        );
+      }
+    } else {
+      failure = const AppException('Chave da OpenAI ausente ou inválida.');
     }
 
+    return _generateFallbackRecipes(sanitized, failure: failure);
+  }
+
+  Future<String?> _requestRecipesFromOpenAI(List<String> ingredients) async {
     final uri = Uri.parse('${config.openAIBaseUrl}/chat/completions');
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -44,36 +69,40 @@ class OpenAIService {
       ],
     });
 
-    try {
-      final response =
-          await _postWithRetry(uri, headers: headers, body: payload);
-      if (response.statusCode == 429) {
-        throw _mapRateLimitError(response);
-      }
-      if (response.statusCode == 400) {
-        throw _mapBadRequestError(response);
-      }
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        final choices = data['choices'] as List<dynamic>?;
-        if (choices == null || choices.isEmpty) {
-          throw const AppException('Resposta vazia da OpenAI');
-        }
-        final message = choices.first['message'] as Map<String, dynamic>?
-            ?? (throw const AppException('Formato inesperado da OpenAI'));
-        final content = _readMessageContent(message['content']);
-        if (content == null || content.trim().isEmpty) {
-          throw const AppException('Conteúdo ausente na resposta da OpenAI');
-        }
-        return content;
-      }
-      throw AppException('Erro ${response.statusCode} ao consultar OpenAI', details: response.body);
-    } catch (error) {
-      if (error is AppException) {
-        rethrow;
-      }
-      throw AppException('Falha ao comunicar com a OpenAI', details: error.toString());
+    final response = await _postWithRetry(
+      uri,
+      headers: headers,
+      body: payload,
+    );
+
+    if (response.statusCode == 429) {
+      throw _mapRateLimitError(response);
     }
+    if (response.statusCode == 400) {
+      throw _mapBadRequestError(response);
+    }
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final choices = data['choices'] as List<dynamic>?;
+      if (choices == null || choices.isEmpty) {
+        return null;
+      }
+      final message = choices.first['message'] as Map<String, dynamic>?;
+      if (message == null) {
+        return null;
+      }
+      final content = _readMessageContent(message['content']);
+      if (content == null) {
+        return null;
+      }
+      final trimmed = content.trim();
+      return trimmed.isEmpty ? null : trimmed;
+    }
+
+    throw AppException(
+      'Erro ${response.statusCode} ao consultar OpenAI',
+      details: response.body,
+    );
   }
 
   AppException _mapRateLimitError(http.Response response) {
@@ -248,5 +277,143 @@ Certifique-se de que cada receita use somente os ingredientes informados (além 
       return buffer.isEmpty ? null : buffer.toString();
     }
     return null;
+  }
+
+  String _generateFallbackRecipes(
+    List<String> ingredients, {
+    AppException? failure,
+  }) {
+    final normalized = LinkedHashSet<String>.from(ingredients);
+    if (normalized.isEmpty) {
+      normalized.add('ingredientes variados');
+    }
+
+    final uniqueIngredients = normalized.toList();
+    final recipes = _buildFallbackRecipeList(uniqueIngredients);
+
+    final payload = <String, dynamic>{
+      'recipes': recipes,
+      'metadata': {
+        'source': 'fallback',
+        if (failure != null) 'reason': failure.message,
+      },
+    };
+
+    return jsonEncode(payload);
+  }
+
+  List<Map<String, dynamic>> _buildFallbackRecipeList(List<String> ingredients) {
+    final main = ingredients.first;
+    final extras = ingredients.skip(1).toList();
+
+    final recipes = <Map<String, dynamic>>[
+      _buildOnePanRecipe(main, extras),
+      _buildOvenRecipe(main, extras),
+      _buildFreshBowlRecipe(main, extras),
+    ];
+
+    final uniqueRecipes = <String>{};
+    final result = <Map<String, dynamic>>[];
+    for (final recipe in recipes) {
+      final name = recipe['name'] as String? ?? '';
+      if (name.isEmpty || uniqueRecipes.add(name)) {
+        result.add(recipe);
+      }
+    }
+
+    return result.take(3).toList();
+  }
+
+  Map<String, dynamic> _buildOnePanRecipe(
+    String main,
+    List<String> extras,
+  ) {
+    final featured = <String>[main, if (extras.isNotEmpty) extras.first];
+    final allIngredients = _combineIngredients(featured)
+      ..add('alho picado (opcional)');
+
+    return {
+      'name': 'Refogado caseiro de ${_formatList(featured)}',
+      'description':
+          'Receita rápida feita na panela com ${_formatList(featured)} temperados com básicos da despensa.',
+      'ingredients': allIngredients,
+      'steps': [
+        'Aqueça uma panela com um fio de azeite de oliva.',
+        'Adicione ${_formatList(featured)} e refogue em fogo médio até ficar macio.',
+        'Tempere com sal, pimenta-do-reino e alho opcional, mexendo por mais 2 minutos antes de servir.',
+      ],
+    };
+  }
+
+  Map<String, dynamic> _buildOvenRecipe(
+    String main,
+    List<String> extras,
+  ) {
+    final supporting = extras.isNotEmpty ? extras : [main];
+    final highlighted = [main, ...supporting.take(2)];
+    final ingredients = _combineIngredients(highlighted)
+      ..add('ervas secas ou temperos a gosto');
+
+    return {
+      'name': 'Assado prático de ${_formatList(highlighted)}',
+      'description':
+          'Uma versão de forno que aproveita ${_formatList(highlighted)} com temperos simples.',
+      'ingredients': ingredients,
+      'steps': [
+        'Preaqueça o forno a 200 °C e unte uma assadeira com azeite.',
+        'Distribua ${_formatList(highlighted)} na assadeira e tempere com sal, pimenta e ervas.',
+        'Asse por 20 a 25 minutos, mexendo na metade do tempo para dourar por igual.',
+      ],
+    };
+  }
+
+  Map<String, dynamic> _buildFreshBowlRecipe(
+    String main,
+    List<String> extras,
+  ) {
+    final base = extras.isNotEmpty ? extras.last : main;
+    final complement = <String>{main, base, ...extras};
+    final complementList = complement.toList();
+    final ingredients = _combineIngredients(complementList)
+      ..add('suco de limão ou vinagre a gosto');
+
+    return {
+      'name': 'Tigela fresca de ${_formatList(complementList)}',
+      'description':
+          'Combinação leve de ${_formatList(complementList)} finalizada com toque cítrico.',
+      'ingredients': ingredients,
+      'steps': [
+        'Pique ${_formatList(complementList)} em pedaços pequenos e coloque em uma tigela.',
+        'Regue com azeite, adicione sal, pimenta e suco de limão ou vinagre.',
+        'Misture bem e deixe descansar por 5 minutos antes de servir como salada ou acompanhamento.',
+      ],
+    };
+  }
+
+  List<String> _combineIngredients(Iterable<String> items) {
+    final normalized = LinkedHashSet<String>.from(
+      items.map((item) => item.trim()).where((item) => item.isNotEmpty),
+    );
+    for (final basic in const ['azeite de oliva', 'sal a gosto', 'pimenta-do-reino']) {
+      normalized.add(basic);
+    }
+    return normalized.toList();
+  }
+
+  String _formatList(List<String> items) {
+    final unique = LinkedHashSet<String>.from(
+      items.map((item) => item.trim()).where((item) => item.isNotEmpty),
+    ).toList();
+    if (unique.isEmpty) {
+      return '';
+    }
+    if (unique.length == 1) {
+      return unique.first;
+    }
+    if (unique.length == 2) {
+      return '${unique[0]} e ${unique[1]}';
+    }
+    final head = unique.sublist(0, unique.length - 1).join(', ');
+    return '$head e ${unique.last}';
   }
 }
