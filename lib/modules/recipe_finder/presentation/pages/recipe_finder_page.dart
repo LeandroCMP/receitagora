@@ -154,7 +154,7 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
       final icon = hasQuota ? Icons.timelapse : Icons.lock_outline;
       final message = hasQuota
           ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. Cada pesquisa retorna até ${SessionService.guestRecipeLimit} receitas.'
-          : 'Modo visitante: limite diário atingido. Faça login com o Google para ter buscas ilimitadas.';
+          : 'Modo visitante: limite diário atingido. O login social estará disponível em breve para liberar buscas ilimitadas.';
 
       return AnimatedContainer(
         duration: const Duration(milliseconds: 300),

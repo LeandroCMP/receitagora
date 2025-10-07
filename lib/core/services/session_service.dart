@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum UserMode { guest, authenticated }
@@ -20,11 +19,8 @@ class SessionUser {
 
 class SessionService extends GetxService {
   SessionService({
-    required this.googleSignIn,
     required this.preferences,
   }) : _readyCompleter = Completer<void>();
-
-  final GoogleSignIn googleSignIn;
   final SharedPreferences preferences;
 
   static const _modeKey = 'session.mode';
@@ -60,10 +56,6 @@ class SessionService extends GetxService {
     await _hydrateFromPreferences();
     _ensureGuestQuotaFreshness();
 
-    if (isAuthenticated) {
-      await _attemptSilentGoogleSignIn();
-    }
-
     if (!_readyCompleter.isCompleted) {
       _readyCompleter.complete();
     }
@@ -79,52 +71,6 @@ class SessionService extends GetxService {
     await preferences.remove(_userEmailKey);
     await preferences.remove(_userAvatarKey);
     _ensureGuestQuotaFreshness();
-  }
-
-  Future<void> signInWithGoogle() async {
-    try {
-      final account = await googleSignIn.signIn();
-      if (account == null) {
-        throw Exception('Login cancelado pelo usuário.');
-      }
-
-      final profile = SessionUser(
-        displayName: account.displayName?.trim().isNotEmpty == true
-            ? account.displayName!.trim()
-            : account.email,
-        email: account.email,
-        avatarUrl: account.photoUrl,
-      );
-
-      _mode.value = UserMode.authenticated;
-      _user.value = profile;
-
-      await preferences.setString(_modeKey, UserMode.authenticated.name);
-      await preferences.setString(_userNameKey, profile.displayName);
-      await preferences.setString(_userEmailKey, profile.email);
-      if (profile.avatarUrl != null) {
-        await preferences.setString(_userAvatarKey, profile.avatarUrl!);
-      } else {
-        await preferences.remove(_userAvatarKey);
-      }
-    } catch (error) {
-      rethrow;
-    }
-  }
-
-  Future<void> signOut() async {
-    try {
-      await googleSignIn.signOut();
-    } catch (_) {
-      // Ignored: even if sign out fails remotely we still reset local state.
-    }
-
-    _mode.value = null;
-    _user.value = null;
-    await preferences.remove(_modeKey);
-    await preferences.remove(_userNameKey);
-    await preferences.remove(_userEmailKey);
-    await preferences.remove(_userAvatarKey);
   }
 
   bool canPerformGuestSearch() {
@@ -165,26 +111,6 @@ class SessionService extends GetxService {
     }
 
     _guestSearchCount.value = preferences.getInt(_guestCountKey) ?? 0;
-  }
-
-  Future<void> _attemptSilentGoogleSignIn() async {
-    try {
-      final account = await googleSignIn.signInSilently();
-      if (account == null) {
-        // Silent sign-in failed; keep stored profile so the UI still greets the user.
-        return;
-      }
-
-      _user.value = SessionUser(
-        displayName: account.displayName?.trim().isNotEmpty == true
-            ? account.displayName!.trim()
-            : account.email,
-        email: account.email,
-        avatarUrl: account.photoUrl,
-      );
-    } catch (_) {
-      // Ignore errors from silent sign-in to keep offline experience working.
-    }
   }
 
   void _ensureGuestQuotaFreshness() {

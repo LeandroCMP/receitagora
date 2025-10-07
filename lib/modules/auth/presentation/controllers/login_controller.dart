@@ -11,30 +11,16 @@ class LoginController extends GetxController {
 
   final isLoading = false.obs;
 
-  Future<void> signInWithGoogle() async {
-    if (isLoading.value) {
-      return;
-    }
-
-    isLoading.value = true;
-
-    try {
-      await sessionService.signInWithGoogle();
-      Get.offAllNamed(AppRoutes.recipeFinder);
-    } catch (error) {
-      final message = _mapErrorToMessage(error);
-      Get.snackbar(
-        'Não foi possível entrar',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Get.theme.colorScheme.surfaceVariant.withOpacity(0.9),
-        colorText: Get.theme.colorScheme.onSurfaceVariant,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 16,
-      );
-    } finally {
-      isLoading.value = false;
-    }
+  void signInWithGoogle() {
+    Get.snackbar(
+      'Em breve',
+      'O login com Google estará disponível nas próximas versões.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Get.theme.colorScheme.surfaceVariant.withOpacity(0.9),
+      colorText: Get.theme.colorScheme.onSurfaceVariant,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 16,
+    );
   }
 
   Future<void> continueAsGuest() async {
@@ -42,21 +28,13 @@ class LoginController extends GetxController {
       return;
     }
 
-    await sessionService.continueAsGuest();
-    Get.offAllNamed(AppRoutes.recipeFinder);
-  }
+    isLoading.value = true;
 
-  String _mapErrorToMessage(Object error) {
-    final description = error.toString();
-
-    if (description.toLowerCase().contains('network')) {
-      return 'Verifique sua conexão e tente novamente.';
+    try {
+      await sessionService.continueAsGuest();
+      await Get.offAllNamed(AppRoutes.recipeFinder);
+    } finally {
+      isLoading.value = false;
     }
-
-    if (description.toLowerCase().contains('cancel')) {
-      return 'O login foi cancelado. Tente novamente quando quiser.';
-    }
-
-    return 'Não foi possível conectar ao Google agora. Tente novamente em instantes.';
   }
 }

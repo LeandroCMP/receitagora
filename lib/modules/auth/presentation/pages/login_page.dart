@@ -78,17 +78,16 @@ class LoginPage extends GetView<LoginController> {
                             ),
                           ),
                           onPressed: controller.isLoading.value ? null : controller.signInWithGoogle,
-                          icon: controller.isLoading.value
-                              ? SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
-                                  ),
-                                )
-                              : _GoogleBadge(theme: theme),
+                          icon: _GoogleBadge(theme: theme),
                           label: const Text('Continuar com o Google'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Disponível em breve',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          fontStyle: FontStyle.italic,
                         ),
                       ),
                       const SizedBox(height: 18),

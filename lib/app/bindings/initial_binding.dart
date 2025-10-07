@@ -1,5 +1,4 @@
 import 'package:get/get.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,12 +21,9 @@ class InitialBinding extends Bindings {
     Get.putAsync<SessionService>(
       () async {
         final preferences = await SharedPreferences.getInstance();
-        final googleSignIn = GoogleSignIn(scopes: const ['email', 'profile']);
         Get.put<SharedPreferences>(preferences, permanent: true);
-        Get.put<GoogleSignIn>(googleSignIn, permanent: true);
 
         final service = SessionService(
-          googleSignIn: googleSignIn,
           preferences: preferences,
         );
         return service.init();

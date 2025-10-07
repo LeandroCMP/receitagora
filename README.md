@@ -2,9 +2,10 @@
 
 Aplicativo Flutter para sugerir receitas com base nos ingredientes que o usuário
 tem em casa. A solução utiliza GetX, Clean Architecture e integra-se com a API
-da OpenAI para gerar receitas possíveis seguindo as restrições informadas. A
-experiência agora conta com splash screen animada, login social com Google e um
-modo visitante elegante em tema escuro.
+da OpenAI para gerar receitas possíveis seguindo as restrições informadas.
+A experiência agora conta com splash screen animada, tela de boas-vindas e um
+modo visitante elegante em tema escuro. O botão de login com Google já aparece
+na interface e será habilitado em uma versão futura.
 
 ## Configuração
 
@@ -26,13 +27,7 @@ modo visitante elegante em tema escuro.
    > **Importante:** mantenha suas chaves privadas fora do controle de versão. O
    > arquivo `.env` já está ignorado pelo Git.
 
-4. (Opcional) Configure o login social do Google. O projeto utiliza o pacote
-   [`google_sign_in`](https://pub.dev/packages/google_sign_in); siga as etapas
-   oficiais para registrar o aplicativo na Google Cloud Platform e informe os
-   identificadores gerados nas plataformas desejadas (Android, iOS, Web e
-   Desktop). Mesmo sem a configuração o modo visitante permanece disponível.
-
-5. Execute o aplicativo:
+4. Execute o aplicativo:
    ```bash
    flutter run
    ```
@@ -44,13 +39,14 @@ modo visitante elegante em tema escuro.
 ### Fluxo de acesso e limites do modo visitante
 
 - **Splash screen & login:** ao abrir o app você verá uma tela de introdução e,
-  em seguida, a tela de autenticação com duas opções — entrar com uma conta
-  Google ou seguir no modo visitante.
+  em seguida, a tela de autenticação com duas opções — o login social com Google
+  (em breve) ou o modo visitante.
 - **Modo visitante:** permite até **3 buscas por dia**, com retorno máximo de
   **2 receitas por pesquisa**. O contador é reiniciado diariamente de forma
   automática.
-- **Conta Google:** remove limites de busca, preserva o histórico de sessão e
-  exibe o avatar do usuário diretamente na tela principal.
+- **Login com Google (em breve):** assim que habilitado, removerá os limites de
+  busca, preservará o histórico de sessão e exibirá o avatar do usuário na tela
+  principal.
 
 ### Erros comuns e fallback
 

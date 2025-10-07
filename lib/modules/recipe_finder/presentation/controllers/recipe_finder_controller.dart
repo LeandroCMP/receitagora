@@ -64,7 +64,7 @@ class RecipeFinderController extends GetxController {
 
     if (sessionService.isGuest && !sessionService.canPerformGuestSearch()) {
       errorMessage.value =
-          'Você atingiu o limite diário de buscas no modo visitante. Faça login com o Google para continuar explorando receitas sem limites.';
+          'Você atingiu o limite diário de buscas no modo visitante. O login social estará disponível em breve para liberar buscas ilimitadas.';
       recipes.clear();
       return;
     }
