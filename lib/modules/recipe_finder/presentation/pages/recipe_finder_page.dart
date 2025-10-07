@@ -106,11 +106,11 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final topBlend = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.05),
+      theme.colorScheme.primary.withOpacity(0.04),
       background,
     );
     final bottomBlend = Color.alphaBlend(
-      theme.colorScheme.secondary.withOpacity(0.04),
+      theme.colorScheme.secondary.withOpacity(0.03),
       background,
     );
 
@@ -207,10 +207,10 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          'Os resultados abrem em uma tela focada para você revisar com calma.',
+                          'Os resultados chegam com um resumo suave e detalhes em uma segunda tela.',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.62),
-                            height: 1.4,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            height: 1.45,
                           ),
                         ),
                       ],
@@ -252,7 +252,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 const SizedBox(width: 18),
                 Expanded(
                   child: Text(
-                    'Receitas prontas para agora',
+                    'Inspire-se agora',
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -262,10 +262,10 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
             ),
             const SizedBox(height: 18),
             Text(
-              'Conte o que tem em casa e receba sugestões criadas sob medida, com visual moderno e foco no que importa.',
+              'Conte o que tem em casa para receber sugestões leves e prontas para o momento.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                height: 1.4,
+                color: theme.colorScheme.onSurface.withOpacity(0.68),
+                height: 1.45,
               ),
             ),
           ],
@@ -287,8 +287,8 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
           : theme.colorScheme.error;
       final icon = hasQuota ? Icons.timelapse : Icons.lock_outline;
       final message = hasQuota
-          ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. Cada pesquisa retorna até ${SessionService.guestRecipeLimit} receitas.'
-          : 'Modo visitante: limite diário atingido. Faça uma pausa e volte amanhã para novas sugestões.';
+          ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. Cada pesquisa revela até ${SessionService.guestRecipeLimit} receitas resumidas.'
+          : 'Modo visitante: limite diário atingido. Relaxe um pouco e volte amanhã para descobrir novas sugestões.';
 
       return Card(
         child: Padding(
@@ -309,8 +309,8 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 child: Text(
                   message,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.72),
-                    height: 1.4,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    height: 1.45,
                   ),
                 ),
               ),
@@ -330,7 +330,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Quais ingredientes você tem agora?',
+                'Quais ingredientes você tem hoje?',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -342,7 +342,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 textInputAction: TextInputAction.done,
                 onSubmitted: controller.addIngredient,
                 decoration: InputDecoration(
-                  hintText: 'Digite um ingrediente e pressione enter',
+                  hintText: 'Digite um ingrediente e toque em adicionar',
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.add_circle_outline),
                     onPressed: () => controller.addIngredient(
@@ -356,8 +356,8 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 Text(
                   'empty_ingredient_hint'.tr,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.58),
-                    height: 1.4,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    height: 1.45,
                   ),
                 )
               else

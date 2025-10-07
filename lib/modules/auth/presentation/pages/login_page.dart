@@ -11,11 +11,11 @@ class LoginPage extends GetView<LoginController> {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final primaryVeil = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.06),
+      theme.colorScheme.primary.withOpacity(0.04),
       background,
     );
     final secondaryVeil = Color.alphaBlend(
-      theme.colorScheme.secondary.withOpacity(0.05),
+      theme.colorScheme.secondary.withOpacity(0.035),
       background,
     );
 
@@ -42,15 +42,15 @@ class LoginPage extends GetView<LoginController> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _BrandHeader(theme: theme),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 44),
                         Card(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
+                            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 34),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Text(
-                                  'Escolha sua experiência',
+                                  'Comece agora',
                                   style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -58,13 +58,14 @@ class LoginPage extends GetView<LoginController> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'Entre como visitante para explorar agora mesmo. Em breve, o Google trará personalização extra.',
+                                  'Use o modo visitante para buscar ideias rápidas enquanto o login com Google não chega.',
                                   style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                    color: theme.colorScheme.onSurface.withOpacity(0.68),
+                                    height: 1.45,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 28),
+                                const SizedBox(height: 30),
                                 Obx(
                                   () => FilledButton.icon(
                                     icon: controller.isLoading.value
@@ -78,7 +79,7 @@ class LoginPage extends GetView<LoginController> {
                                               ),
                                             ),
                                           )
-                                        : const Icon(Icons.auto_awesome_motion),
+                                        : const Icon(Icons.bolt_rounded),
                                     label: const Text('Entrar como visitante'),
                                     onPressed: controller.isLoading.value
                                         ? null
@@ -101,12 +102,12 @@ class LoginPage extends GetView<LoginController> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 40),
                         Text(
-                          'Receitas sob medida com visual leve e intuitivo para inspirar sua próxima refeição.',
+                          'Receitas sob medida em um ambiente calmo e intuitivo para inspirar sua próxima refeição.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onBackground.withOpacity(0.68),
-                            height: 1.4,
+                            color: theme.colorScheme.onBackground.withOpacity(0.64),
+                            height: 1.45,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -133,29 +134,29 @@ class _BrandHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 84,
-          height: 84,
+          width: 88,
+          height: 88,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
               colors: [
                 theme.colorScheme.primary,
-                theme.colorScheme.secondary.withOpacity(0.7),
+                theme.colorScheme.secondary,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.2),
-                blurRadius: 28,
-                offset: const Offset(0, 14),
+                color: theme.colorScheme.primary.withOpacity(0.18),
+                blurRadius: 32,
+                offset: const Offset(0, 18),
               ),
             ],
           ),
-          child: const Icon(Icons.restaurant, size: 36, color: Colors.white),
+          child: const Icon(Icons.restaurant_rounded, size: 36, color: Colors.white),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 26),
         Text(
           'Receita Agora',
           style: theme.textTheme.headlineSmall?.copyWith(
@@ -164,12 +165,12 @@ class _BrandHeader extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Text(
-          'Descubra combinações deliciosas com poucos toques.',
+          'Combine ingredientes com sugestões sempre atualizadas.',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onBackground.withOpacity(0.66),
-            height: 1.4,
+            color: theme.colorScheme.onBackground.withOpacity(0.6),
+            height: 1.45,
           ),
           textAlign: TextAlign.center,
         ),
@@ -186,25 +187,25 @@ class _GuestQuotaHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
       decoration: BoxDecoration(
         color: Color.alphaBlend(
-          theme.colorScheme.primary.withOpacity(0.08),
+          theme.colorScheme.primary.withOpacity(0.07),
           theme.colorScheme.surface,
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.info_outline, color: theme.colorScheme.primary),
-          const SizedBox(width: 12),
+          Icon(Icons.hourglass_top_rounded, color: theme.colorScheme.primary),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
-              'Modo visitante: até 3 buscas por dia com 2 receitas por pesquisa.',
+              'Modo visitante: até 3 buscas por dia com 2 receitas por consulta. Em breve, salve favoritos com o Google.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
-                height: 1.4,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                height: 1.45,
               ),
             ),
           ),

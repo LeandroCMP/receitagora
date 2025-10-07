@@ -5,6 +5,7 @@ import '../../modules/auth/presentation/pages/login_page.dart';
 import '../../modules/recipe_finder/presentation/bindings/recipe_finder_binding.dart';
 import '../../modules/recipe_finder/presentation/pages/recipe_finder_page.dart';
 import '../../modules/recipe_finder/presentation/pages/recipe_results_page.dart';
+import '../../modules/recipe_finder/presentation/pages/recipe_detail_page.dart';
 import '../../modules/splash/presentation/bindings/splash_binding.dart';
 import '../../modules/splash/presentation/pages/splash_page.dart';
 import 'app_routes.dart';
@@ -31,6 +32,10 @@ class AppPages {
     GetPage(
       name: AppRoutes.recipeResults,
       page: RecipeResultsPage.new,
+    ),
+    GetPage(
+      name: AppRoutes.recipeDetail,
+      page: RecipeDetailPage.new,
     ),
   ];
 }

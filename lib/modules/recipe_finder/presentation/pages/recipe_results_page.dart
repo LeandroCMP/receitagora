@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/routes/app_routes.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
 import '../widgets/recipe_card.dart';
+import 'recipe_detail_page.dart';
 
 class RecipeResultsArgs {
   RecipeResultsArgs({
@@ -89,7 +91,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
     final hasRecipes = _args.recipes.isNotEmpty;
     final background = theme.colorScheme.background;
     final blend = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.04),
+      theme.colorScheme.primary.withOpacity(0.035),
       background,
     );
 
@@ -106,32 +108,82 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FadeTransition(
-                  opacity: _headerOpacity,
-                  child: SlideTransition(
-                    position: _headerOffset,
-                    child: _buildHeader(theme, hasRecipes),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Expanded(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                sliver: SliverToBoxAdapter(
                   child: FadeTransition(
-                    opacity: _contentOpacity,
-                    child: hasRecipes
-                        ? _buildAnimatedList()
-                        : EmptyRecipesView(
-                            message: _args.message ??
-                                'Não encontramos receitas com esses ingredientes.',
-                          ),
+                    opacity: _headerOpacity,
+                    child: SlideTransition(
+                      position: _headerOffset,
+                      child: _buildHeader(theme, hasRecipes),
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              if (hasRecipes)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  sliver: SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _contentOpacity,
+                      child: Column(
+                        children: List<Widget>.generate(
+                          _args.recipes.length,
+                          (index) {
+                            final recipe = _args.recipes[index];
+                            final heroTag = 'recipe-${index + 1}-${recipe.name}';
+                            return TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0.18, end: 0),
+                              duration: Duration(milliseconds: 420 + (index * 90)),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Transform.translate(
+                                  offset: Offset(0, 48 * value),
+                                  child: Opacity(
+                                    opacity: 1 - value,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: RecipeSummaryCard(
+                                recipe: recipe,
+                                position: index,
+                                heroTag: heroTag,
+                                onTap: () {
+                                  Get.toNamed(
+                                    AppRoutes.recipeDetail,
+                                    arguments: RecipeDetailArgs(
+                                      recipe: recipe,
+                                      position: index,
+                                      heroTag: heroTag,
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+                  sliver: SliverToBoxAdapter(
+                    child: FadeTransition(
+                      opacity: _contentOpacity,
+                      child: EmptyRecipesView(
+                        message: _args.message ??
+                            'Não encontramos receitas com esses ingredientes.',
+                      ),
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -147,7 +199,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
           children: [
             Text(
               hasRecipes
-                  ? 'Encontramos ${_args.recipes.length} sugestões para você'
+                  ? 'Sugestões suaves para o seu momento agora'
                   : 'Vamos tentar novamente?',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
@@ -173,10 +225,10 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
               )
             else
               Text(
-                'Você pode ajustar os ingredientes e tentar novamente quando quiser.',
+                'Ajuste os ingredientes quando quiser para explorar novas combinações.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.64),
-                  height: 1.4,
+                  height: 1.45,
                 ),
               ),
             if (_args.message != null)
@@ -186,7 +238,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                   _args.message!,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.64),
-                    height: 1.4,
+                    height: 1.45,
                   ),
                 ),
               ),
@@ -202,32 +254,4 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
     );
   }
 
-  Widget _buildAnimatedList() {
-    return ListView.builder(
-      padding: EdgeInsets.zero,
-      physics: const BouncingScrollPhysics(),
-      itemCount: _args.recipes.length,
-      itemBuilder: (context, index) {
-        final recipe = _args.recipes[index];
-        return TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0.16, end: 0),
-          duration: Duration(milliseconds: 420 + (index * 90)),
-          curve: Curves.easeOutCubic,
-          builder: (context, value, child) {
-            return Transform.translate(
-              offset: Offset(0, 60 * value),
-              child: Opacity(
-                opacity: 1 - value,
-                child: child,
-              ),
-            );
-          },
-          child: RecipeCard(
-            recipe: recipe,
-            position: index,
-          ),
-        );
-      },
-    );
-  }
 }

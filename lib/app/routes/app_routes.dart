@@ -3,4 +3,5 @@ abstract class AppRoutes {
   static const login = '/login';
   static const recipeFinder = '/recipes';
   static const recipeResults = '/recipes/results';
+  static const recipeDetail = '/recipes/detail';
 }
