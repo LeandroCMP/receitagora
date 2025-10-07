@@ -46,7 +46,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
       curve: const Interval(0, 0.4, curve: Curves.easeOutCubic),
     );
     _headerOffset = Tween<Offset>(
-      begin: const Offset(0, 0.1),
+      begin: const Offset(0, 0.08),
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
@@ -56,7 +56,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
     );
     _contentOpacity = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.3, 1, curve: Curves.easeOutCubic),
+      curve: const Interval(0.25, 1, curve: Curves.easeOutCubic),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,18 +87,20 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final hasRecipes = _args.recipes.isNotEmpty;
+    final background = theme.colorScheme.background;
+    final blend = Color.alphaBlend(
+      theme.colorScheme.primary.withOpacity(0.05),
+      background,
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sugestões'),
       ),
-      body: Container(
+      body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.background,
-              theme.colorScheme.surfaceVariant.withOpacity(0.6),
-            ],
+            colors: [blend, background],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -116,7 +118,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                     child: _buildHeader(theme, hasRecipes),
                   ),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 16),
                 Expanded(
                   child: FadeTransition(
                     opacity: _contentOpacity,
@@ -137,76 +139,63 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
   }
 
   Widget _buildHeader(ThemeData theme, bool hasRecipes) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.08),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.18),
-            blurRadius: 28,
-            offset: const Offset(0, 16),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            hasRecipes
-                ? 'Encontramos ${_args.recipes.length} sugestões para você'
-                : 'Vamos tentar novamente?',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (_args.ingredients.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _args.ingredients
-                  .map(
-                    (ingredient) => Chip(
-                      label: Text(ingredient),
-                      backgroundColor:
-                          theme.colorScheme.primary.withOpacity(0.12),
-                      labelStyle: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  )
-                  .toList(),
-            )
-          else
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              'Você pode ajustar os ingredientes e tentar novamente quando quiser.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              hasRecipes
+                  ? 'Encontramos ${_args.recipes.length} sugestões para você'
+                  : 'Vamos tentar novamente?',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
-          if (_args.message != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(
-                _args.message!,
+            const SizedBox(height: 10),
+            if (_args.ingredients.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _args.ingredients
+                    .map(
+                      (ingredient) => Chip(
+                        label: Text(ingredient),
+                        backgroundColor: Color.alphaBlend(
+                          theme.colorScheme.primary.withOpacity(0.12),
+                          theme.colorScheme.surface,
+                        ),
+                        labelStyle: theme.textTheme.bodyMedium,
+                      ),
+                    )
+                    .toList(),
+              )
+            else
+              Text(
+                'Você pode ajustar os ingredientes e tentar novamente quando quiser.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withOpacity(0.68),
                 ),
               ),
+            if (_args.message != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  _args.message!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.68),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: () => Get.back(),
+              icon: const Icon(Icons.search),
+              label: const Text('Nova pesquisa'),
             ),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: () => Get.back(),
-            icon: const Icon(Icons.search),
-            label: const Text('Nova pesquisa'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

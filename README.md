@@ -52,11 +52,11 @@ na interface e será habilitado em uma versão futura.
   busca, preservará o histórico de sessão e exibirá o avatar do usuário na tela
   principal.
 
-### Erros comuns e fallback
+### Erros comuns
 
-- **Sem chave configurada:** quando `OPENAI_API_KEY` está ausente, o app gera
-  receitas locais com base nos ingredientes informados para manter a
-  experiência fluindo.
+- **Sem chave configurada:** quando `OPENAI_API_KEY` está ausente, o app exibe
+  uma mensagem informando que a geração depende da credencial e nenhuma receita
+  é retornada até que a chave seja configurada corretamente.
 - **Falhas com a OpenAI (HTTP 400/429):** as mensagens de erro são exibidas
   diretamente na interface para que você saiba o motivo da falha (ex.: limite
   de cota, formato incompatível ou URL incorreta). Corrija a configuração e

@@ -104,6 +104,16 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final background = theme.colorScheme.background;
+    final topBlend = Color.alphaBlend(
+      theme.colorScheme.primary.withOpacity(0.06),
+      background,
+    );
+    final bottomBlend = Color.alphaBlend(
+      theme.colorScheme.secondary.withOpacity(0.05),
+      background,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: Text('app_title'.tr),
@@ -129,7 +139,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
               padding: const EdgeInsets.only(right: 16),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.35),
+                backgroundColor: theme.colorScheme.primary.withOpacity(0.28),
                 backgroundImage:
                     user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
                 child: user.avatarUrl == null
@@ -146,26 +156,24 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
       body: SafeArea(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          child: Container(
+          child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  theme.colorScheme.background,
-                  theme.colorScheme.surfaceVariant.withOpacity(0.65),
-                ],
+                colors: [topBlend, background, bottomBlend],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
             child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-                child: ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minHeight: constraints.maxHeight - 44),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              builder: (context, constraints) {
+                final minHeight = (constraints.maxHeight - 48).clamp(0.0, double.infinity);
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: minHeight),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       FadeTransition(
                         opacity: _headerOpacity,
                         child: SlideTransition(
@@ -173,7 +181,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildHeroHeader(theme),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       FadeTransition(
                         opacity: _quotaOpacity,
                         child: SlideTransition(
@@ -181,7 +189,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildGuestQuota(theme),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       FadeTransition(
                         opacity: _ingredientsOpacity,
                         child: SlideTransition(
@@ -189,7 +197,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildIngredientSection(theme),
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 24),
                       FadeTransition(
                         opacity: _buttonOpacity,
                         child: SlideTransition(
@@ -197,17 +205,17 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildGenerateButton(theme),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Text(
-                        'Os resultados aparecerão em uma nova tela para você explorá-los com calma.',
+                        'Os resultados serão exibidos em uma tela dedicada para você explorar com conforto.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withOpacity(0.65),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
+                );
+              },
             ),
           ),
         ),
@@ -216,47 +224,49 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
   }
 
   Widget _buildHeroHeader(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(26),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withOpacity(0.75),
-            theme.colorScheme.primary,
-            theme.colorScheme.secondary,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(26),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color.alphaBlend(
+                      theme.colorScheme.primary.withOpacity(0.18),
+                      theme.colorScheme.surface,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    'Receitas prontas para agora',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Conte o que tem em casa e receba sugestões criadas sob medida, com visual moderno e foco no que importa.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.35),
-            blurRadius: 36,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Receitas prontas para agora',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: theme.colorScheme.onPrimary,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Conte o que tem em casa e receba sugestões com modo escuro elegante e toques personalizados.',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onPrimary.withOpacity(0.85),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -269,50 +279,39 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
 
       final remaining = controller.guestSearchesRemaining.value;
       final bool hasQuota = remaining > 0;
-      final color =
-          hasQuota ? theme.colorScheme.primary : theme.colorScheme.error;
+      final accentColor = hasQuota
+          ? theme.colorScheme.primary
+          : theme.colorScheme.error;
       final icon = hasQuota ? Icons.timelapse : Icons.lock_outline;
       final message = hasQuota
           ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. Cada pesquisa retorna até ${SessionService.guestRecipeLimit} receitas.'
-          : 'Modo visitante: limite diário atingido. O login social estará disponível em breve para liberar buscas ilimitadas.';
+          : 'Modo visitante: limite diário atingido. Faça uma pausa e volte amanhã para novas sugestões.';
 
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: color.withOpacity(0.35)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.15),
-              blurRadius: 18,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(16),
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: accentColor, size: 20),
               ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                message,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.8),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  message,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.78),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     });
@@ -320,69 +319,57 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
 
   Widget _buildIngredientSection(ThemeData theme) {
     return Obx(
-      () => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(22),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(26),
-          border: Border.all(
-            color: theme.colorScheme.primary.withOpacity(0.08),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.22),
-              blurRadius: 28,
-              offset: const Offset(0, 16),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Quais ingredientes você tem agora?',
-              style:
-                  theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller.ingredientTextController,
-              focusNode: controller.ingredientFocusNode,
-              textInputAction: TextInputAction.done,
-              onSubmitted: controller.addIngredient,
-              decoration: InputDecoration(
-                hintText: 'Digite um ingrediente e pressione enter',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  onPressed: () => controller.addIngredient(
-                    controller.ingredientTextController.text,
+      () => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Quais ingredientes você tem agora?',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller.ingredientTextController,
+                focusNode: controller.ingredientFocusNode,
+                textInputAction: TextInputAction.done,
+                onSubmitted: controller.addIngredient,
+                decoration: InputDecoration(
+                  hintText: 'Digite um ingrediente e pressione enter',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    onPressed: () => controller.addIngredient(
+                      controller.ingredientTextController.text,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 18),
-            if (controller.ingredients.isEmpty)
-              Text(
-                'empty_ingredient_hint'.tr,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+              const SizedBox(height: 16),
+              if (controller.ingredients.isEmpty)
+                Text(
+                  'empty_ingredient_hint'.tr,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.55),
+                  ),
+                )
+              else
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: controller.ingredients
+                      .map(
+                        (ingredient) => IngredientChip(
+                          label: ingredient,
+                          onDeleted: () => controller.removeIngredient(ingredient),
+                        ),
+                      )
+                      .toList(),
                 ),
-              )
-            else
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: controller.ingredients
-                    .map(
-                      (ingredient) => IngredientChip(
-                        label: ingredient,
-                        onDeleted: () => controller.removeIngredient(ingredient),
-                      ),
-                    )
-                    .toList(),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -404,7 +391,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                     ),
                   ),
                 )
-              : const Icon(Icons.auto_awesome),
+              : const Icon(Icons.search_rounded),
           label: Padding(
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Text('generate_recipes'.tr),

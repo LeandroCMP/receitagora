@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -20,8 +19,9 @@ class OpenAIService {
         .toList();
 
     if (!config.hasValidCredentials) {
-      const failure = AppException('Chave da OpenAI ausente ou inválida.');
-      return _generateFallbackRecipes(sanitized, failure: failure);
+      throw const AppException(
+        'Chave da OpenAI ausente ou inválida. Configure a variável OPENAI_API_KEY para gerar receitas com a IA.',
+      );
     }
 
     try {
@@ -29,12 +29,12 @@ class OpenAIService {
       if (content != null && content.trim().isNotEmpty) {
         return content;
       }
-      throw const AppException('Resposta vazia da OpenAI');
+      throw const AppException('A OpenAI retornou uma resposta vazia.');
     } on AppException {
       rethrow;
     } catch (error) {
       throw AppException(
-        'Falha ao comunicar com a OpenAI',
+        'Falha ao comunicar com a OpenAI. Tente novamente em instantes.',
         details: error.toString(),
       );
     }
@@ -127,7 +127,7 @@ class OpenAIService {
         }
       }
     } catch (_) {
-      // Ignored: fallback message will be returned below.
+      // Ignored: mantemos a mensagem genérica definida abaixo.
     }
 
     return const AppException(
@@ -172,7 +172,7 @@ class OpenAIService {
         }
       }
     } catch (_) {
-      // Ignorado: o fallback abaixo trata o cenário.
+      // Ignorado: mantemos a mensagem genérica definida abaixo.
     }
 
     return const AppException(
@@ -236,7 +236,8 @@ class OpenAIService {
   }
 
   String _buildPrompt(List<String> ingredients) {
-    final ingredientList = ingredients.map((ingredient) => '- ${ingredient.trim()}').join('\n');
+    final ingredientList =
+        ingredients.map((ingredient) => '- ${ingredient.trim()}').join('\n');
     return '''Considere apenas os ingredientes abaixo para criar até três receitas. Ingredientes genéricos como sal, água, óleo e temperos básicos podem ser adicionados.
 
 Ingredientes disponíveis:
@@ -274,143 +275,5 @@ Certifique-se de que cada receita use somente os ingredientes informados (além 
       return buffer.isEmpty ? null : buffer.toString();
     }
     return null;
-  }
-
-  String _generateFallbackRecipes(
-    List<String> ingredients, {
-    AppException? failure,
-  }) {
-    final normalized = LinkedHashSet<String>.from(ingredients);
-    if (normalized.isEmpty) {
-      normalized.add('ingredientes variados');
-    }
-
-    final uniqueIngredients = normalized.toList();
-    final recipes = _buildFallbackRecipeList(uniqueIngredients);
-
-    final payload = <String, dynamic>{
-      'recipes': recipes,
-      'metadata': {
-        'source': 'fallback',
-        if (failure != null) 'reason': failure.message,
-      },
-    };
-
-    return jsonEncode(payload);
-  }
-
-  List<Map<String, dynamic>> _buildFallbackRecipeList(List<String> ingredients) {
-    final main = ingredients.first;
-    final extras = ingredients.skip(1).toList();
-
-    final recipes = <Map<String, dynamic>>[
-      _buildOnePanRecipe(main, extras),
-      _buildOvenRecipe(main, extras),
-      _buildFreshBowlRecipe(main, extras),
-    ];
-
-    final uniqueRecipes = <String>{};
-    final result = <Map<String, dynamic>>[];
-    for (final recipe in recipes) {
-      final name = recipe['name'] as String? ?? '';
-      if (name.isEmpty || uniqueRecipes.add(name)) {
-        result.add(recipe);
-      }
-    }
-
-    return result.take(3).toList();
-  }
-
-  Map<String, dynamic> _buildOnePanRecipe(
-    String main,
-    List<String> extras,
-  ) {
-    final featured = <String>[main, if (extras.isNotEmpty) extras.first];
-    final allIngredients = _combineIngredients(featured)
-      ..add('alho picado (opcional)');
-
-    return {
-      'name': 'Refogado caseiro de ${_formatList(featured)}',
-      'description':
-          'Receita rápida feita na panela com ${_formatList(featured)} temperados com básicos da despensa.',
-      'ingredients': allIngredients,
-      'steps': [
-        'Aqueça uma panela com um fio de azeite de oliva.',
-        'Adicione ${_formatList(featured)} e refogue em fogo médio até ficar macio.',
-        'Tempere com sal, pimenta-do-reino e alho opcional, mexendo por mais 2 minutos antes de servir.',
-      ],
-    };
-  }
-
-  Map<String, dynamic> _buildOvenRecipe(
-    String main,
-    List<String> extras,
-  ) {
-    final supporting = extras.isNotEmpty ? extras : [main];
-    final highlighted = [main, ...supporting.take(2)];
-    final ingredients = _combineIngredients(highlighted)
-      ..add('ervas secas ou temperos a gosto');
-
-    return {
-      'name': 'Assado prático de ${_formatList(highlighted)}',
-      'description':
-          'Uma versão de forno que aproveita ${_formatList(highlighted)} com temperos simples.',
-      'ingredients': ingredients,
-      'steps': [
-        'Preaqueça o forno a 200 °C e unte uma assadeira com azeite.',
-        'Distribua ${_formatList(highlighted)} na assadeira e tempere com sal, pimenta e ervas.',
-        'Asse por 20 a 25 minutos, mexendo na metade do tempo para dourar por igual.',
-      ],
-    };
-  }
-
-  Map<String, dynamic> _buildFreshBowlRecipe(
-    String main,
-    List<String> extras,
-  ) {
-    final base = extras.isNotEmpty ? extras.last : main;
-    final complement = <String>{main, base, ...extras};
-    final complementList = complement.toList();
-    final ingredients = _combineIngredients(complementList)
-      ..add('suco de limão ou vinagre a gosto');
-
-    return {
-      'name': 'Tigela fresca de ${_formatList(complementList)}',
-      'description':
-          'Combinação leve de ${_formatList(complementList)} finalizada com toque cítrico.',
-      'ingredients': ingredients,
-      'steps': [
-        'Pique ${_formatList(complementList)} em pedaços pequenos e coloque em uma tigela.',
-        'Regue com azeite, adicione sal, pimenta e suco de limão ou vinagre.',
-        'Misture bem e deixe descansar por 5 minutos antes de servir como salada ou acompanhamento.',
-      ],
-    };
-  }
-
-  List<String> _combineIngredients(Iterable<String> items) {
-    final normalized = LinkedHashSet<String>.from(
-      items.map((item) => item.trim()).where((item) => item.isNotEmpty),
-    );
-    for (final basic in const ['azeite de oliva', 'sal a gosto', 'pimenta-do-reino']) {
-      normalized.add(basic);
-    }
-    return normalized.toList();
-  }
-
-  String _formatList(List<String> items) {
-    final unique = LinkedHashSet<String>.from(
-      items.map((item) => item.trim()).where((item) => item.isNotEmpty),
-    ).toList();
-    if (unique.isEmpty) {
-      return '';
-    }
-    if (unique.length == 1) {
-      return unique.first;
-    }
-    if (unique.length == 2) {
-      return '${unique[0]} e ${unique[1]}';
-    }
-    final head = unique.sublist(0, unique.length - 1).join(', ');
-    return '$head e ${unique.last}';
   }
 }
