@@ -42,6 +42,13 @@ informadas.
   situação. Caso o problema seja de cota, verifique o painel de billing da
   OpenAI. Para rate limits temporários, aguarde alguns instantes e tente
   novamente.
+- **HTTP 400** com mensagem sobre `response_format`: o modelo configurado não
+  suporta o modo JSON. Ajuste a variável `OPENAI_MODEL` para um modelo
+  compatível, como `gpt-4o-mini`.
+- **HTTP 400** com indicação de URL inválida: verifique se `OPENAI_BASE_URL`
+  aponta para o endpoint correto (`https://api.openai.com/v1`).
+- **HTTP 400** informando limite de contexto: reduza a quantidade de
+  ingredientes enviada no pedido para caber no limite de tokens do modelo.
 
 ## Estrutura do Projeto
 

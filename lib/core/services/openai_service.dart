@@ -50,6 +50,9 @@ class OpenAIService {
       if (response.statusCode == 429) {
         throw _mapRateLimitError(response);
       }
+      if (response.statusCode == 400) {
+        throw _mapBadRequestError(response);
+      }
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final choices = data['choices'] as List<dynamic>?;
@@ -103,6 +106,51 @@ class OpenAIService {
 
     return const AppException(
       'Não foi possível processar sua solicitação na OpenAI. Tente novamente mais tarde ou confira se há créditos suficientes.',
+    );
+  }
+
+  AppException _mapBadRequestError(http.Response response) {
+    try {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final error = data['error'];
+      if (error is Map<String, dynamic>) {
+        final code = error['code']?.toString().toLowerCase();
+        final message = error['message']?.toString() ?? '';
+
+        if (code == 'context_length_exceeded' ||
+            message.contains('context length') ||
+            message.contains('maximum context')) {
+          return const AppException(
+            'O pedido excedeu o limite de tokens aceitos pelo modelo. Reduza a lista de ingredientes e tente novamente.',
+          );
+        }
+
+        if (message.contains('Unrecognized request argument') &&
+            message.contains('response_format')) {
+          return const AppException(
+            'O modelo configurado não aceita respostas em JSON. Atualize a variável OPENAI_MODEL para um modelo compatível, como gpt-4o-mini.',
+          );
+        }
+
+        if (message.contains('Invalid URL') || message.contains('invalid url')) {
+          return const AppException(
+            'Verifique a variável OPENAI_BASE_URL. Ela deve apontar para o endpoint correto (por exemplo, https://api.openai.com/v1).',
+          );
+        }
+
+        if (message.isNotEmpty) {
+          return AppException(
+            'Não foi possível processar sua solicitação na OpenAI: $message',
+            details: response.body,
+          );
+        }
+      }
+    } catch (_) {
+      // Ignorado: o fallback abaixo trata o cenário.
+    }
+
+    return const AppException(
+      'A OpenAI rejeitou a solicitação enviada. Confira os dados informados e tente novamente.',
     );
   }
 
