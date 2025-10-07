@@ -28,13 +28,13 @@ class LoginPage extends GetView<LoginController> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 44),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     _BrandHeader(theme: theme),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
                     Obx(
                       () => FilledButton.icon(
                         style: FilledButton.styleFrom(
@@ -51,7 +51,7 @@ class LoginPage extends GetView<LoginController> {
                         label: const Text('Continuar com o Google'),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     Text(
                       'Disponível em breve',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -59,7 +59,7 @@ class LoginPage extends GetView<LoginController> {
                         fontStyle: FontStyle.italic,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                     Obx(
                       () => OutlinedButton(
                         style: OutlinedButton.styleFrom(
@@ -87,7 +87,7 @@ class LoginPage extends GetView<LoginController> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 20),
                     Text(
                       'Modo visitante: até 3 buscas por dia com 2 receitas por consulta.',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -95,7 +95,7 @@ class LoginPage extends GetView<LoginController> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 48),
                     Text(
                       'Receitas inspiradas para qualquer momento, em uma experiência moderna e intuitiva.',
                       style: theme.textTheme.bodyMedium?.copyWith(
