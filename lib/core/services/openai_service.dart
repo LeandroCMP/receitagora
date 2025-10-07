@@ -49,7 +49,7 @@ class OpenAIService {
           await _postWithRetry(uri, headers: headers, body: payload);
       if (response.statusCode == 429) {
         throw const AppException(
-          'A OpenAI está recebendo muitas requisições. Aguarde e tente novamente.',
+          'A OpenAI está recebendo muitas requisições, aguarde e tente novamente.',
         );
       }
       if (response.statusCode >= 200 && response.statusCode < 300) {
