@@ -3,26 +3,26 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static ThemeData buildTheme(TextTheme baseTextTheme) {
     final baseScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF87D7C3),
+      seedColor: const Color(0xFFFF9D5C),
       brightness: Brightness.dark,
     );
 
     final colorScheme = baseScheme.copyWith(
-      primary: const Color(0xFF8ADCC8),
-      onPrimary: const Color(0xFF03201A),
-      primaryContainer: const Color(0xFF22554A),
-      onPrimaryContainer: const Color(0xFFD6FFF3),
-      secondary: const Color(0xFFA6C4FA),
-      onSecondary: const Color(0xFF071A2F),
-      secondaryContainer: const Color(0xFF2F3F5F),
-      onSecondaryContainer: const Color(0xFFDCE6FF),
-      background: const Color(0xFF0F141D),
-      onBackground: const Color(0xFFE5EBF4),
-      surface: const Color(0xFF141924),
-      onSurface: const Color(0xFFD8DFEB),
-      surfaceVariant: const Color(0xFF1E2431),
-      outline: const Color(0xFF384250),
-      outlineVariant: const Color(0xFF292F3A),
+      primary: const Color(0xFFFF9D5C),
+      onPrimary: const Color(0xFF2C0D00),
+      primaryContainer: const Color(0xFF382014),
+      onPrimaryContainer: const Color(0xFFFFE3D4),
+      secondary: const Color(0xFF75D6C3),
+      onSecondary: const Color(0xFF01201A),
+      secondaryContainer: const Color(0xFF1D3B35),
+      onSecondaryContainer: const Color(0xFFCAFFF1),
+      background: const Color(0xFF0C131F),
+      onBackground: const Color(0xFFE4E9F3),
+      surface: const Color(0xFF141C2B),
+      onSurface: const Color(0xFFDCE2EE),
+      surfaceVariant: const Color(0xFF1B2434),
+      outline: const Color(0xFF323B4C),
+      outlineVariant: const Color(0xFF232B3A),
       error: const Color(0xFFF28B82),
       onError: const Color(0xFF2C0B0D),
     );
@@ -33,15 +33,15 @@ class AppTheme {
     );
 
     final surfaceTint = Color.alphaBlend(
-      colorScheme.primary.withOpacity(0.05),
+      colorScheme.primary.withOpacity(0.08),
       colorScheme.surface,
     );
     final borderColor = Color.alphaBlend(
-      colorScheme.onSurface.withOpacity(0.06),
+      colorScheme.onSurface.withOpacity(0.05),
       colorScheme.surface,
     );
     final subtleBorder = Color.alphaBlend(
-      colorScheme.onSurface.withOpacity(0.04),
+      colorScheme.onSurface.withOpacity(0.03),
       colorScheme.surface,
     );
 
@@ -54,7 +54,7 @@ class AppTheme {
       fontFamily: 'Roboto',
       appBarTheme: AppBarTheme(
         backgroundColor: Color.alphaBlend(
-          colorScheme.primary.withOpacity(0.04),
+          colorScheme.primary.withOpacity(0.06),
           colorScheme.surface,
         ),
         foregroundColor: colorScheme.onSurface,
@@ -67,9 +67,9 @@ class AppTheme {
       cardTheme: CardTheme(
         color: surfaceTint,
         elevation: 0,
-        margin: const EdgeInsets.symmetric(vertical: 10),
+        margin: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(28),
           side: BorderSide(color: subtleBorder),
         ),
       ),
@@ -127,7 +127,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Color.alphaBlend(
-          colorScheme.primary.withOpacity(0.05),
+          colorScheme.primary.withOpacity(0.07),
           colorScheme.surface,
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
@@ -152,12 +152,12 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: Color.alphaBlend(
-          colorScheme.primary.withOpacity(0.1),
+          colorScheme.primary.withOpacity(0.12),
           colorScheme.surface,
         ),
         disabledColor: colorScheme.onSurface.withOpacity(0.12),
-        selectedColor: colorScheme.primary.withOpacity(0.2),
-        secondarySelectedColor: colorScheme.primary.withOpacity(0.24),
+        selectedColor: colorScheme.primary.withOpacity(0.24),
+        secondarySelectedColor: colorScheme.primary.withOpacity(0.28),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         labelStyle: textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w500,
@@ -169,7 +169,7 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: Color.alphaBlend(
-          colorScheme.primary.withOpacity(0.08),
+          colorScheme.primary.withOpacity(0.12),
           colorScheme.surface,
         ),
         contentTextStyle: textTheme.bodyMedium,

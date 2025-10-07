@@ -156,69 +156,83 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
       body: SafeArea(
         child: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [topBlend, background, bottomBlend],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final minHeight = (constraints.maxHeight - 56).clamp(0.0, double.infinity);
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: minHeight),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FadeTransition(
-                          opacity: _headerOpacity,
-                          child: SlideTransition(
-                            position: _headerOffset,
-                            child: _buildHeroHeader(theme),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        FadeTransition(
-                          opacity: _quotaOpacity,
-                          child: SlideTransition(
-                            position: _quotaOffset,
-                            child: _buildGuestQuota(theme),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        FadeTransition(
-                          opacity: _ingredientsOpacity,
-                          child: SlideTransition(
-                            position: _ingredientsOffset,
-                            child: _buildIngredientSection(theme),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        FadeTransition(
-                          opacity: _buttonOpacity,
-                          child: SlideTransition(
-                            position: _buttonOffset,
-                            child: _buildGenerateButton(theme),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          'Os resultados chegam com um resumo suave e detalhes em uma segunda tela.',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.6),
-                            height: 1.45,
-                          ),
-                        ),
-                      ],
-                    ),
+          child: Stack(
+            children: [
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [topBlend, background, bottomBlend],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
-                );
-              },
-            ),
+                ),
+              ),
+              Positioned(
+                top: -140,
+                right: -80,
+                child: _BackgroundOrb(color: theme.colorScheme.primary.withOpacity(0.28)),
+              ),
+              Positioned(
+                bottom: -160,
+                left: -60,
+                child: _BackgroundOrb(color: theme.colorScheme.secondary.withOpacity(0.22)),
+              ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final minHeight = (constraints.maxHeight - 56).clamp(0.0, double.infinity);
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: minHeight),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          FadeTransition(
+                            opacity: _headerOpacity,
+                            child: SlideTransition(
+                              position: _headerOffset,
+                              child: _buildHeroHeader(theme),
+                            ),
+                          ),
+                          const SizedBox(height: 26),
+                          FadeTransition(
+                            opacity: _quotaOpacity,
+                            child: SlideTransition(
+                              position: _quotaOffset,
+                              child: _buildGuestQuota(theme),
+                            ),
+                          ),
+                          const SizedBox(height: 26),
+                          FadeTransition(
+                            opacity: _ingredientsOpacity,
+                            child: SlideTransition(
+                              position: _ingredientsOffset,
+                              child: _buildIngredientSection(theme),
+                            ),
+                          ),
+                          const SizedBox(height: 34),
+                          FadeTransition(
+                            opacity: _buttonOpacity,
+                            child: SlideTransition(
+                              position: _buttonOffset,
+                              child: _buildGenerateButton(theme),
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          Text(
+                            'Os resultados chegam em cartões animados com todos os detalhes na próxima tela.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(0.62),
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -226,46 +240,54 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
   }
 
   Widget _buildHeroHeader(ThemeData theme) {
+    final gradient = LinearGradient(
+      colors: [
+        theme.colorScheme.primary.withOpacity(0.9),
+        theme.colorScheme.secondary.withOpacity(0.85),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: gradient,
+        ),
+        padding: const EdgeInsets.fromLTRB(28, 32, 28, 34),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color.alphaBlend(
-                      theme.colorScheme.primary.withOpacity(0.16),
-                      theme.colorScheme.surface,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.auto_awesome,
-                    color: theme.colorScheme.primary,
-                  ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                'Descubra agora'.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: Colors.white.withOpacity(0.9),
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
                 ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: Text(
-                    'Inspire-se agora',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             Text(
-              'Conte o que tem em casa para receber sugestões leves e prontas para o momento.',
+              'Inspire-se com combinações feitas sob medida.',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Informe os ingredientes que estão disponíveis e receba receitas suaves para hoje.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.68),
-                height: 1.45,
+                color: Colors.white.withOpacity(0.88),
+                height: 1.5,
               ),
             ),
           ],
@@ -292,26 +314,39 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
 
       return Card(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(11),
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.18),
                   shape: BoxShape.circle,
+                  color: accentColor.withOpacity(0.18),
                 ),
-                child: Icon(icon, color: accentColor, size: 20),
+                child: Icon(icon, color: accentColor, size: 22),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 18),
               Expanded(
-                child: Text(
-                  message,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    height: 1.45,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasQuota ? 'Limite diário disponível' : 'Limite diário atingido',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      message,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -325,17 +360,47 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
     return Obx(
       () => Card(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
+          padding: const EdgeInsets.fromLTRB(26, 28, 26, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Quais ingredientes você tem hoje?',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: theme.colorScheme.primary.withOpacity(0.16),
+                    ),
+                    child: Icon(Icons.shopping_basket_outlined, color: theme.colorScheme.primary),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Quais ingredientes você tem hoje?',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Adicione um ingrediente por vez para receber sugestões equilibradas.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.68),
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 22),
               TextField(
                 controller: controller.ingredientTextController,
                 focusNode: controller.ingredientFocusNode,
@@ -351,13 +416,13 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                   ),
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 20),
               if (controller.ingredients.isEmpty)
                 Text(
                   'empty_ingredient_hint'.tr,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    height: 1.45,
+                    height: 1.5,
                   ),
                 )
               else
@@ -403,6 +468,26 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
           ),
           onPressed:
               controller.isLoading.value ? null : controller.fetchRecipes,
+        ),
+      ),
+    );
+  }
+}
+
+class _BackgroundOrb extends StatelessWidget {
+  const _BackgroundOrb({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 280,
+      height: 280,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withOpacity(0.05)],
         ),
       ),
     );

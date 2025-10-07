@@ -17,14 +17,18 @@ class IngredientChip extends StatelessWidget {
       label: Text(label),
       deleteIcon: const Icon(Icons.close, size: 18),
       backgroundColor: Color.alphaBlend(
-        theme.colorScheme.primary.withOpacity(0.1),
+        theme.colorScheme.primary.withOpacity(0.14),
         theme.colorScheme.surface,
       ),
-      labelStyle: theme.textTheme.bodyMedium?.copyWith(height: 1.3),
+      labelStyle: theme.textTheme.bodyMedium?.copyWith(
+        height: 1.3,
+        fontWeight: FontWeight.w500,
+      ),
+      deleteIconColor: theme.colorScheme.onSurface.withOpacity(0.6),
       onDeleted: onDeleted,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.24)),
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.3)),
       ),
     );
   }

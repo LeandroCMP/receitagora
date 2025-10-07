@@ -91,7 +91,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
     final hasRecipes = _args.recipes.isNotEmpty;
     final background = theme.colorScheme.background;
     final blend = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.035),
+      theme.colorScheme.primary.withOpacity(0.05),
       background,
     );
 
@@ -99,18 +99,31 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
       appBar: AppBar(
         title: const Text('Sugestões'),
       ),
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [blend, background],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: Stack(
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [blend, background],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
+          Positioned(
+            top: -160,
+            left: -80,
+            child: _ResultsOrb(color: theme.colorScheme.primary.withOpacity(0.24)),
+          ),
+          Positioned(
+            bottom: -180,
+            right: -60,
+            child: _ResultsOrb(color: theme.colorScheme.secondary.withOpacity(0.2)),
+          ),
+          SafeArea(
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
                 sliver: SliverToBoxAdapter(
@@ -183,9 +196,10 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                     ),
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -193,19 +207,35 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
   Widget _buildHeader(ThemeData theme, bool hasRecipes) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
+        padding: const EdgeInsets.fromLTRB(26, 28, 26, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              hasRecipes
-                  ? 'Sugestões suaves para o seu momento agora'
-                  : 'Vamos tentar novamente?',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primary.withOpacity(0.18),
+                  ),
+                  child: Icon(Icons.auto_awesome, color: theme.colorScheme.primary),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    hasRecipes
+                        ? 'Sugestões suaves para o seu momento agora'
+                        : 'Vamos tentar novamente?',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
             if (_args.ingredients.isNotEmpty)
               Wrap(
                 spacing: 10,
@@ -214,11 +244,6 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                     .map(
                       (ingredient) => Chip(
                         label: Text(ingredient),
-                        backgroundColor: Color.alphaBlend(
-                          theme.colorScheme.primary.withOpacity(0.1),
-                          theme.colorScheme.surface,
-                        ),
-                        labelStyle: theme.textTheme.bodyMedium,
                       ),
                     )
                     .toList(),
@@ -254,4 +279,24 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
     );
   }
 
+}
+
+class _ResultsOrb extends StatelessWidget {
+  const _ResultsOrb({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 260,
+      height: 260,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withOpacity(0.05)],
+        ),
+      ),
+    );
+  }
 }

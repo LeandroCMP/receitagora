@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../domain/entities/recipe_entity.dart';
+import '../widgets/recipe_cover.dart';
 
 class RecipeDetailArgs {
   const RecipeDetailArgs({
@@ -30,6 +31,8 @@ class RecipeDetailPage extends StatelessWidget {
         description: 'Não foi possível carregar os detalhes desta receita.',
         ingredients: [],
         steps: [],
+        difficulty: 'Dificuldade desconhecida',
+        duration: 'Tempo indisponível',
       ),
       position: 0,
       heroTag: 'recipe-fallback',
@@ -103,76 +106,49 @@ class _OverviewCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 32),
+        padding: const EdgeInsets.fromLTRB(24, 26, 24, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Hero(
-                  tag: args.heroTag,
-                  child: Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color.alphaBlend(
-                        theme.colorScheme.primary.withOpacity(0.18),
-                        theme.colorScheme.surface,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${args.position + 1}',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        recipe.name,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        description.isNotEmpty
-                            ? description
-                            : 'Explore os ingredientes e o modo de preparo para seguir com a receita.',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                          height: 1.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            RecipeCover(
+              theme: theme,
+              recipe: recipe,
+              position: args.position,
+              heroTag: args.heroTag,
+              height: 210,
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 24),
             Wrap(
               spacing: 12,
               runSpacing: 12,
               children: [
                 _OverviewPill(
+                  icon: Icons.auto_awesome,
+                  label: recipe.difficulty,
+                ),
+                _OverviewPill(
+                  icon: Icons.schedule_rounded,
+                  label: recipe.duration,
+                ),
+                _OverviewPill(
                   icon: Icons.restaurant_menu,
                   label: '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
                 ),
                 _OverviewPill(
-                  icon: Icons.timer_outlined,
+                  icon: Icons.format_list_numbered,
                   label: '${recipe.steps.length} etapa${recipe.steps.length == 1 ? '' : 's'}',
                 ),
               ],
+            ),
+            const SizedBox(height: 22),
+            Text(
+              description.isNotEmpty
+                  ? description
+                  : 'Explore os ingredientes e o modo de preparo para seguir com a receita.',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                height: 1.55,
+              ),
             ),
           ],
         ),

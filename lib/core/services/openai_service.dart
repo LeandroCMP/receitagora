@@ -249,13 +249,15 @@ Retorne um JSON com o formato:
     {
       "name": "nome da receita",
       "description": "breve descrição",
+      "difficulty": "fácil | médio | difícil",
+      "duration": "tempo estimado (ex: 25 minutos)",
       "ingredients": ["ingrediente 1", "ingrediente 2"],
       "steps": ["passo 1", "passo 2"]
     }
   ]
 }
 
-Certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
+Para cada receita escolha uma dificuldade coerente (fácil, médio ou difícil) considerando o preparo e indique o tempo total aproximado em minutos. Certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
   }
 
   String? _readMessageContent(dynamic content) {

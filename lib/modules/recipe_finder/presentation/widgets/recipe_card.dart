@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/recipe_entity.dart';
+import 'recipe_cover.dart';
 
 class RecipeSummaryCard extends StatelessWidget {
   const RecipeSummaryCard({
@@ -37,71 +38,30 @@ class RecipeSummaryCard extends StatelessWidget {
     final stepCount = recipe.steps.length;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 12),
+      margin: const EdgeInsets.symmetric(vertical: 14),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 26),
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 26),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Hero(
-                    tag: heroTag,
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color.alphaBlend(
-                          theme.colorScheme.primary.withOpacity(0.16),
-                          theme.colorScheme.surface,
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${position + 1}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          recipe.name,
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          preview,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.68),
-                            height: 1.45,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                ],
+              RecipeCover(
+                theme: theme,
+                recipe: recipe,
+                position: position,
+                heroTag: heroTag,
+              ),
+              const SizedBox(height: 22),
+              Text(
+                preview,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.72),
+                  height: 1.5,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 22),
               Wrap(
@@ -109,11 +69,19 @@ class RecipeSummaryCard extends StatelessWidget {
                 runSpacing: 12,
                 children: [
                   _MetaPill(
+                    icon: Icons.auto_awesome,
+                    label: recipe.difficulty,
+                  ),
+                  _MetaPill(
+                    icon: Icons.schedule_rounded,
+                    label: recipe.duration,
+                  ),
+                  _MetaPill(
                     icon: Icons.restaurant_menu,
                     label: '$ingredientCount ingrediente${ingredientCount == 1 ? '' : 's'}',
                   ),
                   _MetaPill(
-                    icon: Icons.timer_outlined,
+                    icon: Icons.format_list_numbered,
                     label: '$stepCount etapa${stepCount == 1 ? '' : 's'}',
                   ),
                 ],

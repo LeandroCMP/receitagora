@@ -4,8 +4,10 @@ Aplicativo Flutter para sugerir receitas com base nos ingredientes que o usuári
 tem em casa. A solução utiliza GetX, Clean Architecture e integra-se com a API
 da OpenAI para gerar receitas possíveis seguindo as restrições informadas.
 A experiência agora conta com splash screen animada, tela de boas-vindas e um
-modo visitante elegante em tema escuro. O botão de login com Google já aparece
-na interface e será habilitado em uma versão futura.
+modo visitante elegante em tema escuro. Inspiramos o layout em referências de
+apps de receitas premium, com gradientes suaves e cartões modernos que destacam
+dificuldade e tempo estimado logo na lista de resultados. O botão de login com
+Google já aparece na interface e será habilitado em uma versão futura.
 
 ## Configuração
 
@@ -56,6 +58,14 @@ na interface e será habilitado em uma versão futura.
   tente novamente para receber respostas reais da OpenAI.
 - **HTTP 400** informando limite de contexto: reduza a quantidade de
   ingredientes enviada no pedido para caber no limite de tokens do modelo.
+
+### Resultado das receitas
+
+- Cada busca solicita ao ChatGPT que retorne, além do nome e descrição, o nível
+  de dificuldade (`fácil`, `médio` ou `difícil`) e o tempo aproximado de preparo.
+- As informações são exibidas nos cartões resumidos e na página detalhada, para
+  que você escolha rapidamente a receita que combina com o tempo e o esforço
+  disponível no momento.
 
 ## Estrutura do Projeto
 
