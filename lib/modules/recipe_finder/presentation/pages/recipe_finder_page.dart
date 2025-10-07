@@ -174,46 +174,47 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                      FadeTransition(
-                        opacity: _headerOpacity,
-                        child: SlideTransition(
-                          position: _headerOffset,
-                          child: _buildHeroHeader(theme),
+                        FadeTransition(
+                          opacity: _headerOpacity,
+                          child: SlideTransition(
+                            position: _headerOffset,
+                            child: _buildHeroHeader(theme),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      FadeTransition(
-                        opacity: _quotaOpacity,
-                        child: SlideTransition(
-                          position: _quotaOffset,
-                          child: _buildGuestQuota(theme),
+                        const SizedBox(height: 24),
+                        FadeTransition(
+                          opacity: _quotaOpacity,
+                          child: SlideTransition(
+                            position: _quotaOffset,
+                            child: _buildGuestQuota(theme),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      FadeTransition(
-                        opacity: _ingredientsOpacity,
-                        child: SlideTransition(
-                          position: _ingredientsOffset,
-                          child: _buildIngredientSection(theme),
+                        const SizedBox(height: 24),
+                        FadeTransition(
+                          opacity: _ingredientsOpacity,
+                          child: SlideTransition(
+                            position: _ingredientsOffset,
+                            child: _buildIngredientSection(theme),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 32),
-                      FadeTransition(
-                        opacity: _buttonOpacity,
-                        child: SlideTransition(
-                          position: _buttonOffset,
-                          child: _buildGenerateButton(theme),
+                        const SizedBox(height: 32),
+                        FadeTransition(
+                          opacity: _buttonOpacity,
+                          child: SlideTransition(
+                            position: _buttonOffset,
+                            child: _buildGenerateButton(theme),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        'Os resultados abrem em uma tela focada para você revisar com calma.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.62),
-                          height: 1.4,
+                        const SizedBox(height: 20),
+                        Text(
+                          'Os resultados abrem em uma tela focada para você revisar com calma.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.62),
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },
