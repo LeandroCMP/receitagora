@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
@@ -15,7 +17,18 @@ class SplashController extends GetxController {
   }
 
   Future<void> _navigate() async {
-    await sessionService.ensureInitialized();
+    try {
+      await sessionService.ensureInitialized().timeout(
+            const Duration(seconds: 5),
+          );
+    } catch (error, stackTrace) {
+      Get.log(
+        'Failed to hydrate session before leaving splash: $error',
+        isError: true,
+        stackTrace: stackTrace,
+      );
+    }
+
     await Future.delayed(const Duration(seconds: 3));
 
     Get.offAllNamed(AppRoutes.login);
