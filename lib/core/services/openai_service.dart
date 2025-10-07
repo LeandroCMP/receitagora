@@ -19,28 +19,25 @@ class OpenAIService {
         .where((ingredient) => ingredient.isNotEmpty)
         .toList();
 
-    AppException? failure;
-
-    if (config.hasValidCredentials) {
-      try {
-        final content = await _requestRecipesFromOpenAI(sanitized);
-        if (content != null && content.trim().isNotEmpty) {
-          return content;
-        }
-        failure = const AppException('Resposta vazia da OpenAI');
-      } on AppException catch (error) {
-        failure = error;
-      } catch (error) {
-        failure = AppException(
-          'Falha ao comunicar com a OpenAI',
-          details: error.toString(),
-        );
-      }
-    } else {
-      failure = const AppException('Chave da OpenAI ausente ou inválida.');
+    if (!config.hasValidCredentials) {
+      const failure = AppException('Chave da OpenAI ausente ou inválida.');
+      return _generateFallbackRecipes(sanitized, failure: failure);
     }
 
-    return _generateFallbackRecipes(sanitized, failure: failure);
+    try {
+      final content = await _requestRecipesFromOpenAI(sanitized);
+      if (content != null && content.trim().isNotEmpty) {
+        return content;
+      }
+      throw const AppException('Resposta vazia da OpenAI');
+    } on AppException {
+      rethrow;
+    } catch (error) {
+      throw AppException(
+        'Falha ao comunicar com a OpenAI',
+        details: error.toString(),
+      );
+    }
   }
 
   Future<String?> _requestRecipesFromOpenAI(List<String> ingredients) async {

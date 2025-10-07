@@ -50,19 +50,13 @@ na interface e será habilitado em uma versão futura.
 
 ### Erros comuns e fallback
 
-- **Sem chave ou falha de rede:** o app automaticamente gera receitas locais
-  com base nos ingredientes informados. A experiência continua fluindo, mas
-  vale revisar a configuração para aproveitar as sugestões da OpenAI quando
-  estiver disponível.
-- **HTTP 429 ao gerar receitas:** indica excesso de requisições em um curto
-  período ou falta de créditos/limite de faturamento. As respostas da IA são
-  tentadas com repetição exponencial; caso o limite persista o app alterna para
-  receitas locais para que você não fique sem sugestões.
-- **HTTP 400** com mensagem sobre `response_format`: o modelo configurado não
-  suporta o modo JSON. Ajuste a variável `OPENAI_MODEL` para um modelo
-  compatível, como `gpt-4o-mini`.
-- **HTTP 400** com indicação de URL inválida: verifique se `OPENAI_BASE_URL`
-  aponta para o endpoint correto (`https://api.openai.com/v1`).
+- **Sem chave configurada:** quando `OPENAI_API_KEY` está ausente, o app gera
+  receitas locais com base nos ingredientes informados para manter a
+  experiência fluindo.
+- **Falhas com a OpenAI (HTTP 400/429):** as mensagens de erro são exibidas
+  diretamente na interface para que você saiba o motivo da falha (ex.: limite
+  de cota, formato incompatível ou URL incorreta). Corrija a configuração e
+  tente novamente para receber respostas reais da OpenAI.
 - **HTTP 400** informando limite de contexto: reduza a quantidade de
   ingredientes enviada no pedido para caber no limite de tokens do modelo.
 

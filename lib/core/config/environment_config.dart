@@ -12,9 +12,10 @@ class EnvironmentConfig {
   final String model;
 
   factory EnvironmentConfig.fromEnv() {
-    final apiKey = dotenv.maybeGet('OPENAI_API_KEY') ?? '';
-    final baseUrl = dotenv.maybeGet('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
-    final model = dotenv.maybeGet('OPENAI_MODEL') ?? 'gpt-4o-mini';
+    final apiKey = (dotenv.maybeGet('OPENAI_API_KEY') ?? '').trim();
+    final baseUrl =
+        (dotenv.maybeGet('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1').trim();
+    final model = (dotenv.maybeGet('OPENAI_MODEL') ?? 'gpt-4o-mini').trim();
 
     return EnvironmentConfig(
       openAIApiKey: apiKey,
@@ -23,5 +24,5 @@ class EnvironmentConfig {
     );
   }
 
-  bool get hasValidCredentials => openAIApiKey.isNotEmpty;
+  bool get hasValidCredentials => openAIApiKey.trim().isNotEmpty;
 }
