@@ -16,12 +16,8 @@ class SplashController extends GetxController {
 
   Future<void> _navigate() async {
     await sessionService.ensureInitialized();
-    await Future.delayed(const Duration(milliseconds: 1600));
+    await Future.delayed(const Duration(seconds: 3));
 
-    if (sessionService.hasActiveSession) {
-      Get.offAllNamed(AppRoutes.recipeFinder);
-    } else {
-      Get.offAllNamed(AppRoutes.login);
-    }
+    Get.offAllNamed(AppRoutes.login);
   }
 }
