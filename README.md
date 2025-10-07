@@ -26,6 +26,10 @@ na interface e será habilitado em uma versão futura.
    ```
    > **Importante:** mantenha suas chaves privadas fora do controle de versão. O
    > arquivo `.env` já está ignorado pelo Git.
+   >
+   > O arquivo `.env` é carregado em tempo de execução via `flutter_dotenv` e já
+   > está listado na seção de `assets` do `pubspec.yaml`. Certifique-se de que a
+   > chave esteja nesse arquivo para que o aplicativo consiga empacotá-la.
 
 4. Execute o aplicativo:
    ```bash
