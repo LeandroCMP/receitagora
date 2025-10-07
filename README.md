@@ -2,8 +2,9 @@
 
 Aplicativo Flutter para sugerir receitas com base nos ingredientes que o usuário
 tem em casa. A solução utiliza GetX, Clean Architecture e integra-se com a API
-da OpenAI para gerar até três receitas possíveis seguindo as restrições
-informadas.
+da OpenAI para gerar receitas possíveis seguindo as restrições informadas. A
+experiência agora conta com splash screen animada, login social com Google e um
+modo visitante elegante em tema escuro.
 
 ## Configuração
 
@@ -25,7 +26,13 @@ informadas.
    > **Importante:** mantenha suas chaves privadas fora do controle de versão. O
    > arquivo `.env` já está ignorado pelo Git.
 
-4. Execute o aplicativo:
+4. (Opcional) Configure o login social do Google. O projeto utiliza o pacote
+   [`google_sign_in`](https://pub.dev/packages/google_sign_in); siga as etapas
+   oficiais para registrar o aplicativo na Google Cloud Platform e informe os
+   identificadores gerados nas plataformas desejadas (Android, iOS, Web e
+   Desktop). Mesmo sem a configuração o modo visitante permanece disponível.
+
+5. Execute o aplicativo:
    ```bash
    flutter run
    ```
@@ -33,6 +40,17 @@ informadas.
 > **Dica:** mesmo sem acesso à OpenAI o aplicativo continua funcionando graças
 > a um gerador local de receitas. Ainda assim, configurar uma chave válida
 > garante resultados mais criativos produzidos pela IA.
+
+### Fluxo de acesso e limites do modo visitante
+
+- **Splash screen & login:** ao abrir o app você verá uma tela de introdução e,
+  em seguida, a tela de autenticação com duas opções — entrar com uma conta
+  Google ou seguir no modo visitante.
+- **Modo visitante:** permite até **3 buscas por dia**, com retorno máximo de
+  **2 receitas por pesquisa**. O contador é reiniciado diariamente de forma
+  automática.
+- **Conta Google:** remove limites de busca, preserva o histórico de sessão e
+  exibe o avatar do usuário diretamente na tela principal.
 
 ### Erros comuns e fallback
 
@@ -55,6 +73,9 @@ informadas.
 ## Estrutura do Projeto
 
 - `lib/core`: configurações, serviços e tratamento de erros compartilhados.
+- `lib/modules/auth`: telas, bindings e controladores do login social e modo
+  visitante.
+- `lib/modules/splash`: controlador e tela da splash screen animada.
 - `lib/modules/recipe_finder`: módulo principal com camadas de domínio,
   dados e apresentação seguindo Clean Architecture.
 - `lib/app`: inicialização do GetX, rotas e tema visual.

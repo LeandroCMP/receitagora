@@ -17,15 +17,16 @@ class RecipeCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 12),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
           ),
         ],
       ),
@@ -34,13 +35,30 @@ class RecipeCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.85),
+                      theme.colorScheme.primary,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.35),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: Text(
                   '${position + 1}',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.primary,
+                    color: theme.colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -59,7 +77,9 @@ class RecipeCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       recipe.description,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
                     ),
                   ],
                 ),
@@ -79,7 +99,10 @@ class RecipeCard extends StatelessWidget {
                 .map(
                   (ingredient) => Chip(
                     label: Text(ingredient),
-                    backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+                    labelStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 )
                 .toList(),

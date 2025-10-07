@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../../../core/services/openai_service.dart';
+import '../../../../core/services/session_service.dart';
 import '../../data/datasources/recipe_remote_data_source.dart';
 import '../../data/repositories/recipe_repository_impl.dart';
 import '../../domain/repositories/recipe_repository.dart';
@@ -20,7 +21,10 @@ class RecipeFinderBinding extends Bindings {
       () => GenerateRecipesUseCase(Get.find<RecipeRepository>()),
     );
     Get.lazyPut<RecipeFinderController>(
-      () => RecipeFinderController(generateRecipesUseCase: Get.find<GenerateRecipesUseCase>()),
+      () => RecipeFinderController(
+        generateRecipesUseCase: Get.find<GenerateRecipesUseCase>(),
+        sessionService: Get.find<SessionService>(),
+      ),
     );
   }
 }

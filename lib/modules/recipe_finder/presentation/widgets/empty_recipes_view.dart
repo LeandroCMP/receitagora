@@ -15,11 +15,19 @@ class EmptyRecipesView extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
+          ),
+        ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.restaurant_menu,
@@ -30,7 +38,9 @@ class EmptyRecipesView extends StatelessWidget {
           Text(
             message,
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
           ),
         ],
       ),
