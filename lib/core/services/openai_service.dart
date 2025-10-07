@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -44,7 +45,13 @@ class OpenAIService {
     });
 
     try {
-      final response = await client.post(uri, headers: headers, body: payload);
+      final response =
+          await _postWithRetry(uri, headers: headers, body: payload);
+      if (response.statusCode == 429) {
+        throw const AppException(
+          'A OpenAI está recebendo muitas requisições. Aguarde e tente novamente.',
+        );
+      }
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         final choices = data['choices'] as List<dynamic>?;
@@ -66,6 +73,61 @@ class OpenAIService {
       }
       throw AppException('Falha ao comunicar com a OpenAI', details: error.toString());
     }
+  }
+
+  Future<http.Response> _postWithRetry(
+    Uri uri, {
+    required Map<String, String> headers,
+    required String body,
+    int maxAttempts = 3,
+  }) async {
+    const baseDelay = Duration(milliseconds: 500);
+
+    http.Response? lastResponse;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      final response =
+          await client.post(uri, headers: headers, body: body);
+      if (response.statusCode != 429) {
+        return response;
+      }
+
+      lastResponse = response;
+      if (attempt == maxAttempts - 1) {
+        break;
+      }
+
+      final retryAfter = response.headers['retry-after'];
+      final delay = _parseRetryAfter(retryAfter) ??
+          Duration(milliseconds: baseDelay.inMilliseconds * (1 << attempt));
+      await Future.delayed(delay);
+    }
+
+    return lastResponse ??
+        await client.post(uri, headers: headers, body: body);
+  }
+
+  Duration? _parseRetryAfter(String? header) {
+    if (header == null) {
+      return null;
+    }
+
+    final seconds = int.tryParse(header);
+    if (seconds != null) {
+      return Duration(seconds: seconds);
+    }
+
+    final date = DateTime.tryParse(header);
+    if (date != null) {
+      final now = DateTime.now().toUtc();
+      final target = date.toUtc();
+      final difference = target.difference(now);
+      if (difference.isNegative) {
+        return Duration.zero;
+      }
+      return difference;
+    }
+
+    return null;
   }
 
   String _buildPrompt(List<String> ingredients) {
