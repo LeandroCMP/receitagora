@@ -13,32 +13,25 @@ na interface e será habilitado em uma versão futura.
    ```bash
    flutter pub get
    ```
-2. Crie um arquivo `.env` na raiz do projeto, utilizando o template disponibilizado
-   em `.env.example`:
-   ```bash
-   cp .env.example .env
-   ```
-3. Edite o arquivo `.env` e preencha com as suas credenciais da OpenAI:
+2. Edite o arquivo `.env` que acompanha o projeto e preencha com as suas
+   credenciais da OpenAI:
    ```env
    OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
    OPENAI_BASE_URL=https://api.openai.com/v1
    OPENAI_MODEL=gpt-4o-mini
    ```
-   > **Importante:** mantenha suas chaves privadas fora do controle de versão. O
-   > arquivo `.env` já está ignorado pelo Git.
-   >
-   > O arquivo `.env` é carregado em tempo de execução via `flutter_dotenv` e já
-   > está listado na seção de `assets` do `pubspec.yaml`. Certifique-se de que a
-   > chave esteja nesse arquivo para que o aplicativo consiga empacotá-la.
+   > **Importante:** substitua o valor padrão pela sua chave real antes de gerar
+   > builds de produção. O arquivo está versionado para garantir que o asset
+   > exista durante o empacotamento, mas você pode manter um arquivo separado
+   > com as chaves reais fora do Git ao distribuir o projeto.
 
-4. Execute o aplicativo:
+3. Execute o aplicativo:
    ```bash
    flutter run
    ```
 
-> **Dica:** mesmo sem acesso à OpenAI o aplicativo continua funcionando graças
-> a um gerador local de receitas. Ainda assim, configurar uma chave válida
-> garante resultados mais criativos produzidos pela IA.
+> **Dica:** sem uma chave válida da OpenAI o aplicativo não consegue gerar
+> receitas. Configure a credencial antes de buscar sugestões.
 
 ### Fluxo de acesso e limites do modo visitante
 
