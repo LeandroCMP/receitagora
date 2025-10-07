@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/routes/app_routes.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../../../core/services/session_service.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../../domain/usecases/generate_recipes_usecase.dart';
+import '../pages/recipe_results_page.dart';
 
 class RecipeFinderController extends GetxController {
   RecipeFinderController({
@@ -57,15 +59,29 @@ class RecipeFinderController extends GetxController {
 
   Future<void> fetchRecipes() async {
     if (ingredients.isEmpty) {
-      errorMessage.value = 'Adicione ao menos um ingrediente.';
+      const message = 'Adicione ao menos um ingrediente.';
+      errorMessage.value = message;
       recipes.clear();
+      Get.snackbar(
+        'Nada para buscar',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
       return;
     }
 
     if (sessionService.isGuest && !sessionService.canPerformGuestSearch()) {
-      errorMessage.value =
+      const message =
           'Você atingiu o limite diário de buscas no modo visitante. O login social estará disponível em breve para liberar buscas ilimitadas.';
+      errorMessage.value = message;
       recipes.clear();
+      Get.snackbar(
+        'Limite diário atingido',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
       return;
     }
 
@@ -78,19 +94,40 @@ class RecipeFinderController extends GetxController {
           ? results.take(SessionService.guestRecipeLimit).toList()
           : results;
       recipes.assignAll(adjustedResults);
-      if (results.isEmpty) {
-        errorMessage.value = 'Não encontramos receitas com esses ingredientes.';
-      }
       if (sessionService.isGuest) {
         await sessionService.registerGuestSearch();
         _syncGuestQuota();
       }
-    } catch (error) {
-      if (error is AppException) {
-        errorMessage.value = error.message;
-      } else {
-        errorMessage.value = 'Não foi possível gerar receitas agora. Tente novamente.';
+
+      String? helperMessage;
+      if (adjustedResults.isEmpty) {
+        helperMessage = 'Não encontramos receitas com esses ingredientes.';
+        errorMessage.value = helperMessage;
       }
+
+      Get.toNamed(
+        AppRoutes.recipeResults,
+        arguments: RecipeResultsArgs(
+          recipes: adjustedResults,
+          ingredients: List<String>.from(ingredients),
+          message: helperMessage,
+        ),
+      );
+    } catch (error) {
+      String message;
+      if (error is AppException) {
+        message = error.message;
+      } else {
+        message =
+            'Não foi possível gerar receitas agora. Tente novamente.';
+      }
+      errorMessage.value = message;
+      Get.snackbar(
+        'Não foi possível gerar receitas',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
     } finally {
       isLoading.value = false;
     }

@@ -3,12 +3,103 @@ import 'package:get/get.dart';
 
 import '../../../../core/services/session_service.dart';
 import '../controllers/recipe_finder_controller.dart';
-import '../widgets/empty_recipes_view.dart';
 import '../widgets/ingredient_chip.dart';
-import '../widgets/recipe_card.dart';
 
-class RecipeFinderPage extends GetView<RecipeFinderController> {
+class RecipeFinderPage extends StatefulWidget {
   const RecipeFinderPage({super.key});
+
+  @override
+  State<RecipeFinderPage> createState() => _RecipeFinderPageState();
+}
+
+class _RecipeFinderPageState extends State<RecipeFinderPage>
+    with SingleTickerProviderStateMixin {
+  late final RecipeFinderController controller =
+      Get.find<RecipeFinderController>();
+  late final AnimationController _introController;
+  late final Animation<double> _headerOpacity;
+  late final Animation<Offset> _headerOffset;
+  late final Animation<double> _quotaOpacity;
+  late final Animation<Offset> _quotaOffset;
+  late final Animation<double> _ingredientsOpacity;
+  late final Animation<Offset> _ingredientsOffset;
+  late final Animation<double> _buttonOpacity;
+  late final Animation<Offset> _buttonOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    _introController = AnimationController(
+      duration: const Duration(milliseconds: 900),
+      vsync: this,
+    );
+
+    _headerOpacity = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(0, 0.45, curve: Curves.easeOutCubic),
+    );
+    _headerOffset = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(0, 0.45, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _quotaOpacity = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(0.25, 0.6, curve: Curves.easeOutCubic),
+    );
+    _quotaOffset = Tween<Offset>(
+      begin: const Offset(0, 0.14),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(0.25, 0.6, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _ingredientsOpacity = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(0.45, 0.85, curve: Curves.easeOutCubic),
+    );
+    _ingredientsOffset = Tween<Offset>(
+      begin: const Offset(0, 0.16),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(0.45, 0.85, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    _buttonOpacity = CurvedAnimation(
+      parent: _introController,
+      curve: const Interval(0.7, 1, curve: Curves.easeOutCubic),
+    );
+    _buttonOffset = Tween<Offset>(
+      begin: const Offset(0, 0.18),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _introController,
+        curve: const Interval(0.7, 1, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _introController.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _introController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,13 +119,11 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
               return const SizedBox.shrink();
             }
 
-            final initialsSource = user.displayName.isNotEmpty
-                ? user.displayName
-                : user.email;
+            final initialsSource =
+                user.displayName.isNotEmpty ? user.displayName : user.email;
             final sanitized = initialsSource.trim();
-            final initials = sanitized.isNotEmpty
-                ? sanitized.substring(0, 1).toUpperCase()
-                : '?';
+            final initials =
+                sanitized.isNotEmpty ? sanitized.substring(0, 1).toUpperCase() : '?';
 
             return Padding(
               padding: const EdgeInsets.only(right: 16),
@@ -72,19 +161,49 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
               builder: (context, constraints) => SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight - 44),
+                  constraints:
+                      BoxConstraints(minHeight: constraints.maxHeight - 44),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildHeroHeader(theme),
-                      const SizedBox(height: 20),
-                      _buildGuestQuota(theme),
-                      const SizedBox(height: 20),
-                      _buildIngredientSection(theme),
-                      const SizedBox(height: 20),
-                      _buildGenerateButton(theme),
+                      FadeTransition(
+                        opacity: _headerOpacity,
+                        child: SlideTransition(
+                          position: _headerOffset,
+                          child: _buildHeroHeader(theme),
+                        ),
+                      ),
                       const SizedBox(height: 24),
-                      _buildResultsSection(theme),
+                      FadeTransition(
+                        opacity: _quotaOpacity,
+                        child: SlideTransition(
+                          position: _quotaOffset,
+                          child: _buildGuestQuota(theme),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FadeTransition(
+                        opacity: _ingredientsOpacity,
+                        child: SlideTransition(
+                          position: _ingredientsOffset,
+                          child: _buildIngredientSection(theme),
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      FadeTransition(
+                        opacity: _buttonOpacity,
+                        child: SlideTransition(
+                          position: _buttonOffset,
+                          child: _buildGenerateButton(theme),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Os resultados aparecerão em uma nova tela para você explorá-los com calma.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -150,7 +269,8 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
 
       final remaining = controller.guestSearchesRemaining.value;
       final bool hasQuota = remaining > 0;
-      final color = hasQuota ? theme.colorScheme.primary : theme.colorScheme.error;
+      final color =
+          hasQuota ? theme.colorScheme.primary : theme.colorScheme.error;
       final icon = hasQuota ? Icons.timelapse : Icons.lock_outline;
       final message = hasQuota
           ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. Cada pesquisa retorna até ${SessionService.guestRecipeLimit} receitas.'
@@ -206,7 +326,9 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(26),
-          border: Border.all(color: theme.colorScheme.primary.withOpacity(0.08)),
+          border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.08),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.22),
@@ -220,7 +342,8 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
           children: [
             Text(
               'Quais ingredientes você tem agora?',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style:
+                  theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -276,8 +399,9 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
                   width: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.onPrimary,
+                    ),
                   ),
                 )
               : const Icon(Icons.auto_awesome),
@@ -285,42 +409,10 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
             padding: const EdgeInsets.symmetric(vertical: 2),
             child: Text('generate_recipes'.tr),
           ),
-          onPressed: controller.isLoading.value ? null : controller.fetchRecipes,
+          onPressed:
+              controller.isLoading.value ? null : controller.fetchRecipes,
         ),
       ),
-    );
-  }
-
-  Widget _buildResultsSection(ThemeData theme) {
-    return Obx(
-      () {
-        if (controller.isLoading.value && controller.recipes.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (controller.recipes.isEmpty) {
-          final message = controller.errorMessage.value ??
-              'Adicione ingredientes para descobrir receitas deliciosas.';
-          return EmptyRecipesView(message: message);
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sugestões personalizadas',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ...controller.recipes.asMap().entries.map(
-                  (entry) => RecipeCard(
-                    recipe: entry.value,
-                    position: entry.key,
-                  ),
-                ),
-          ],
-        );
-      },
     );
   }
 }
