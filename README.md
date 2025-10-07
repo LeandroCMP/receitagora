@@ -30,9 +30,9 @@ informadas.
    flutter run
    ```
 
-Caso não disponha de credenciais válidas da OpenAI, o aplicativo utiliza dados
-simulados para apresentar sugestões de receitas, permitindo testar o fluxo da
-interface.
+> **Atenção:** a geração das receitas depende de credenciais válidas da OpenAI.
+> Sem a configuração da chave a aplicação exibirá um alerta informando que não
+> foi possível se conectar ao ChatGPT.
 
 ## Estrutura do Projeto
 
