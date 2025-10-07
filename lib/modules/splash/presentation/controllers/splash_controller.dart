@@ -23,9 +23,8 @@ class SplashController extends GetxController {
           );
     } catch (error, stackTrace) {
       Get.log(
-        'Failed to hydrate session before leaving splash: $error',
+        'Failed to hydrate session before leaving splash: $error\n$stackTrace',
         isError: true,
-        stackTrace: stackTrace,
       );
     }
 

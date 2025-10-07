@@ -20,7 +20,7 @@ class ReceitagoraApp extends StatelessWidget {
       initialRoute: AppPages.initial,
       getPages: AppPages.routes,
       defaultTransition: Transition.cupertino,
-      translations: const _AppTranslations(),
+      translations: _AppTranslations(),
       locale: const Locale('pt', 'BR'),
       fallbackLocale: const Locale('pt', 'BR'),
     );
@@ -28,7 +28,7 @@ class ReceitagoraApp extends StatelessWidget {
 }
 
 class _AppTranslations extends Translations {
-  const _AppTranslations();
+  _AppTranslations();
 
   @override
   Map<String, Map<String, String>> get keys => {
