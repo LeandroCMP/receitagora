@@ -15,7 +15,7 @@ class SplashController extends GetxController {
   }
 
   Future<void> _navigate() async {
-    await sessionService.ready;
+    await sessionService.ensureInitialized();
     await Future.delayed(const Duration(milliseconds: 1600));
 
     if (sessionService.hasActiveSession) {

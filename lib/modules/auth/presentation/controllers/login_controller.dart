@@ -31,6 +31,7 @@ class LoginController extends GetxController {
     isLoading.value = true;
 
     try {
+      await sessionService.ensureInitialized();
       await sessionService.continueAsGuest();
       await Get.offAllNamed(AppRoutes.recipeFinder);
     } finally {

@@ -34,6 +34,7 @@ class SessionService extends GetxService {
   static const int guestRecipeLimit = 2;
 
   final Completer<void> _readyCompleter;
+  bool _isInitializing = false;
   final Rxn<UserMode> _mode = Rxn<UserMode>();
   final Rxn<SessionUser> _user = Rxn<SessionUser>();
   final RxInt _guestSearchCount = 0.obs;
@@ -53,14 +54,32 @@ class SessionService extends GetxService {
   Stream<int> get guestSearchCountStream => _guestSearchCount.stream;
 
   Future<SessionService> init() async {
-    await _hydrateFromPreferences();
-    _ensureGuestQuotaFreshness();
+    await ensureInitialized();
+    return this;
+  }
 
-    if (!_readyCompleter.isCompleted) {
-      _readyCompleter.complete();
+  Future<void> ensureInitialized() async {
+    if (_readyCompleter.isCompleted) {
+      return;
     }
 
-    return this;
+    if (_isInitializing) {
+      await ready;
+      return;
+    }
+
+    _isInitializing = true;
+
+    try {
+      await _hydrateFromPreferences();
+      _ensureGuestQuotaFreshness();
+
+      if (!_readyCompleter.isCompleted) {
+        _readyCompleter.complete();
+      }
+    } finally {
+      _isInitializing = false;
+    }
   }
 
   Future<void> continueAsGuest() async {
