@@ -14,7 +14,7 @@ class EnvironmentConfig {
   factory EnvironmentConfig.fromEnv() {
     final apiKey = dotenv.maybeGet('OPENAI_API_KEY') ?? '';
     final baseUrl = dotenv.maybeGet('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1';
-    final model = dotenv.maybeGet('OPENAI_MODEL') ?? 'gpt-3.5-turbo';
+    final model = dotenv.maybeGet('OPENAI_MODEL') ?? 'gpt-4o-mini';
 
     return EnvironmentConfig(
       openAIApiKey: apiKey,

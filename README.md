@@ -20,7 +20,7 @@ informadas.
    ```env
    OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
    OPENAI_BASE_URL=https://api.openai.com/v1
-   OPENAI_MODEL=gpt-3.5-turbo
+   OPENAI_MODEL=gpt-4o-mini
    ```
    > **Importante:** mantenha suas chaves privadas fora do controle de versão. O
    > arquivo `.env` já está ignorado pelo Git.
@@ -30,9 +30,9 @@ informadas.
    flutter run
    ```
 
-Caso não disponha de credenciais válidas da OpenAI, o aplicativo utiliza dados
-simulados para apresentar sugestões de receitas, permitindo testar o fluxo da
-interface.
+> **Atenção:** a geração das receitas depende de credenciais válidas da OpenAI.
+> Sem a configuração da chave a aplicação exibirá um alerta informando que não
+> foi possível se conectar ao ChatGPT.
 
 ## Estrutura do Projeto
 

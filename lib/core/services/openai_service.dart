@@ -13,7 +13,9 @@ class OpenAIService {
 
   Future<String> generateRecipes(List<String> ingredients) async {
     if (!config.hasValidCredentials) {
-      return _simulateRecipes(ingredients);
+      throw const AppException(
+        'Configure sua chave da OpenAI para gerar receitas com a IA.',
+      );
     }
 
     final uri = Uri.parse('${config.openAIBaseUrl}/chat/completions');
@@ -25,6 +27,9 @@ class OpenAIService {
     final payload = jsonEncode({
       'model': config.model,
       'temperature': 0.7,
+      'response_format': {
+        'type': 'json_object',
+      },
       'messages': [
         {
           'role': 'system',
@@ -48,8 +53,8 @@ class OpenAIService {
         }
         final message = choices.first['message'] as Map<String, dynamic>?
             ?? (throw const AppException('Formato inesperado da OpenAI'));
-        final content = message['content'] as String?;
-        if (content == null) {
+        final content = _readMessageContent(message['content']);
+        if (content == null || content.trim().isEmpty) {
           throw const AppException('Conteúdo ausente na resposta da OpenAI');
         }
         return content;
@@ -85,31 +90,22 @@ Retorne um JSON com o formato:
 Certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
   }
 
-  String _simulateRecipes(List<String> ingredients) {
-    final safeIngredients = ingredients.isEmpty ? ['ingrediente principal'] : ingredients;
-    final sampleRecipes = {
-      'recipes': [
-        {
-          'name': 'Salada crocante de ${safeIngredients.take(1).join(', ')}',
-          'description':
-              'Uma salada leve que aproveita os ingredientes disponíveis com um toque cítrico.',
-          'ingredients': [...safeIngredients, 'Sal', 'Pimenta-do-reino', 'Azeite'],
-          'steps': [
-            'Higienize e prepare os ingredientes.',
-            'Misture tudo em uma tigela com temperos a gosto.',
-          ],
-        },
-        {
-          'name': 'Refogado rápido de ${safeIngredients.join(', ')}',
-          'description': 'Receita prática feita em uma única panela.',
-          'ingredients': [...safeIngredients, 'Óleo', 'Água'],
-          'steps': [
-            'Aqueça o óleo e doure os ingredientes aromáticos.',
-            'Adicione os demais itens e cozinhe até ficar macio.',
-          ],
-        },
-      ],
-    };
-    return const JsonEncoder.withIndent('  ').convert(sampleRecipes);
+  String? _readMessageContent(dynamic content) {
+    if (content is String) {
+      return content;
+    }
+    if (content is List) {
+      final buffer = StringBuffer();
+      for (final item in content) {
+        if (item is Map<String, dynamic>) {
+          final text = item['text'];
+          if (text is String) {
+            buffer.write(text);
+          }
+        }
+      }
+      return buffer.isEmpty ? null : buffer.toString();
+    }
+    return null;
   }
 }
