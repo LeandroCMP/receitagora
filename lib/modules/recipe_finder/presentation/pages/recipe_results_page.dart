@@ -89,7 +89,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
     final hasRecipes = _args.recipes.isNotEmpty;
     final background = theme.colorScheme.background;
     final blend = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.05),
+      theme.colorScheme.primary.withOpacity(0.04),
       background,
     );
 
@@ -107,7 +107,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -118,7 +118,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                     child: _buildHeader(theme, hasRecipes),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Expanded(
                   child: FadeTransition(
                     opacity: _contentOpacity,
@@ -141,7 +141,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
   Widget _buildHeader(ThemeData theme, bool hasRecipes) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -153,17 +153,17 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             if (_args.ingredients.isNotEmpty)
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 10,
+                runSpacing: 10,
                 children: _args.ingredients
                     .map(
                       (ingredient) => Chip(
                         label: Text(ingredient),
                         backgroundColor: Color.alphaBlend(
-                          theme.colorScheme.primary.withOpacity(0.12),
+                          theme.colorScheme.primary.withOpacity(0.1),
                           theme.colorScheme.surface,
                         ),
                         labelStyle: theme.textTheme.bodyMedium,
@@ -175,7 +175,8 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
               Text(
                 'Você pode ajustar os ingredientes e tentar novamente quando quiser.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.68),
+                  color: theme.colorScheme.onSurface.withOpacity(0.64),
+                  height: 1.4,
                 ),
               ),
             if (_args.message != null)
@@ -184,11 +185,12 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                 child: Text(
                   _args.message!,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.68),
+                    color: theme.colorScheme.onSurface.withOpacity(0.64),
+                    height: 1.4,
                   ),
                 ),
               ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => Get.back(),
               icon: const Icon(Icons.search),

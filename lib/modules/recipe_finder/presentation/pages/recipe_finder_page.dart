@@ -106,11 +106,11 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final topBlend = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.06),
+      theme.colorScheme.primary.withOpacity(0.05),
       background,
     );
     final bottomBlend = Color.alphaBlend(
-      theme.colorScheme.secondary.withOpacity(0.05),
+      theme.colorScheme.secondary.withOpacity(0.04),
       background,
     );
 
@@ -166,9 +166,9 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final minHeight = (constraints.maxHeight - 48).clamp(0.0, double.infinity);
+                final minHeight = (constraints.maxHeight - 56).clamp(0.0, double.infinity);
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: minHeight),
                     child: Column(
@@ -181,7 +181,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildHeroHeader(theme),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       FadeTransition(
                         opacity: _quotaOpacity,
                         child: SlideTransition(
@@ -189,7 +189,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildGuestQuota(theme),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       FadeTransition(
                         opacity: _ingredientsOpacity,
                         child: SlideTransition(
@@ -197,7 +197,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildIngredientSection(theme),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 32),
                       FadeTransition(
                         opacity: _buttonOpacity,
                         child: SlideTransition(
@@ -205,11 +205,12 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                           child: _buildGenerateButton(theme),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       Text(
-                        'Os resultados serão exibidos em uma tela dedicada para você explorar com conforto.',
+                        'Os resultados abrem em uma tela focada para você revisar com calma.',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.65),
+                          color: theme.colorScheme.onSurface.withOpacity(0.62),
+                          height: 1.4,
                         ),
                       ),
                     ],
@@ -226,7 +227,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
   Widget _buildHeroHeader(ThemeData theme) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(26),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -234,11 +235,11 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Color.alphaBlend(
-                      theme.colorScheme.primary.withOpacity(0.18),
+                      theme.colorScheme.primary.withOpacity(0.16),
                       theme.colorScheme.surface,
                     ),
                   ),
@@ -247,7 +248,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 18),
                 Expanded(
                   child: Text(
                     'Receitas prontas para agora',
@@ -258,11 +259,12 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Text(
               'Conte o que tem em casa e receba sugestões criadas sob medida, com visual moderno e foco no que importa.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                height: 1.4,
               ),
             ),
           ],
@@ -289,24 +291,25 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
 
       return Card(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 22),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
                   color: accentColor.withOpacity(0.18),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: accentColor, size: 20),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   message,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.78),
+                    color: theme.colorScheme.onSurface.withOpacity(0.72),
+                    height: 1.4,
                   ),
                 ),
               ),
@@ -321,7 +324,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
     return Obx(
       () => Card(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -331,7 +334,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               TextField(
                 controller: controller.ingredientTextController,
                 focusNode: controller.ingredientFocusNode,
@@ -347,18 +350,19 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               if (controller.ingredients.isEmpty)
                 Text(
                   'empty_ingredient_hint'.tr,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.55),
+                    color: theme.colorScheme.onSurface.withOpacity(0.58),
+                    height: 1.4,
                   ),
                 )
               else
                 Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                  spacing: 12,
+                  runSpacing: 12,
                   children: controller.ingredients
                       .map(
                         (ingredient) => IngredientChip(

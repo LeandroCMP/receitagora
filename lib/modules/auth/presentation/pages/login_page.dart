@@ -11,11 +11,11 @@ class LoginPage extends GetView<LoginController> {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final primaryVeil = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.08),
+      theme.colorScheme.primary.withOpacity(0.06),
       background,
     );
     final secondaryVeil = Color.alphaBlend(
-      theme.colorScheme.secondary.withOpacity(0.06),
+      theme.colorScheme.secondary.withOpacity(0.05),
       background,
     );
 
@@ -33,30 +33,38 @@ class LoginPage extends GetView<LoginController> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      maxWidth: constraints.maxWidth > 520 ? 480 : constraints.maxWidth,
+                      maxWidth: constraints.maxWidth > 520 ? 460 : constraints.maxWidth,
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         _BrandHeader(theme: theme),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 40),
                         Card(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Text(
-                                  'Como você prefere continuar?',
-                                  style: theme.textTheme.titleMedium?.copyWith(
+                                  'Escolha sua experiência',
+                                  style: theme.textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Entre como visitante para explorar agora mesmo. Em breve, o Google trará personalização extra.',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 28),
                                 Obx(
                                   () => FilledButton.icon(
                                     icon: controller.isLoading.value
@@ -70,42 +78,35 @@ class LoginPage extends GetView<LoginController> {
                                               ),
                                             ),
                                           )
-                                        : const Icon(Icons.person_outline),
+                                        : const Icon(Icons.auto_awesome_motion),
                                     label: const Text('Entrar como visitante'),
                                     onPressed: controller.isLoading.value
                                         ? null
                                         : controller.continueAsGuest,
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 18),
                                 Obx(
                                   () => OutlinedButton.icon(
                                     icon: _GoogleBadge(theme: theme),
-                                    label: const Text('Continuar com o Google'),
+                                    label: const Text('Google (em breve)'),
                                     onPressed: controller.isLoading.value
                                         ? null
                                         : controller.signInWithGoogle,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Login social disponível em breve. Use o modo visitante para experimentar agora mesmo.',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 28),
+                                const SizedBox(height: 30),
                                 _GuestQuotaHint(theme: theme),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 36),
                         Text(
-                          'Receitas inteligentes com uma experiência acolhedora e intuitiva para o seu dia a dia.',
+                          'Receitas sob medida com visual leve e intuitivo para inspirar sua próxima refeição.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onBackground.withOpacity(0.72),
+                            color: theme.colorScheme.onBackground.withOpacity(0.68),
+                            height: 1.4,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -132,29 +133,29 @@ class _BrandHeader extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 76,
-          height: 76,
+          width: 84,
+          height: 84,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: LinearGradient(
               colors: [
-                theme.colorScheme.primary.withOpacity(0.85),
-                theme.colorScheme.secondary.withOpacity(0.65),
+                theme.colorScheme.primary,
+                theme.colorScheme.secondary.withOpacity(0.7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.25),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
+                color: theme.colorScheme.primary.withOpacity(0.2),
+                blurRadius: 28,
+                offset: const Offset(0, 14),
               ),
             ],
           ),
-          child: const Icon(Icons.restaurant, size: 34, color: Colors.white),
+          child: const Icon(Icons.restaurant, size: 36, color: Colors.white),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         Text(
           'Receita Agora',
           style: theme.textTheme.headlineSmall?.copyWith(
@@ -163,11 +164,12 @@ class _BrandHeader extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
           'Descubra combinações deliciosas com poucos toques.',
           style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onBackground.withOpacity(0.7),
+            color: theme.colorScheme.onBackground.withOpacity(0.66),
+            height: 1.4,
           ),
           textAlign: TextAlign.center,
         ),
@@ -184,10 +186,10 @@ class _GuestQuotaHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
         color: Color.alphaBlend(
-          theme.colorScheme.primary.withOpacity(0.06),
+          theme.colorScheme.primary.withOpacity(0.08),
           theme.colorScheme.surface,
         ),
         borderRadius: BorderRadius.circular(18),
@@ -201,7 +203,8 @@ class _GuestQuotaHint extends StatelessWidget {
             child: Text(
               'Modo visitante: até 3 buscas por dia com 2 receitas por pesquisa.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                height: 1.4,
               ),
             ),
           ),

@@ -15,9 +15,15 @@ class SplashPage extends GetView<SplashController> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              theme.colorScheme.primary.withOpacity(0.4),
-              theme.colorScheme.surfaceVariant.withOpacity(0.6),
+              Color.alphaBlend(
+                theme.colorScheme.primary.withOpacity(0.08),
+                theme.colorScheme.background,
+              ),
               theme.colorScheme.background,
+              Color.alphaBlend(
+                theme.colorScheme.secondary.withOpacity(0.06),
+                theme.colorScheme.background,
+              ),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -34,15 +40,15 @@ class SplashPage extends GetView<SplashController> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      theme.colorScheme.primary.withOpacity(0.85),
                       theme.colorScheme.primary,
+                      theme.colorScheme.primary.withOpacity(0.72),
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.35),
-                      blurRadius: 28,
-                      spreadRadius: 4,
+                      color: theme.colorScheme.primary.withOpacity(0.25),
+                      blurRadius: 30,
+                      spreadRadius: 2,
                     ),
                   ],
                 ),
@@ -64,7 +70,8 @@ class SplashPage extends GetView<SplashController> {
               Text(
                 'Sabores sob medida para o seu momento.',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.72),
+                  color: theme.colorScheme.onBackground.withOpacity(0.68),
+                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),

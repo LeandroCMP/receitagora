@@ -13,7 +13,7 @@ class EmptyRecipesView extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -22,12 +22,13 @@ class EmptyRecipesView extends StatelessWidget {
               size: 48,
               color: theme.colorScheme.primary,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Text(
               message,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                height: 1.45,
               ),
             ),
           ],
