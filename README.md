@@ -34,6 +34,15 @@ informadas.
 > Sem a configuração da chave a aplicação exibirá um alerta informando que não
 > foi possível se conectar ao ChatGPT.
 
+### Erros comuns
+
+- **HTTP 429 ao gerar receitas:** pode indicar tanto excesso de requisições em
+  um curto período quanto falta de créditos ou limite de faturamento alcançado
+  na conta da OpenAI. A aplicação exibirá mensagens diferentes para cada
+  situação. Caso o problema seja de cota, verifique o painel de billing da
+  OpenAI. Para rate limits temporários, aguarde alguns instantes e tente
+  novamente.
+
 ## Estrutura do Projeto
 
 - `lib/core`: configurações, serviços e tratamento de erros compartilhados.

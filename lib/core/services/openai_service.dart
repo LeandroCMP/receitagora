@@ -48,9 +48,7 @@ class OpenAIService {
       final response =
           await _postWithRetry(uri, headers: headers, body: payload);
       if (response.statusCode == 429) {
-        throw const AppException(
-          'A OpenAI está recebendo muitas requisições, aguarde e tente novamente.',
-        );
+        throw _mapRateLimitError(response);
       }
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -73,6 +71,39 @@ class OpenAIService {
       }
       throw AppException('Falha ao comunicar com a OpenAI', details: error.toString());
     }
+  }
+
+  AppException _mapRateLimitError(http.Response response) {
+    try {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final error = data['error'];
+      if (error is Map<String, dynamic>) {
+        final code = error['code']?.toString().toLowerCase();
+        final message = error['message']?.toString() ?? '';
+
+        if (code == 'insufficient_quota' ||
+            code == 'billing_hard_limit_reached' ||
+            message.contains('insufficient_quota')) {
+          return const AppException(
+            'Sua conta da OpenAI atingiu o limite de uso. Verifique seu plano ou créditos disponíveis no painel da OpenAI.',
+          );
+        }
+
+        if (code == 'rate_limit_exceeded' ||
+            message.contains('rate limit') ||
+            message.contains('too many requests')) {
+          return const AppException(
+            'A OpenAI está recebendo muitas requisições, aguarde e tente novamente.',
+          );
+        }
+      }
+    } catch (_) {
+      // Ignored: fallback message will be returned below.
+    }
+
+    return const AppException(
+      'Não foi possível processar sua solicitação na OpenAI. Tente novamente mais tarde ou confira se há créditos suficientes.',
+    );
   }
 
   Future<http.Response> _postWithRetry(
