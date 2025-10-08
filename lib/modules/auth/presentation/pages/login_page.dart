@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -49,9 +51,7 @@ class LoginPage extends GetView<LoginController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _LoginHeader(theme: theme),
-                        const SizedBox(height: 28),
-                        const _HighlightCard(),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 32),
                         _GuestCard(controller: controller),
                         const SizedBox(height: 20),
                         _ComingSoonCard(controller: controller),
@@ -99,14 +99,15 @@ class _LoginHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Receita Agora',
+              'Receitagora',
               style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 10),
             Text(
-              'Descubra receitas que combinam com os ingredientes que você tem à mão.',
+              'Encontre combinações deliciosas com os ingredientes que você já tem em casa.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.68),
                 height: 1.45,
@@ -139,60 +140,6 @@ class _LoginHeader extends StatelessWidget {
   }
 }
 
-class _HighlightCard extends StatelessWidget {
-  const _HighlightCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(28),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.colorScheme.primary.withOpacity(0.3),
-              theme.colorScheme.primary.withOpacity(0.08),
-            ],
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onPrimary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Text(
-                'Experiência personalizada'.toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  letterSpacing: 1.2,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Conte o que tem na sua cozinha e o ChatGPT cria sugestões sob medida. Cada receita vem com tempo de preparo, dificuldade e modo de fazer.',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                height: 1.5,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _GuestCard extends StatelessWidget {
   const _GuestCard({required this.controller});
 
@@ -204,25 +151,23 @@ class _GuestCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 30, 26, 26),
+        padding: const EdgeInsets.fromLTRB(26, 32, 26, 28),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Entrar como visitante',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
-              'Você pode realizar até três buscas por dia e cada pesquisa retorna duas sugestões exclusivas.',
+              'Acesse rapidamente o Receitagora com até três buscas por dia e visualize duas sugestões por pesquisa.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
                 height: 1.45,
               ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
             Obx(
@@ -275,31 +220,107 @@ class _ComingSoonCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(26, 28, 26, 26),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Preferir entrar com Google?',
+              'Entrar com Google',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Estamos finalizando uma experiência de login social para liberar buscas ilimitadas e sincronizar suas receitas favoritas.',
+              'Estamos preparando o login social para liberar mais buscas e salvar suas receitas preferidas.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 18),
-            OutlinedButton.icon(
-              onPressed: controller.signInWithGoogle,
-              icon: const Icon(Icons.login_rounded),
-              label: const Text('Entrar com Google (em breve)'),
+            const SizedBox(height: 20),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Material(
+                    shape: const CircleBorder(),
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                    child: InkWell(
+                      onTap: controller.signInWithGoogle,
+                      customBorder: const CircleBorder(),
+                      child: const Padding(
+                        padding: EdgeInsets.all(18),
+                        child: _GoogleMark(size: 32),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Em breve',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+class _GoogleMark extends StatelessWidget {
+  const _GoogleMark({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _GoogleMarkPainter(),
+      ),
+    );
+  }
+}
+
+class _GoogleMarkPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeWidth = size.width * 0.22;
+    final rect = Offset.zero & size;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    // Blue arc and horizontal stroke
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(rect.deflate(strokeWidth * 0.45), -40 * (math.pi / 180),
+        230 * (math.pi / 180), false, paint);
+    canvas.drawLine(Offset(size.width * 0.48, size.height * 0.52),
+        Offset(size.width * 0.88, size.height * 0.52), paint);
+
+    // Red segment
+    paint.color = const Color(0xFFEA4335);
+    canvas.drawLine(Offset(size.width * 0.82, size.height * 0.52),
+        Offset(size.width * 0.82, size.height * 0.78), paint);
+
+    // Yellow segment
+    paint.color = const Color(0xFFFABB05);
+    canvas.drawArc(rect.deflate(strokeWidth * 0.45), 200 * (math.pi / 180),
+        110 * (math.pi / 180), false, paint);
+
+    // Green segment
+    paint.color = const Color(0xFF34A853);
+    canvas.drawArc(rect.deflate(strokeWidth * 0.45), 110 * (math.pi / 180),
+        90 * (math.pi / 180), false, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
