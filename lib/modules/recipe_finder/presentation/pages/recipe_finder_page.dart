@@ -102,7 +102,8 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
                         _GenerateButton(controller: controller),
                         const SizedBox(height: 16),
                         Text(
-                          'Os resultados aparecem em cartões resumidos e você pode abrir cada receita para ver o preparo completo.',
+                          'Os resultados aparecem em cartões resumidos '
+                          'e você pode abrir cada receita para ver o preparo completo.',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.62),
                             height: 1.5,
@@ -349,7 +350,9 @@ class _GuestNotice extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              'Pronto para descobrir novos sabores? Adicione ingredientes, escolha suas preferências e deixe o ChatGPT sugerir combinações personalizadas.',
+              'Pronto para descobrir novos sabores? '
+              'Adicione ingredientes, escolha suas preferências '
+              'e deixe o ChatGPT sugerir combinações personalizadas.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.72),
                 height: 1.5,
@@ -361,7 +364,8 @@ class _GuestNotice extends StatelessWidget {
 
       final remaining = controller.guestSearchesRemaining.value;
       final helper = remaining > 0
-          ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. Cada pesquisa entrega até ${SessionService.guestRecipeLimit} receitas resumidas.'
+          ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. '
+              'Cada pesquisa entrega até ${SessionService.guestRecipeLimit} receitas resumidas.'
           : 'Você atingiu o limite diário de buscas no modo visitante. Volte amanhã para novas sugestões!';
 
       return Card(
