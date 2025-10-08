@@ -238,7 +238,7 @@ class OpenAIService {
   String _buildPrompt(List<String> ingredients) {
     final ingredientList =
         ingredients.map((ingredient) => '- ${ingredient.trim()}').join('\n');
-    return '''Considere apenas os ingredientes abaixo para criar até três receitas. Ingredientes genéricos como sal, água, óleo e temperos básicos podem ser adicionados.
+    return '''Considere apenas os ingredientes abaixo para criar entre duas e três receitas. Ingredientes genéricos como sal, água, óleo e temperos básicos podem ser adicionados.
 
 Ingredientes disponíveis:
 $ingredientList
@@ -248,7 +248,7 @@ Retorne um JSON com o formato:
   "recipes": [
     {
       "name": "nome da receita",
-      "description": "breve descrição",
+      "description": "descrição envolvente e explicativa",
       "difficulty": "fácil | médio | difícil",
       "duration": "tempo estimado (ex: 25 minutos)",
       "ingredients": ["ingrediente 1", "ingrediente 2"],
@@ -257,7 +257,7 @@ Retorne um JSON com o formato:
   ]
 }
 
-Para cada receita escolha uma dificuldade coerente (fácil, médio ou difícil) considerando o preparo e indique o tempo total aproximado em minutos. Certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
+Inclua pelo menos uma receita fácil e uma receita de dificuldade média, mantendo o nível de execução acessível. Descreva cada preparo de forma mais elaborada, trazendo contexto e dicas rápidas, mas sem aumentar demais a complexidade. Indique o tempo total aproximado em minutos e certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
   }
 
   String? _readMessageContent(dynamic content) {
