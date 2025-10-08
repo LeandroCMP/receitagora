@@ -21,15 +21,21 @@ class AppResponsive {
     T? medium,
     T? expanded,
   }) {
+    T result;
+
     if (isExpanded(width) && expanded != null) {
-      return expanded;
+      result = expanded;
+    } else if (!isCompact(width) && medium != null) {
+      result = medium;
+    } else {
+      result = compact;
     }
 
-    if (!isCompact(width) && medium != null) {
-      return medium;
+    if (T == double && result is num) {
+      return result.toDouble() as T;
     }
 
-    return compact;
+    return result;
   }
 }
 
