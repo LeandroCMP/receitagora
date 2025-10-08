@@ -32,7 +32,7 @@ class EmptyRecipesView extends StatelessWidget {
               child: Icon(
                 Icons.restaurant_menu,
                 size: 28,
-                color: theme.colorScheme.onPrimary,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 18),

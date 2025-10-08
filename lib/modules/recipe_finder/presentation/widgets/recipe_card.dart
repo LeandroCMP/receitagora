@@ -107,7 +107,7 @@ class RecipeSummaryCard extends StatelessWidget {
             Text(
               'Toque para ver ingredientes e preparo completo',
               style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.primary,
+                color: theme.colorScheme.onSurface.withOpacity(0.78),
                 fontWeight: FontWeight.w600,
               ),
             ),

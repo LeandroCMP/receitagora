@@ -87,7 +87,7 @@ class _LoginHeader extends StatelessWidget {
               ],
             ),
           ),
-          child: Icon(Icons.restaurant_menu, color: theme.colorScheme.onPrimary, size: 32),
+          child: Icon(Icons.restaurant_menu, color: theme.colorScheme.onSurface, size: 32),
         );
 
         final text = Column(

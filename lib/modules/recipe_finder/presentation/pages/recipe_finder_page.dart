@@ -202,18 +202,18 @@ class _HeroChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.onPrimary.withOpacity(0.1),
+        color: theme.colorScheme.primary.withOpacity(0.18),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.auto_awesome, color: theme.colorScheme.onPrimary, size: 16),
+          Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 16),
           const SizedBox(width: 8),
           Text(
             'Sugestões fresquinhas',
             style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onPrimary,
+              color: theme.colorScheme.onSurface,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -298,7 +298,7 @@ class _HeroIllustration extends StatelessWidget {
         child: Center(
           child: Icon(
             Icons.restaurant_menu,
-            color: theme.colorScheme.onPrimary,
+            color: theme.colorScheme.onSurface,
             size: 48,
           ),
         ),
@@ -319,18 +319,18 @@ class _HeroMeta extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.onPrimary.withOpacity(0.12),
+        color: theme.colorScheme.primary.withOpacity(0.18),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: theme.colorScheme.onPrimary),
+          Icon(icon, size: 16, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
           Text(
             label,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onPrimary,
+              color: theme.colorScheme.onSurface,
               letterSpacing: 0.2,
             ),
           ),

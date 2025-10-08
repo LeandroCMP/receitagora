@@ -162,7 +162,7 @@ class _OverviewSection extends StatelessWidget {
                   child: Text(
                     recipe.difficulty,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
+                      color: theme.colorScheme.onSurface,
                       letterSpacing: 0.3,
                       fontWeight: FontWeight.w600,
                     ),

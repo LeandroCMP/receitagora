@@ -50,11 +50,11 @@ class SplashPage extends GetView<SplashController> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.restaurant_menu,
-                  color: theme.colorScheme.onPrimary,
-                  size: 40,
-                ),
+              child: Icon(
+                Icons.restaurant_menu,
+                color: theme.colorScheme.onSurface,
+                size: 40,
+              ),
               ),
               const SizedBox(height: 24),
               Text(
@@ -77,7 +77,7 @@ class SplashPage extends GetView<SplashController> {
               SizedBox(
                 width: 60,
                 child: LinearProgressIndicator(
-                  backgroundColor: theme.colorScheme.onPrimary.withOpacity(0.12),
+                  backgroundColor: theme.colorScheme.onSurface.withOpacity(0.2),
                   color: theme.colorScheme.primary,
                 ),
               ),
