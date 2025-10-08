@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../core/ui/responsive.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
 import '../widgets/recipe_card.dart';
@@ -132,7 +133,19 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                       opacity: _headerOpacity,
                       child: SlideTransition(
                         position: _headerOffset,
-                        child: _buildHeader(theme, hasRecipes),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: context.responsiveValue<double>(
+                                compact: double.infinity,
+                                medium: 640,
+                                expanded: 760,
+                              ),
+                            ),
+                            child: _buildHeader(theme, hasRecipes),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -162,20 +175,32 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                                     ),
                                   );
                                 },
-                                child: RecipeSummaryCard(
-                                  recipe: recipe,
-                                  position: index,
-                                  heroTag: heroTag,
-                                  onTap: () {
-                                    Get.toNamed(
-                                      AppRoutes.recipeDetail,
-                                      arguments: RecipeDetailArgs(
-                                        recipe: recipe,
-                                        position: index,
-                                        heroTag: heroTag,
+                                child: Align(
+                                  alignment: Alignment.topCenter,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: context.responsiveValue<double>(
+                                        compact: double.infinity,
+                                        medium: 640,
+                                        expanded: 760,
                                       ),
-                                    );
-                                  },
+                                    ),
+                                    child: RecipeSummaryCard(
+                                      recipe: recipe,
+                                      position: index,
+                                      heroTag: heroTag,
+                                      onTap: () {
+                                        Get.toNamed(
+                                          AppRoutes.recipeDetail,
+                                          arguments: RecipeDetailArgs(
+                                            recipe: recipe,
+                                            position: index,
+                                            heroTag: heroTag,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
                                 ),
                               );
                             },
@@ -190,9 +215,21 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                     sliver: SliverToBoxAdapter(
                       child: FadeTransition(
                         opacity: _contentOpacity,
-                        child: EmptyRecipesView(
-                          message: _args.message ??
-                              'Não encontramos receitas com esses ingredientes.',
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: context.responsiveValue<double>(
+                                compact: double.infinity,
+                                medium: 520,
+                                expanded: 640,
+                              ),
+                            ),
+                            child: EmptyRecipesView(
+                              message: _args.message ??
+                                  'Não encontramos receitas com esses ingredientes.',
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -215,95 +252,159 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
         if (highlight != null)
           Card(
             margin: EdgeInsets.zero,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    theme.colorScheme.primary.withOpacity(0.75),
-                    theme.colorScheme.primary.withOpacity(0.32),
-                    theme.colorScheme.primary.withOpacity(0.12),
-                  ],
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final isCompact = AppResponsive.isCompact(width);
+                final coverSize = AppResponsive.valueForWidth<double>(
+                  width: width,
+                  compact: 120,
+                  medium: 136,
+                  expanded: 150,
+                );
+
+                final decoration = BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.primary.withOpacity(0.75),
+                      theme.colorScheme.primary.withOpacity(0.32),
+                      theme.colorScheme.primary.withOpacity(0.12),
+                    ],
+                  ),
+                );
+
+                final cover = RecipeCover(
+                  theme: theme,
+                  recipe: highlight,
+                  position: 0,
+                  heroTag: 'highlight-${highlight.name}',
+                  size: coverSize,
+                  showLabel: false,
+                );
+
+                final content = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Text(
+                        'Sugestão principal',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      highlight.name,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: Text(
-                            'Sugestão principal',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.6,
-                            ),
-                          ),
+                        _HeaderMeta(
+                          icon: Icons.schedule_rounded,
+                          label: highlight.duration,
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          highlight.name,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        _HeaderMeta(
+                          icon: Icons.auto_awesome,
+                          label: highlight.difficulty,
                         ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            _HeaderMeta(
-                              icon: Icons.schedule_rounded,
-                              label: highlight.duration,
-                            ),
-                            _HeaderMeta(
-                              icon: Icons.auto_awesome,
-                              label: highlight.difficulty,
-                            ),
-                            _HeaderMeta(
-                              icon: Icons.receipt_long,
-                              label: '${highlight.ingredients.length} ingredientes',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          highlight.description.isNotEmpty
-                              ? highlight.description
-                              : 'Abra a receita para ver o preparo completo e os ingredientes detalhados.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.85),
-                            height: 1.45,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                        _HeaderMeta(
+                          icon: Icons.receipt_long,
+                          label: '${highlight.ingredients.length} ingredientes',
                         ),
                       ],
                     ),
+                    const SizedBox(height: 18),
+                    Text(
+                      highlight.description.isNotEmpty
+                          ? highlight.description
+                          : 'Abra a receita para ver o preparo completo e os ingredientes detalhados.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withOpacity(0.85),
+                        height: 1.45,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                );
+
+                final layoutChild = isCompact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          content,
+                          const SizedBox(height: 24),
+                          Align(
+                            alignment: Alignment.center,
+                            child: cover,
+                          ),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: content),
+                          const SizedBox(width: 20),
+                          cover,
+                        ],
+                      );
+
+                return Container(
+                  padding: EdgeInsets.fromLTRB(
+                    AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 24,
+                      medium: 28,
+                      expanded: 30,
+                    ),
+                    AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 26,
+                      medium: 30,
+                      expanded: 32,
+                    ),
+                    AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 24,
+                      medium: 28,
+                      expanded: 30,
+                    ),
+                    AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 26,
+                      medium: 30,
+                      expanded: 32,
+                    ),
                   ),
-                  const SizedBox(width: 20),
-                  RecipeCover(
-                    theme: theme,
-                    recipe: highlight,
-                    position: 0,
-                    heroTag: 'highlight-${highlight.name}',
-                    size: 130,
-                    showLabel: false,
+                  decoration: decoration,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 320),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeInCubic,
+                    child: KeyedSubtree(
+                      key: ValueKey<bool>(isCompact),
+                      child: layoutChild,
+                    ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         if (highlight != null) const SizedBox(height: 28),

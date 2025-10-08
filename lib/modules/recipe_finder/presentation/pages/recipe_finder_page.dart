@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/session_service.dart';
+import '../../../../core/ui/responsive.dart';
 import '../controllers/recipe_finder_controller.dart';
 import '../widgets/ingredient_chip.dart';
 
@@ -180,20 +181,47 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
               LayoutBuilder(
                 builder: (context, constraints) {
                   final minHeight = (constraints.maxHeight - 56).clamp(0.0, double.infinity);
+                  final horizontalPadding = AppResponsive.valueForWidth<double>(
+                    width: constraints.maxWidth,
+                    compact: 22,
+                    medium: 32,
+                    expanded: 40,
+                  );
+                  final verticalPadding = AppResponsive.valueForWidth<double>(
+                    width: constraints.maxWidth,
+                    compact: 28,
+                    medium: 32,
+                    expanded: 38,
+                  );
+                  final maxWidth = AppResponsive.valueForWidth<double>(
+                    width: constraints.maxWidth,
+                    compact: constraints.maxWidth,
+                    medium: 560,
+                    expanded: 720,
+                  );
+
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(minHeight: minHeight),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          FadeTransition(
-                            opacity: _headerOpacity,
-                            child: SlideTransition(
-                              position: _headerOffset,
-                              child: _buildHeroHeader(theme),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: verticalPadding,
+                    ),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: minHeight,
+                          maxWidth: maxWidth,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            FadeTransition(
+                              opacity: _headerOpacity,
+                              child: SlideTransition(
+                                position: _headerOffset,
+                                child: _buildHeroHeader(theme),
+                              ),
                             ),
-                          ),
                           const SizedBox(height: 26),
                           FadeTransition(
                             opacity: _quotaOpacity,
@@ -248,183 +276,308 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
         ? '${sanitized[0].toUpperCase()}${sanitized.length > 1 ? sanitized.substring(1) : ''}'
         : 'Convidado';
 
-    final heroGradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        theme.colorScheme.primary.withOpacity(0.75),
-        theme.colorScheme.primary.withOpacity(0.32),
-        theme.colorScheme.primary.withOpacity(0.12),
-      ],
-    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final isCompact = AppResponsive.isCompact(width);
+        final heroGradient = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withOpacity(0.75),
+            theme.colorScheme.primary.withOpacity(0.32),
+            theme.colorScheme.primary.withOpacity(0.12),
+          ],
+        );
+        final cardHeight = AppResponsive.valueForWidth<double>(
+          width: width,
+          compact: 250,
+          medium: 230,
+          expanded: 220,
+        );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        final avatar = CircleAvatar(
+          radius: AppResponsive.valueForWidth<double>(
+            width: width,
+            compact: 24,
+            medium: 26,
+            expanded: 28,
+          ),
+          backgroundColor: theme.colorScheme.surfaceVariant,
+          child: Icon(
+            Icons.person_outline,
+            color: theme.colorScheme.onSurface.withOpacity(0.75),
+          ),
+        );
+
+        final greetingBlock = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Olá, $greeting',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Pronto para cozinhar hoje à noite?',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.68),
-                  ),
-                ),
-              ],
+            Text(
+              'Olá, $greeting',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
             ),
-            CircleAvatar(
-              radius: 26,
-              backgroundColor: theme.colorScheme.surfaceVariant,
-              child: Icon(
-                Icons.person_outline,
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+            const SizedBox(height: 6),
+            Text(
+              'Pronto para cozinhar hoje à noite?',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.68),
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 26),
-        Card(
+        );
+
+        final header = isCompact
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  avatar,
+                  const SizedBox(height: 18),
+                  greetingBlock,
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: greetingBlock),
+                  const SizedBox(width: 18),
+                  avatar,
+                ],
+              );
+
+        final heroMeta = const [
+          _HeroStat(icon: Icons.schedule_rounded, label: '40 min'),
+          _HeroStat(icon: Icons.group_outlined, label: 'Serve 3'),
+          _HeroStat(icon: Icons.local_fire_department_rounded, label: '480 kcal'),
+        ];
+
+        final heroCard = Card(
           margin: EdgeInsets.zero,
-          child: Container(
-            height: 220,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              gradient: heroGradient,
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  right: -24,
-                  top: 40,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.18),
+          child: SizedBox(
+            height: cardHeight,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: heroGradient,
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -24,
+                    top: AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 46,
+                      medium: 40,
+                      expanded: 36,
+                    ),
+                    child: Container(
+                      width: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 168,
+                        medium: 180,
+                        expanded: 190,
+                      ),
+                      height: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 168,
+                        medium: 180,
+                        expanded: 190,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.18),
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  right: 28,
-                  top: 36,
-                  child: Container(
-                    width: 132,
-                    height: 132,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.32),
+                  Positioned(
+                    right: AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 20,
+                      medium: 26,
+                      expanded: 28,
                     ),
-                    child: Icon(
-                      Icons.ramen_dining,
-                      color: Colors.black.withOpacity(0.75),
-                      size: 50,
+                    top: AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 32,
+                      medium: 34,
+                      expanded: 36,
                     ),
-                  ),
-                ),
-                Positioned(
-                  top: 24,
-                  right: 24,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.redAccent.withOpacity(0.85),
-                    ),
-                    child: const SizedBox(
-                      width: 42,
-                      height: 42,
-                      child: Icon(Icons.favorite, color: Colors.white, size: 22),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(22),
+                    child: Container(
+                      width: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 118,
+                        medium: 128,
+                        expanded: 132,
+                      ),
+                      height: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 118,
+                        medium: 128,
+                        expanded: 132,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.32),
+                      ),
+                      child: Icon(
+                        Icons.ramen_dining,
+                        color: Colors.black.withOpacity(0.75),
+                        size: AppResponsive.valueForWidth<double>(
+                          width: width,
+                          compact: 46,
+                          medium: 48,
+                          expanded: 50,
                         ),
-                        child: Text(
-                          'Chicken baked',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 20,
+                      medium: 24,
+                      expanded: 24,
+                    ),
+                    right: AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 20,
+                      medium: 24,
+                      expanded: 24,
+                    ),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.redAccent.withOpacity(0.85),
+                      ),
+                      child: SizedBox(
+                        width: AppResponsive.valueForWidth<double>(
+                          width: width,
+                          compact: 40,
+                          medium: 42,
+                          expanded: 44,
+                        ),
+                        height: AppResponsive.valueForWidth<double>(
+                          width: width,
+                          compact: 40,
+                          medium: 42,
+                          expanded: 44,
+                        ),
+                        child: const Icon(Icons.favorite, color: Colors.white, size: 22),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 22,
+                        medium: 26,
+                        expanded: 28,
+                      ),
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 26,
+                        medium: 28,
+                        expanded: 28,
+                      ),
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 22,
+                        medium: 26,
+                        expanded: 28,
+                      ),
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 24,
+                        medium: 28,
+                        expanded: 28,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Text(
+                            'Chicken baked',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Um clássico dourado com ervas frescas.',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
+                        const SizedBox(height: 16),
+                        Text(
+                          'Um clássico dourado com ervas frescas.',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Comece adicionando seus ingredientes favoritos e receba sugestões sob medida.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.85),
-                          height: 1.4,
+                        const SizedBox(height: 12),
+                        Text(
+                          'Comece adicionando seus ingredientes favoritos e receba sugestões sob medida.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.85),
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                      const Spacer(),
-                      Wrap(
-                        spacing: 12,
-                        children: const [
-                          _HeroStat(icon: Icons.schedule_rounded, label: '40 min'),
-                          _HeroStat(icon: Icons.group_outlined, label: 'Serve 3'),
-                          _HeroStat(icon: Icons.local_fire_department_rounded, label: '480 kcal'),
-                        ],
-                      ),
-                    ],
+                        const Spacer(),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: heroMeta,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 28),
-        Text(
-          'Categorias de refeição',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.2,
-          ),
-        ),
-        const SizedBox(height: 14),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: const [
-              _CategoryChip(label: 'Café da manhã', selected: false),
-              SizedBox(width: 12),
-              _CategoryChip(label: 'Almoço', selected: true),
-              SizedBox(width: 12),
-              _CategoryChip(label: 'Jantar', selected: false),
-              SizedBox(width: 12),
-              _CategoryChip(label: 'Snacks', selected: false),
-            ],
-          ),
-        ),
-      ],
+        );
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            header,
+            const SizedBox(height: 26),
+            heroCard,
+            const SizedBox(height: 28),
+            Text(
+              'Categorias de refeição',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 14),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: const [
+                  _CategoryChip(label: 'Café da manhã', selected: false),
+                  SizedBox(width: 12),
+                  _CategoryChip(label: 'Almoço', selected: true),
+                  SizedBox(width: 12),
+                  _CategoryChip(label: 'Jantar', selected: false),
+                  SizedBox(width: 12),
+                  _CategoryChip(label: 'Snacks', selected: false),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

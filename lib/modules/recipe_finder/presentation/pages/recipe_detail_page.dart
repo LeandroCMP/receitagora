@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/ui/responsive.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/recipe_cover.dart';
 
@@ -106,101 +107,174 @@ class _OverviewCard extends StatelessWidget {
 
     return Card(
       margin: EdgeInsets.zero,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(28, 28, 28, 32),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.colorScheme.primary.withOpacity(0.68),
-              theme.colorScheme.primary.withOpacity(0.28),
-              theme.colorScheme.primary.withOpacity(0.12),
-            ],
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Text(
-                          'Receita ${args.position + 1}'.toUpperCase(),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: Colors.white,
-                            letterSpacing: 1.2,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        recipe.name,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _OverviewPill(
-                            icon: Icons.auto_awesome,
-                            label: recipe.difficulty,
-                            accent: Colors.black.withOpacity(0.28),
-                          ),
-                          _OverviewPill(
-                            icon: Icons.schedule_rounded,
-                            label: recipe.duration,
-                            accent: Colors.black.withOpacity(0.28),
-                          ),
-                          _OverviewPill(
-                            icon: Icons.receipt_long,
-                            label: '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
-                            accent: Colors.black.withOpacity(0.28),
-                          ),
-                        ],
-                      ),
-                    ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final isCompact = AppResponsive.isCompact(width);
+          final coverSize = AppResponsive.valueForWidth<double>(
+            width: width,
+            compact: 128,
+            medium: 148,
+            expanded: 168,
+          );
+
+          final highlight = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Text(
+                  'Receita ${args.position + 1}'.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 24),
-                RecipeCover(
-                  theme: theme,
-                  recipe: recipe,
-                  position: args.position,
-                  heroTag: args.heroTag,
-                  size: 160,
-                  showLabel: false,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                recipe.name,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
                 ),
-              ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _OverviewPill(
+                    icon: Icons.auto_awesome,
+                    label: recipe.difficulty,
+                    accent: Colors.black.withOpacity(0.28),
+                  ),
+                  _OverviewPill(
+                    icon: Icons.schedule_rounded,
+                    label: recipe.duration,
+                    accent: Colors.black.withOpacity(0.28),
+                  ),
+                  _OverviewPill(
+                    icon: Icons.receipt_long,
+                    label: '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
+                    accent: Colors.black.withOpacity(0.28),
+                  ),
+                ],
+              ),
+            ],
+          );
+
+          final cover = RecipeCover(
+            theme: theme,
+            recipe: recipe,
+            position: args.position,
+            heroTag: args.heroTag,
+            size: coverSize,
+            showLabel: false,
+          );
+
+          final descriptionWidget = Text(
+            description.isNotEmpty
+                ? description
+                : 'Explore os ingredientes e o modo de preparo para seguir com a receita.',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: Colors.white.withOpacity(0.9),
+              height: 1.55,
             ),
-            const SizedBox(height: 26),
-            Text(
-              description.isNotEmpty
-                  ? description
-                  : 'Explore os ingredientes e o modo de preparo para seguir com a receita.',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white.withOpacity(0.9),
-                height: 1.55,
+          );
+
+          final compactLayout = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              highlight,
+              const SizedBox(height: 26),
+              Align(
+                alignment: Alignment.center,
+                child: cover,
+              ),
+              const SizedBox(height: 26),
+              descriptionWidget,
+            ],
+          );
+
+          final expandedLayout = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: highlight),
+                  SizedBox(
+                    width: AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 0,
+                      medium: 24,
+                      expanded: 28,
+                    ),
+                  ),
+                  cover,
+                ],
+              ),
+              const SizedBox(height: 26),
+              descriptionWidget,
+            ],
+          );
+
+          return Container(
+            padding: EdgeInsets.fromLTRB(
+              AppResponsive.valueForWidth<double>(
+                width: width,
+                compact: 24,
+                medium: 28,
+                expanded: 30,
+              ),
+              AppResponsive.valueForWidth<double>(
+                width: width,
+                compact: 26,
+                medium: 30,
+                expanded: 34,
+              ),
+              AppResponsive.valueForWidth<double>(
+                width: width,
+                compact: 24,
+                medium: 28,
+                expanded: 30,
+              ),
+              AppResponsive.valueForWidth<double>(
+                width: width,
+                compact: 28,
+                medium: 32,
+                expanded: 36,
               ),
             ),
-          ],
-        ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.primary.withOpacity(0.68),
+                  theme.colorScheme.primary.withOpacity(0.28),
+                  theme.colorScheme.primary.withOpacity(0.12),
+                ],
+              ),
+            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 320),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: KeyedSubtree(
+                key: ValueKey<bool>(isCompact),
+                child: isCompact ? compactLayout : expandedLayout,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/ui/responsive.dart';
 import '../controllers/login_controller.dart';
 
 class LoginPage extends GetView<LoginController> {
@@ -40,8 +41,20 @@ class LoginPage extends GetView<LoginController> {
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final horizontalPadding = constraints.maxWidth > 600 ? 48.0 : 24.0;
-                final maxWidth = constraints.maxWidth > 520 ? 480.0 : constraints.maxWidth;
+                final width = constraints.maxWidth;
+                final horizontalPadding =
+                    AppResponsive.valueForWidth(
+                  width: width,
+                  compact: 20,
+                  medium: 32,
+                  expanded: 48,
+                );
+                final maxWidth = AppResponsive.valueForWidth<double>(
+                  width: width,
+                  compact: width,
+                  medium: 520,
+                  expanded: 560,
+                );
 
                 return SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
@@ -54,33 +67,11 @@ class LoginPage extends GetView<LoginController> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Olá, convidado'.toUpperCase(),
-                                      style: theme.textTheme.labelLarge?.copyWith(
-                                        letterSpacing: 1.4,
-                                        color: theme.colorScheme.onBackground.withOpacity(0.68),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Pronto para cozinhar?\nDescubra combinações perfeitas.',
-                                      style: theme.textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        height: 1.1,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 18),
-                              CircleAvatar(
+                          LayoutBuilder(
+                            builder: (context, headerConstraints) {
+                              final headerWidth = headerConstraints.maxWidth;
+                              final isCompactHeader = AppResponsive.isCompact(headerWidth);
+                              final avatar = CircleAvatar(
                                 radius: 28,
                                 backgroundColor: theme.colorScheme.surfaceVariant,
                                 child: Icon(
@@ -88,11 +79,52 @@ class LoginPage extends GetView<LoginController> {
                                   color: theme.colorScheme.onSurface.withOpacity(0.8),
                                   size: 30,
                                 ),
-                              ),
-                            ],
+                              );
+
+                              final headline = Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Olá, convidado'.toUpperCase(),
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      letterSpacing: 1.4,
+                                      color: theme.colorScheme.onBackground.withOpacity(0.68),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Pronto para cozinhar?\nDescubra combinações perfeitas.',
+                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                ],
+                              );
+
+                              if (isCompactHeader) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    avatar,
+                                    const SizedBox(height: 18),
+                                    headline,
+                                  ],
+                                );
+                              }
+
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: headline),
+                                  const SizedBox(width: 18),
+                                  avatar,
+                                ],
+                              );
+                            },
                           ),
                           const SizedBox(height: 32),
-                          _HeroCard(theme: theme),
+                          const _HeroCard(),
                           const SizedBox(height: 32),
                           Card(
                             child: Padding(
@@ -188,114 +220,184 @@ class LoginPage extends GetView<LoginController> {
 }
 
 class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.theme});
-
-  final ThemeData theme;
+  const _HeroCard();
 
   @override
   Widget build(BuildContext context) {
-    final gradient = LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        theme.colorScheme.primary.withOpacity(0.86),
-        theme.colorScheme.primary.withOpacity(0.35),
-        theme.colorScheme.primary.withOpacity(0.12),
-      ],
-    );
+    final theme = Theme.of(context);
 
-    return Card(
-      elevation: 0,
-      margin: EdgeInsets.zero,
-      child: Container(
-        height: 240,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          gradient: gradient,
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -30,
-              top: 36,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.18),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final cardHeight = AppResponsive.valueForWidth<double>(
+          width: width,
+          compact: 280,
+          medium: 260,
+          expanded: 240,
+        );
+        final gradient = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withOpacity(0.86),
+            theme.colorScheme.primary.withOpacity(0.35),
+            theme.colorScheme.primary.withOpacity(0.12),
+          ],
+        );
+
+        final metaItems = [
+          const _HeroMeta(icon: Icons.schedule_rounded, label: '40 min'),
+          const _HeroMeta(icon: Icons.whatshot_outlined, label: 'Fácil'),
+          const _HeroMeta(icon: Icons.star_rounded, label: '4.8'),
+        ];
+
+        return Card(
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          child: SizedBox(
+            height: cardHeight,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: gradient,
               ),
-            ),
-            Positioned(
-              right: 26,
-              top: 30,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.35),
-                ),
-                child: Icon(
-                  Icons.ramen_dining,
-                  color: Colors.black.withOpacity(0.78),
-                  size: 54,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Stack(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(22),
-                    ),
-                    child: Text(
-                      'Sugestão do dia',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.6,
+                  Positioned(
+                    right: -30,
+                    top: 36,
+                    child: Container(
+                      width: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 160,
+                        medium: 180,
+                        expanded: 190,
+                      ),
+                      height: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 160,
+                        medium: 180,
+                        expanded: 190,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.18),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Chicken baked com ervas',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                  Positioned(
+                    right: AppResponsive.valueForWidth<double>(
+                      width: width,
+                      compact: 22,
+                      medium: 24,
+                      expanded: 26,
+                    ),
+                    top: 30,
+                    child: Container(
+                      width: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 120,
+                        medium: 130,
+                        expanded: 140,
+                      ),
+                      height: AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 120,
+                        medium: 130,
+                        expanded: 140,
+                      ),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.35),
+                      ),
+                      child: Icon(
+                        Icons.ramen_dining,
+                        color: Colors.black.withOpacity(0.78),
+                        size: AppResponsive.valueForWidth<double>(
+                          width: width,
+                          compact: 48,
+                          medium: 52,
+                          expanded: 54,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Uma inspiração para você começar — e nós cuidamos do resto na próxima busca.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withOpacity(0.85),
-                      height: 1.45,
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 22,
+                        medium: 26,
+                        expanded: 28,
+                      ),
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 26,
+                        medium: 28,
+                        expanded: 32,
+                      ),
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 22,
+                        medium: 26,
+                        expanded: 28,
+                      ),
+                      AppResponsive.valueForWidth<double>(
+                        width: width,
+                        compact: 26,
+                        medium: 28,
+                        expanded: 28,
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: const [
-                      _HeroMeta(icon: Icons.schedule_rounded, label: '40 min'),
-                      SizedBox(width: 12),
-                      _HeroMeta(icon: Icons.whatshot_outlined, label: 'Fácil'),
-                      SizedBox(width: 12),
-                      _HeroMeta(icon: Icons.star_rounded, label: '4.8'),
-                    ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Text(
+                            'Sugestão do dia',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          'Chicken baked com ervas',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Uma inspiração para você começar — e nós cuidamos do resto na próxima busca.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.85),
+                            height: 1.45,
+                          ),
+                        ),
+                        const Spacer(),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: metaItems,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
