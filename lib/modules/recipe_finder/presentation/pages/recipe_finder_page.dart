@@ -275,20 +275,18 @@ class _HeroIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 140,
-      width: 140,
+    return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
+          colors: <Color>[
             theme.colorScheme.primary.withOpacity(0.85),
             theme.colorScheme.primary,
           ],
         ),
-        boxShadow: [
+        boxShadow: <BoxShadow>[
           BoxShadow(
             color: theme.colorScheme.primary.withOpacity(0.24),
             blurRadius: 32,
@@ -297,10 +295,16 @@ class _HeroIllustration extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(
-        Icons.restaurant_menu,
-        color: theme.colorScheme.onPrimary,
-        size: 48,
+      child: SizedBox(
+        height: 140,
+        width: 140,
+        child: Center(
+          child: Icon(
+            Icons.restaurant_menu,
+            color: theme.colorScheme.onPrimary,
+            size: 48,
+          ),
+        ),
       ),
     );
   }
