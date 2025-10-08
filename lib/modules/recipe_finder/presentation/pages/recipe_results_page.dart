@@ -183,7 +183,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                         ),
                       ),
                     ),
-                  ),
+                  )
                 else
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
