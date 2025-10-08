@@ -281,22 +281,25 @@ class _HeroIllustration extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [
-            theme.colorScheme.onPrimary.withOpacity(0.8),
+            theme.colorScheme.primary.withOpacity(0.85),
             theme.colorScheme.primary,
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.2),
-            blurRadius: 28,
-            spreadRadius: 4,
+            color: theme.colorScheme.primary.withOpacity(0.24),
+            blurRadius: 32,
+            spreadRadius: 6,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Icon(
         Icons.restaurant_menu,
-        color: theme.colorScheme.primaryContainer,
+        color: theme.colorScheme.onPrimary,
         size: 48,
       ),
     );
