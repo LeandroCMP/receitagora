@@ -2,9 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/services/session_service.dart';
-import '../../../../core/ui/responsive.dart';
 import '../controllers/recipe_finder_controller.dart';
 import '../widgets/ingredient_chip.dart';
+
+const double _compactBreakpoint = 480.0;
+const double _mediumBreakpoint = 840.0;
+
+bool _isCompactWidth(double width) => width < _compactBreakpoint;
+
+bool _isExpandedWidth(double width) => width >= _mediumBreakpoint;
+
+T _valueForWidth<T>({
+  required double width,
+  required T compact,
+  T? medium,
+  T? expanded,
+}) {
+  T result;
+
+  if (_isExpandedWidth(width) && expanded != null) {
+    result = expanded;
+  } else if (!_isCompactWidth(width) && medium != null) {
+    result = medium;
+  } else {
+    result = compact;
+  }
+
+  if (T == double && result is num) {
+    return result.toDouble() as T;
+  }
+
+  return result;
+}
 
 class RecipeFinderPage extends StatefulWidget {
   const RecipeFinderPage({super.key});
@@ -181,19 +210,19 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
               LayoutBuilder(
                 builder: (context, constraints) {
                   final minHeight = (constraints.maxHeight - 56).clamp(0.0, double.infinity);
-                  final horizontalPadding = AppResponsive.valueForWidth<double>(
+                  final horizontalPadding = _valueForWidth<double>(
                     width: constraints.maxWidth,
                     compact: 22,
                     medium: 32,
                     expanded: 40,
                   );
-                  final verticalPadding = AppResponsive.valueForWidth<double>(
+                  final verticalPadding = _valueForWidth<double>(
                     width: constraints.maxWidth,
                     compact: 28,
                     medium: 32,
                     expanded: 38,
                   );
-                  final maxWidth = AppResponsive.valueForWidth<double>(
+                  final maxWidth = _valueForWidth<double>(
                     width: constraints.maxWidth,
                     compact: constraints.maxWidth,
                     medium: 560,
@@ -279,7 +308,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final isCompact = AppResponsive.isCompact(width);
+        final isCompact = _isCompactWidth(width);
         final heroGradient = LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -289,7 +318,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
             theme.colorScheme.primary.withOpacity(0.12),
           ],
         );
-        final cardHeight = AppResponsive.valueForWidth<double>(
+        final cardHeight = _valueForWidth<double>(
           width: width,
           compact: 250,
           medium: 230,
@@ -297,7 +326,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
         );
 
         final avatar = CircleAvatar(
-          radius: AppResponsive.valueForWidth<double>(
+          radius: _valueForWidth<double>(
             width: width,
             compact: 24,
             medium: 26,
@@ -368,20 +397,20 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 children: [
                   Positioned(
                     right: -24,
-                    top: AppResponsive.valueForWidth<double>(
+                    top: _valueForWidth<double>(
                       width: width,
                       compact: 46,
                       medium: 40,
                       expanded: 36,
                     ),
                     child: Container(
-                      width: AppResponsive.valueForWidth<double>(
+                      width: _valueForWidth<double>(
                         width: width,
                         compact: 168,
                         medium: 180,
                         expanded: 190,
                       ),
-                      height: AppResponsive.valueForWidth<double>(
+                      height: _valueForWidth<double>(
                         width: width,
                         compact: 168,
                         medium: 180,
@@ -394,26 +423,26 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                     ),
                   ),
                   Positioned(
-                    right: AppResponsive.valueForWidth<double>(
+                    right: _valueForWidth<double>(
                       width: width,
                       compact: 20,
                       medium: 26,
                       expanded: 28,
                     ),
-                    top: AppResponsive.valueForWidth<double>(
+                    top: _valueForWidth<double>(
                       width: width,
                       compact: 32,
                       medium: 34,
                       expanded: 36,
                     ),
                     child: Container(
-                      width: AppResponsive.valueForWidth<double>(
+                      width: _valueForWidth<double>(
                         width: width,
                         compact: 118,
                         medium: 128,
                         expanded: 132,
                       ),
-                      height: AppResponsive.valueForWidth<double>(
+                      height: _valueForWidth<double>(
                         width: width,
                         compact: 118,
                         medium: 128,
@@ -426,7 +455,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                       child: Icon(
                         Icons.ramen_dining,
                         color: Colors.black.withOpacity(0.75),
-                        size: AppResponsive.valueForWidth<double>(
+                        size: _valueForWidth<double>(
                           width: width,
                           compact: 46,
                           medium: 48,
@@ -436,13 +465,13 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                     ),
                   ),
                   Positioned(
-                    top: AppResponsive.valueForWidth<double>(
+                    top: _valueForWidth<double>(
                       width: width,
                       compact: 20,
                       medium: 24,
                       expanded: 24,
                     ),
-                    right: AppResponsive.valueForWidth<double>(
+                    right: _valueForWidth<double>(
                       width: width,
                       compact: 20,
                       medium: 24,
@@ -454,13 +483,13 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                         color: Colors.redAccent.withOpacity(0.85),
                       ),
                       child: SizedBox(
-                        width: AppResponsive.valueForWidth<double>(
+                        width: _valueForWidth<double>(
                           width: width,
                           compact: 40,
                           medium: 42,
                           expanded: 44,
                         ),
-                        height: AppResponsive.valueForWidth<double>(
+                        height: _valueForWidth<double>(
                           width: width,
                           compact: 40,
                           medium: 42,
@@ -472,25 +501,25 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 22,
                         medium: 26,
                         expanded: 28,
                       ),
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 26,
                         medium: 28,
                         expanded: 28,
                       ),
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 22,
                         medium: 26,
                         expanded: 28,
                       ),
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 24,
                         medium: 28,

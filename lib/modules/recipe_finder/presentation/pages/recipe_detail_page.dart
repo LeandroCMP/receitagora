@@ -1,9 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/ui/responsive.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/recipe_cover.dart';
+
+const double _compactBreakpoint = 480.0;
+const double _mediumBreakpoint = 840.0;
+
+bool _isCompactWidth(double width) => width < _compactBreakpoint;
+
+bool _isExpandedWidth(double width) => width >= _mediumBreakpoint;
+
+T _valueForWidth<T>({
+  required double width,
+  required T compact,
+  T? medium,
+  T? expanded,
+}) {
+  T result;
+
+  if (_isExpandedWidth(width) && expanded != null) {
+    result = expanded;
+  } else if (!_isCompactWidth(width) && medium != null) {
+    result = medium;
+  } else {
+    result = compact;
+  }
+
+  if (T == double && result is num) {
+    return result.toDouble() as T;
+  }
+
+  return result;
+}
 
 class RecipeDetailArgs {
   const RecipeDetailArgs({
@@ -110,8 +139,8 @@ class _OverviewCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-          final isCompact = AppResponsive.isCompact(width);
-          final coverSize = AppResponsive.valueForWidth<double>(
+          final isCompact = _isCompactWidth(width);
+          final coverSize = _valueForWidth<double>(
             width: width,
             compact: 128,
             medium: 148,
@@ -210,7 +239,7 @@ class _OverviewCard extends StatelessWidget {
                 children: [
                   Expanded(child: highlight),
                   SizedBox(
-                    width: AppResponsive.valueForWidth<double>(
+                    width: _valueForWidth<double>(
                       width: width,
                       compact: 0,
                       medium: 24,
@@ -227,25 +256,25 @@ class _OverviewCard extends StatelessWidget {
 
           return Container(
             padding: EdgeInsets.fromLTRB(
-              AppResponsive.valueForWidth<double>(
+              _valueForWidth<double>(
                 width: width,
                 compact: 24,
                 medium: 28,
                 expanded: 30,
               ),
-              AppResponsive.valueForWidth<double>(
+              _valueForWidth<double>(
                 width: width,
                 compact: 26,
                 medium: 30,
                 expanded: 34,
               ),
-              AppResponsive.valueForWidth<double>(
+              _valueForWidth<double>(
                 width: width,
                 compact: 24,
                 medium: 28,
                 expanded: 30,
               ),
-              AppResponsive.valueForWidth<double>(
+              _valueForWidth<double>(
                 width: width,
                 compact: 28,
                 medium: 32,

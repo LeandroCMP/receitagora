@@ -2,12 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
-import '../../../../core/ui/responsive.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
 import '../widgets/recipe_card.dart';
 import '../widgets/recipe_cover.dart';
 import 'recipe_detail_page.dart';
+
+const double _compactBreakpoint = 480.0;
+const double _mediumBreakpoint = 840.0;
+
+bool _isCompactWidth(double width) => width < _compactBreakpoint;
+
+bool _isExpandedWidth(double width) => width >= _mediumBreakpoint;
+
+T _valueForWidth<T>({
+  required double width,
+  required T compact,
+  T? medium,
+  T? expanded,
+}) {
+  T result;
+
+  if (_isExpandedWidth(width) && expanded != null) {
+    result = expanded;
+  } else if (!_isCompactWidth(width) && medium != null) {
+    result = medium;
+  } else {
+    result = compact;
+  }
+
+  if (T == double && result is num) {
+    return result.toDouble() as T;
+  }
+
+  return result;
+}
 
 class RecipeResultsArgs {
   RecipeResultsArgs({
@@ -92,6 +121,7 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
     final theme = Theme.of(context);
     final hasRecipes = _args.recipes.isNotEmpty;
     final background = theme.colorScheme.background;
+    final screenWidth = MediaQuery.sizeOf(context).width;
     final blend = Color.alphaBlend(
       theme.colorScheme.primary.withOpacity(0.05),
       background,
@@ -137,7 +167,8 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                           alignment: Alignment.topCenter,
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: context.responsiveValue<double>(
+                              maxWidth: _valueForWidth<double>(
+                                width: screenWidth,
                                 compact: double.infinity,
                                 medium: 640,
                                 expanded: 760,
@@ -177,14 +208,15 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                                 },
                                 child: Align(
                                   alignment: Alignment.topCenter,
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxWidth: context.responsiveValue<double>(
-                                        compact: double.infinity,
-                                        medium: 640,
-                                        expanded: 760,
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: _valueForWidth<double>(
+                                          width: screenWidth,
+                                          compact: double.infinity,
+                                          medium: 640,
+                                          expanded: 760,
+                                        ),
                                       ),
-                                    ),
                                     child: RecipeSummaryCard(
                                       recipe: recipe,
                                       position: index,
@@ -219,7 +251,8 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
                           alignment: Alignment.topCenter,
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: context.responsiveValue<double>(
+                              maxWidth: _valueForWidth<double>(
+                                width: screenWidth,
                                 compact: double.infinity,
                                 medium: 520,
                                 expanded: 640,
@@ -255,8 +288,8 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
-                final isCompact = AppResponsive.isCompact(width);
-                final coverSize = AppResponsive.valueForWidth<double>(
+                final isCompact = _isCompactWidth(width);
+                final coverSize = _valueForWidth<double>(
                   width: width,
                   compact: 120,
                   medium: 136,
@@ -368,25 +401,25 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
 
                 return Container(
                   padding: EdgeInsets.fromLTRB(
-                    AppResponsive.valueForWidth<double>(
+                    _valueForWidth<double>(
                       width: width,
                       compact: 24,
                       medium: 28,
                       expanded: 30,
                     ),
-                    AppResponsive.valueForWidth<double>(
+                    _valueForWidth<double>(
                       width: width,
                       compact: 26,
                       medium: 30,
                       expanded: 32,
                     ),
-                    AppResponsive.valueForWidth<double>(
+                    _valueForWidth<double>(
                       width: width,
                       compact: 24,
                       medium: 28,
                       expanded: 30,
                     ),
-                    AppResponsive.valueForWidth<double>(
+                    _valueForWidth<double>(
                       width: width,
                       compact: 26,
                       medium: 30,

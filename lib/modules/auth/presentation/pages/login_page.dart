@@ -1,8 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/ui/responsive.dart';
 import '../controllers/login_controller.dart';
+
+const double _compactBreakpoint = 480.0;
+const double _mediumBreakpoint = 840.0;
+
+bool _isCompactWidth(double width) => width < _compactBreakpoint;
+
+bool _isExpandedWidth(double width) => width >= _mediumBreakpoint;
+
+T _valueForWidth<T>({
+  required double width,
+  required T compact,
+  T? medium,
+  T? expanded,
+}) {
+  T result;
+
+  if (_isExpandedWidth(width) && expanded != null) {
+    result = expanded;
+  } else if (!_isCompactWidth(width) && medium != null) {
+    result = medium;
+  } else {
+    result = compact;
+  }
+
+  if (T == double && result is num) {
+    return result.toDouble() as T;
+  }
+
+  return result;
+}
 
 class LoginPage extends GetView<LoginController> {
   const LoginPage({super.key});
@@ -42,14 +71,13 @@ class LoginPage extends GetView<LoginController> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final width = constraints.maxWidth;
-                final horizontalPadding =
-                    AppResponsive.valueForWidth(
+                final horizontalPadding = _valueForWidth<double>(
                   width: width,
                   compact: 20,
                   medium: 32,
                   expanded: 48,
                 );
-                final maxWidth = AppResponsive.valueForWidth<double>(
+                final maxWidth = _valueForWidth<double>(
                   width: width,
                   compact: width,
                   medium: 520,
@@ -70,7 +98,7 @@ class LoginPage extends GetView<LoginController> {
                           LayoutBuilder(
                             builder: (context, headerConstraints) {
                               final headerWidth = headerConstraints.maxWidth;
-                              final isCompactHeader = AppResponsive.isCompact(headerWidth);
+                              final isCompactHeader = _isCompactWidth(headerWidth);
                               final avatar = CircleAvatar(
                                 radius: 28,
                                 backgroundColor: theme.colorScheme.surfaceVariant,
@@ -229,7 +257,7 @@ class _HeroCard extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final cardHeight = AppResponsive.valueForWidth<double>(
+        final cardHeight = _valueForWidth<double>(
           width: width,
           compact: 280,
           medium: 260,
@@ -267,13 +295,13 @@ class _HeroCard extends StatelessWidget {
                     right: -30,
                     top: 36,
                     child: Container(
-                      width: AppResponsive.valueForWidth<double>(
+                      width: _valueForWidth<double>(
                         width: width,
                         compact: 160,
                         medium: 180,
                         expanded: 190,
                       ),
-                      height: AppResponsive.valueForWidth<double>(
+                      height: _valueForWidth<double>(
                         width: width,
                         compact: 160,
                         medium: 180,
@@ -286,7 +314,7 @@ class _HeroCard extends StatelessWidget {
                     ),
                   ),
                   Positioned(
-                    right: AppResponsive.valueForWidth<double>(
+                    right: _valueForWidth<double>(
                       width: width,
                       compact: 22,
                       medium: 24,
@@ -294,13 +322,13 @@ class _HeroCard extends StatelessWidget {
                     ),
                     top: 30,
                     child: Container(
-                      width: AppResponsive.valueForWidth<double>(
+                      width: _valueForWidth<double>(
                         width: width,
                         compact: 120,
                         medium: 130,
                         expanded: 140,
                       ),
-                      height: AppResponsive.valueForWidth<double>(
+                      height: _valueForWidth<double>(
                         width: width,
                         compact: 120,
                         medium: 130,
@@ -313,7 +341,7 @@ class _HeroCard extends StatelessWidget {
                       child: Icon(
                         Icons.ramen_dining,
                         color: Colors.black.withOpacity(0.78),
-                        size: AppResponsive.valueForWidth<double>(
+                        size: _valueForWidth<double>(
                           width: width,
                           compact: 48,
                           medium: 52,
@@ -324,25 +352,25 @@ class _HeroCard extends StatelessWidget {
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 22,
                         medium: 26,
                         expanded: 28,
                       ),
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 26,
                         medium: 28,
                         expanded: 32,
                       ),
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 22,
                         medium: 26,
                         expanded: 28,
                       ),
-                      AppResponsive.valueForWidth<double>(
+                      _valueForWidth<double>(
                         width: width,
                         compact: 26,
                         medium: 28,
