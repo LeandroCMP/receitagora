@@ -16,6 +16,7 @@ class FirebaseInitializer {
   static Future<void> ensureInitialized() async {
     if (_initialized || Firebase.apps.isNotEmpty) {
       _initialized = true;
+      await _writeIntegrationProbe();
       return;
     }
 
