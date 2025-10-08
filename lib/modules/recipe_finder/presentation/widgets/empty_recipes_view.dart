@@ -13,31 +13,29 @@ class EmptyRecipesView extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 34),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 66,
-              height: 66,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.6),
-                    theme.colorScheme.primary.withOpacity(0.2),
+                    theme.colorScheme.primary.withOpacity(0.25),
+                    theme.colorScheme.primary.withOpacity(0.05),
                   ],
-                  begin: Alignment.topRight,
-                  end: Alignment.bottomLeft,
                 ),
               ),
               child: Icon(
                 Icons.restaurant_menu,
-                size: 30,
-                color: Colors.white,
+                size: 28,
+                color: theme.colorScheme.onPrimary,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Text(
               message,
               textAlign: TextAlign.center,

@@ -22,6 +22,7 @@ class RecipeCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final highlight = theme.colorScheme.primary;
+    final secondary = theme.colorScheme.secondary;
 
     return Hero(
       tag: heroTag,
@@ -30,19 +31,19 @@ class RecipeCover extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          gradient: SweepGradient(
             colors: [
-              highlight.withOpacity(0.92),
-              highlight.withOpacity(0.45),
-              highlight.withOpacity(0.18),
+              highlight.withOpacity(0.85),
+              secondary.withOpacity(0.6),
+              highlight.withOpacity(0.35),
+              highlight.withOpacity(0.85),
             ],
+            stops: const [0.0, 0.45, 0.75, 1.0],
           ),
           boxShadow: [
             BoxShadow(
-              color: highlight.withOpacity(0.3),
-              blurRadius: 28,
+              color: highlight.withOpacity(0.25),
+              blurRadius: 32,
               offset: const Offset(0, 18),
             ),
           ],
@@ -66,17 +67,17 @@ class RecipeCover extends StatelessWidget {
                 left: 16,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onPrimary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Receita ${position + 1}'.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: Text(
-                    'Receita ${position + 1}'.toUpperCase(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.white,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w600,
-                    ),
                   ),
                 ),
               ),
@@ -84,7 +85,7 @@ class RecipeCover extends StatelessWidget {
               alignment: Alignment.center,
               child: Icon(
                 Icons.ramen_dining,
-                color: Colors.black.withOpacity(0.78),
+                color: theme.colorScheme.primaryContainer,
                 size: size * 0.38,
               ),
             ),
@@ -94,18 +95,22 @@ class RecipeCover extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.28),
+                  color: theme.colorScheme.onPrimary.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.schedule_rounded, size: 14, color: Colors.white),
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 14,
+                      color: theme.colorScheme.onPrimary,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       recipe.duration,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
+                        color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

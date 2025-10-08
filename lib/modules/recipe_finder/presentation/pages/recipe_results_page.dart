@@ -5,38 +5,7 @@ import '../../../../app/routes/app_routes.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
 import '../widgets/recipe_card.dart';
-import '../widgets/recipe_cover.dart';
 import 'recipe_detail_page.dart';
-
-const double _compactBreakpoint = 480.0;
-const double _mediumBreakpoint = 840.0;
-
-bool _isCompactWidth(double width) => width < _compactBreakpoint;
-
-bool _isExpandedWidth(double width) => width >= _mediumBreakpoint;
-
-T _valueForWidth<T>({
-  required double width,
-  required T compact,
-  T? medium,
-  T? expanded,
-}) {
-  T result;
-
-  if (_isExpandedWidth(width) && expanded != null) {
-    result = expanded;
-  } else if (!_isCompactWidth(width) && medium != null) {
-    result = medium;
-  } else {
-    result = compact;
-  }
-
-  if (T == double && result is num) {
-    return result.toDouble() as T;
-  }
-
-  return result;
-}
 
 class RecipeResultsArgs {
   RecipeResultsArgs({
@@ -51,57 +20,8 @@ class RecipeResultsArgs {
   final String? message;
 }
 
-class RecipeResultsPage extends StatefulWidget {
+class RecipeResultsPage extends StatelessWidget {
   const RecipeResultsPage({super.key});
-
-  @override
-  State<RecipeResultsPage> createState() => _RecipeResultsPageState();
-}
-
-class _RecipeResultsPageState extends State<RecipeResultsPage>
-    with SingleTickerProviderStateMixin {
-  late final RecipeResultsArgs _args = _resolveArgs();
-  late final AnimationController _controller;
-  late final Animation<double> _headerOpacity;
-  late final Animation<Offset> _headerOffset;
-  late final Animation<double> _contentOpacity;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-
-    _headerOpacity = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0, 0.4, curve: Curves.easeOutCubic),
-    );
-    _headerOffset = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0, 0.4, curve: Curves.easeOutCubic),
-      ),
-    );
-    _contentOpacity = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.25, 1, curve: Curves.easeOutCubic),
-    );
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _controller.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   RecipeResultsArgs _resolveArgs() {
     final dynamic rawArgs = Get.arguments;
@@ -119,475 +39,189 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasRecipes = _args.recipes.isNotEmpty;
     final background = theme.colorScheme.background;
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final blend = Color.alphaBlend(
-      theme.colorScheme.primary.withOpacity(0.05),
-      background,
-    );
+    final args = _resolveArgs();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sugestões'),
+        title: const Text('Resultados'),
+        automaticallyImplyLeading: true,
+        actions: [
+          TextButton(
+            onPressed: () => Get.offAllNamed(AppRoutes.recipeFinder),
+            child: const Text('Nova busca'),
+          ),
+        ],
       ),
-      body: Stack(
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [blend, background],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.05), background),
+              background,
+            ],
           ),
-          Positioned(
-            top: -160,
-            left: -80,
-            child: _ResultsOrb(color: theme.colorScheme.primary.withOpacity(0.24)),
-          ),
-          Positioned(
-            bottom: -180,
-            right: -60,
-            child: _ResultsOrb(color: theme.colorScheme.secondary.withOpacity(0.2)),
-          ),
-          SafeArea(
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-                  sliver: SliverToBoxAdapter(
-                    child: FadeTransition(
-                      opacity: _headerOpacity,
-                      child: SlideTransition(
-                        position: _headerOffset,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: _valueForWidth<double>(
-                                width: screenWidth,
-                                compact: double.infinity,
-                                medium: 640,
-                                expanded: 760,
-                              ),
-                            ),
-                            child: _buildHeader(theme, hasRecipes),
-                          ),
-                        ),
-                      ),
-                    ),
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final horizontalPadding = width < 420
+                  ? 20.0
+                  : width < 720
+                      ? 28.0
+                      : 48.0;
+              final maxWidth = width < 820 ? width : 780.0;
+
+              return Center(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    24,
+                    horizontalPadding,
+                    40,
                   ),
-                ),
-                if (hasRecipes)
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                    sliver: SliverToBoxAdapter(
-                      child: FadeTransition(
-                        opacity: _contentOpacity,
-                        child: Column(
-                          children: List<Widget>.generate(
-                            _args.recipes.length,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ResultsHeader(theme: theme, args: args),
+                        const SizedBox(height: 24),
+                        if (args.message != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 20),
+                            child: _InfoBanner(message: args.message!),
+                          ),
+                        if (args.recipes.isEmpty)
+                          EmptyRecipesView(
+                            message: args.message ??
+                                'Não encontramos receitas com esses ingredientes. Tente ajustar a combinação.',
+                          )
+                        else
+                          ...List.generate(
+                            args.recipes.length,
                             (index) {
-                              final recipe = _args.recipes[index];
-                              final heroTag = 'recipe-${index + 1}-${recipe.name}';
-                              return TweenAnimationBuilder<double>(
-                                tween: Tween<double>(begin: 0.18, end: 0),
-                                duration: Duration(milliseconds: 420 + (index * 90)),
-                                curve: Curves.easeOutCubic,
-                                builder: (context, value, child) {
-                                  return Transform.translate(
-                                    offset: Offset(0, 48 * value),
-                                    child: Opacity(
-                                      opacity: 1 - value,
-                                      child: child,
+                              final recipe = args.recipes[index];
+                              final heroTag = 'recipe-${recipe.name.hashCode}-$index';
+                              return RecipeSummaryCard(
+                                recipe: recipe,
+                                position: index,
+                                heroTag: heroTag,
+                                onTap: () {
+                                  Get.to(
+                                    () => RecipeDetailPage(
+                                      recipe: recipe,
+                                      heroTag: heroTag,
                                     ),
+                                    transition: Transition.cupertino,
                                   );
                                 },
-                                child: Align(
-                                  alignment: Alignment.topCenter,
-                                    child: ConstrainedBox(
-                                      constraints: BoxConstraints(
-                                        maxWidth: _valueForWidth<double>(
-                                          width: screenWidth,
-                                          compact: double.infinity,
-                                          medium: 640,
-                                          expanded: 760,
-                                        ),
-                                      ),
-                                    child: RecipeSummaryCard(
-                                      recipe: recipe,
-                                      position: index,
-                                      heroTag: heroTag,
-                                      onTap: () {
-                                        Get.toNamed(
-                                          AppRoutes.recipeDetail,
-                                          arguments: RecipeDetailArgs(
-                                            recipe: recipe,
-                                            position: index,
-                                            heroTag: heroTag,
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
                               );
                             },
                           ),
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-                    sliver: SliverToBoxAdapter(
-                      child: FadeTransition(
-                        opacity: _contentOpacity,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: _valueForWidth<double>(
-                                width: screenWidth,
-                                compact: double.infinity,
-                                medium: 520,
-                                expanded: 640,
-                              ),
-                            ),
-                            child: EmptyRecipesView(
-                              message: _args.message ??
-                                  'Não encontramos receitas com esses ingredientes.',
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(ThemeData theme, bool hasRecipes) {
-    final highlight = hasRecipes ? _args.recipes.first : null;
-    final ingredients = _args.ingredients;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (highlight != null)
-          Card(
-            margin: EdgeInsets.zero,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final isCompact = _isCompactWidth(width);
-                final coverSize = _valueForWidth<double>(
-                  width: width,
-                  compact: 120,
-                  medium: 136,
-                  expanded: 150,
-                );
-
-                final decoration = BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primary.withOpacity(0.75),
-                      theme.colorScheme.primary.withOpacity(0.32),
-                      theme.colorScheme.primary.withOpacity(0.12),
-                    ],
-                  ),
-                );
-
-                final cover = RecipeCover(
-                  theme: theme,
-                  recipe: highlight,
-                  position: 0,
-                  heroTag: 'highlight-${highlight.name}',
-                  size: coverSize,
-                  showLabel: false,
-                );
-
-                final content = Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: Text(
-                        'Sugestão principal',
-                        style: theme.textTheme.labelLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      highlight.name,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        _HeaderMeta(
-                          icon: Icons.schedule_rounded,
-                          label: highlight.duration,
-                        ),
-                        _HeaderMeta(
-                          icon: Icons.auto_awesome,
-                          label: highlight.difficulty,
-                        ),
-                        _HeaderMeta(
-                          icon: Icons.receipt_long,
-                          label: '${highlight.ingredients.length} ingredientes',
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 18),
-                    Text(
-                      highlight.description.isNotEmpty
-                          ? highlight.description
-                          : 'Abra a receita para ver o preparo completo e os ingredientes detalhados.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withOpacity(0.85),
-                        height: 1.45,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                );
-
-                final layoutChild = isCompact
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          content,
-                          const SizedBox(height: 24),
-                          Align(
-                            alignment: Alignment.center,
-                            child: cover,
-                          ),
-                        ],
-                      )
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: content),
-                          const SizedBox(width: 20),
-                          cover,
-                        ],
-                      );
-
-                return Container(
-                  padding: EdgeInsets.fromLTRB(
-                    _valueForWidth<double>(
-                      width: width,
-                      compact: 24,
-                      medium: 28,
-                      expanded: 30,
-                    ),
-                    _valueForWidth<double>(
-                      width: width,
-                      compact: 26,
-                      medium: 30,
-                      expanded: 32,
-                    ),
-                    _valueForWidth<double>(
-                      width: width,
-                      compact: 24,
-                      medium: 28,
-                      expanded: 30,
-                    ),
-                    _valueForWidth<double>(
-                      width: width,
-                      compact: 26,
-                      medium: 30,
-                      expanded: 32,
-                    ),
                   ),
-                  decoration: decoration,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 320),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    child: KeyedSubtree(
-                      key: ValueKey<bool>(isCompact),
-                      child: layoutChild,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        if (highlight != null) const SizedBox(height: 28),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(26, 26, 26, 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            theme.colorScheme.primary.withOpacity(0.6),
-                            theme.colorScheme.primary.withOpacity(0.18),
-                          ],
-                          begin: Alignment.topRight,
-                          end: Alignment.bottomLeft,
-                        ),
-                      ),
-                      child: const Icon(Icons.auto_awesome, color: Colors.white),
-                    ),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            hasRecipes
-                                ? 'Sugestões sob medida para agora'
-                                : 'Vamos tentar novamente?',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          if (_args.message != null) ...[
-                            const SizedBox(height: 10),
-                            Text(
-                              _args.message!,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.65),
-                                height: 1.45,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
-                const SizedBox(height: 18),
-                if (ingredients.isNotEmpty)
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: ingredients
-                        .map(
-                          (ingredient) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.16),
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                            child: Text(
-                              ingredient,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface.withOpacity(0.75),
-                                    letterSpacing: 0.2,
-                                  ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  )
-                else
-                  Text(
-                    'Ajuste os ingredientes quando quiser para explorar novas combinações.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.65),
-                      height: 1.45,
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: () => Get.back(),
-                  icon: const Icon(Icons.search),
-                  label: const Text('Nova pesquisa'),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ),
-      ],
+      ),
     );
   }
 }
 
-class _HeaderMeta extends StatelessWidget {
-  const _HeaderMeta({required this.icon, required this.label});
+class _ResultsHeader extends StatelessWidget {
+  const _ResultsHeader({required this.theme, required this.args});
 
-  final IconData icon;
-  final String label;
+  final ThemeData theme;
+  final RecipeResultsArgs args;
 
   @override
   Widget build(BuildContext context) {
+    final chips = args.ingredients
+        .map(
+          (ingredient) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            margin: const EdgeInsets.only(right: 8, bottom: 8),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Text(
+              ingredient,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
+          ),
+        )
+        .toList();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(26, 28, 26, 26),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Aqui está o que encontramos',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Receitas pensadas a partir dos ingredientes selecionados:',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.68),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Wrap(children: chips),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.22),
+        color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+          Icon(Icons.info_outline, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.74),
+                height: 1.45,
+              ),
+            ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ResultsOrb extends StatelessWidget {
-  const _ResultsOrb({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 260,
-      height: 260,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withOpacity(0.05)],
-        ),
       ),
     );
   }

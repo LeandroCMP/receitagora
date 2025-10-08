@@ -3,36 +3,6 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/recipe_entity.dart';
 import 'recipe_cover.dart';
 
-const double _compactBreakpoint = 480.0;
-const double _mediumBreakpoint = 840.0;
-
-bool _isCompactWidth(double width) => width < _compactBreakpoint;
-
-bool _isExpandedWidth(double width) => width >= _mediumBreakpoint;
-
-T _valueForWidth<T>({
-  required double width,
-  required T compact,
-  T? medium,
-  T? expanded,
-}) {
-  T result;
-
-  if (_isExpandedWidth(width) && expanded != null) {
-    result = expanded;
-  } else if (!_isCompactWidth(width) && medium != null) {
-    result = medium;
-  } else {
-    result = compact;
-  }
-
-  if (T == double && result is num) {
-    return result.toDouble() as T;
-  }
-
-  return result;
-}
-
 class RecipeSummaryCard extends StatelessWidget {
   const RecipeSummaryCard({
     required this.recipe,
@@ -47,7 +17,7 @@ class RecipeSummaryCard extends StatelessWidget {
   final String heroTag;
   final VoidCallback onTap;
 
-  String _buildPreview() {
+  String _previewText() {
     final description = recipe.description.trim();
     if (description.isNotEmpty) {
       return description;
@@ -57,104 +27,89 @@ class RecipeSummaryCard extends StatelessWidget {
       return recipe.steps.first.trim();
     }
 
-    return 'Veja os detalhes para preparar essa receita.';
+    return 'Toque para visualizar o passo a passo completo desta receita.';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final preview = _buildPreview();
-    final ingredientCount = recipe.ingredients.length;
-    final stepCount = recipe.steps.length;
+    final preview = _previewText();
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final isCompact = _isCompactWidth(width);
-        final coverSize = _valueForWidth<double>(
-          width: width,
-          compact: 104,
-          medium: 120,
-          expanded: 138,
-        );
+        final isCompact = width < 540;
+        final padding = EdgeInsets.all(isCompact ? 22 : 28);
+        final gap = isCompact ? 20.0 : 28.0;
 
         final cover = RecipeCover(
           theme: theme,
           recipe: recipe,
           position: position,
           heroTag: heroTag,
-          size: coverSize,
+          size: isCompact ? 120 : 140,
+        );
+
+        final meta = Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _MetaPill(
+              icon: Icons.auto_awesome,
+              label: recipe.difficulty,
+              color: theme.colorScheme.primary,
+            ),
+            _MetaPill(
+              icon: Icons.schedule_rounded,
+              label: recipe.duration,
+              color: theme.colorScheme.secondary,
+            ),
+            _MetaPill(
+              icon: Icons.restaurant_menu,
+              label: '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
+              color: theme.colorScheme.primary,
+            ),
+          ],
         );
 
         final content = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.18),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Sugestão ${position + 1}'.toUpperCase(),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: Colors.white,
-                  letterSpacing: 1.1,
-                  fontWeight: FontWeight.w600,
-                ),
+            Text(
+              'Sugestão ${position + 1}'.toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Text(
               recipe.name,
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w700,
-                height: 1.15,
+                height: 1.2,
               ),
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _MetaPill(
-                  icon: Icons.auto_awesome,
-                  label: recipe.difficulty,
-                  accent: theme.colorScheme.primary,
-                ),
-                _MetaPill(
-                  icon: Icons.schedule_rounded,
-                  label: recipe.duration,
-                  accent: theme.colorScheme.secondary,
-                ),
-              ],
-            ),
+            const SizedBox(height: 14),
+            meta,
             const SizedBox(height: 18),
             Text(
               preview,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.68),
-                height: 1.55,
-              ),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                height: 1.55,
+              ),
             ),
             const SizedBox(height: 20),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                _MetaPill(
-                  icon: Icons.restaurant_menu,
-                  label: '$ingredientCount ingrediente${ingredientCount == 1 ? '' : 's'}',
-                  accent: theme.colorScheme.primary.withOpacity(0.75),
-                ),
-                _MetaPill(
-                  icon: Icons.format_list_numbered,
-                  label: '$stepCount etapa${stepCount == 1 ? '' : 's'}',
-                  accent: theme.colorScheme.primary.withOpacity(0.75),
-                ),
-              ],
+            Text(
+              'Toque para ver ingredientes e preparo completo',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         );
@@ -164,7 +119,7 @@ class RecipeSummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   content,
-                  const SizedBox(height: 24),
+                  SizedBox(height: gap),
                   Align(
                     alignment: Alignment.center,
                     child: cover,
@@ -175,63 +130,24 @@ class RecipeSummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(child: content),
-                  const SizedBox(width: 18),
+                  SizedBox(width: gap),
                   cover,
                 ],
               );
 
         return Card(
-          margin: const EdgeInsets.symmetric(vertical: 16),
+          margin: EdgeInsets.only(bottom: isCompact ? 20 : 28),
           child: InkWell(
+            borderRadius: BorderRadius.circular(28),
             onTap: onTap,
-            borderRadius: BorderRadius.circular(32),
             child: Container(
+              padding: padding,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(32),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    theme.colorScheme.surfaceVariant.withOpacity(0.45),
-                    theme.colorScheme.surfaceVariant.withOpacity(0.18),
-                  ],
-                ),
+                borderRadius: BorderRadius.circular(28),
+                color: theme.colorScheme.surface.withOpacity(0.95),
+                border: Border.all(color: theme.colorScheme.outline.withOpacity(0.28)),
               ),
-              padding: EdgeInsets.fromLTRB(
-                _valueForWidth<double>(
-                  width: width,
-                  compact: 22,
-                  medium: 26,
-                  expanded: 28,
-                ),
-                _valueForWidth<double>(
-                  width: width,
-                  compact: 24,
-                  medium: 26,
-                  expanded: 28,
-                ),
-                _valueForWidth<double>(
-                  width: width,
-                  compact: 22,
-                  medium: 26,
-                  expanded: 28,
-                ),
-                _valueForWidth<double>(
-                  width: width,
-                  compact: 26,
-                  medium: 28,
-                  expanded: 30,
-                ),
-              ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: KeyedSubtree(
-                  key: ValueKey<bool>(isCompact),
-                  child: child,
-                ),
-              ),
+              child: child,
             ),
           ),
         );
@@ -244,27 +160,28 @@ class _MetaPill extends StatelessWidget {
   const _MetaPill({
     required this.icon,
     required this.label,
-    required this.accent,
+    required this.color,
   });
 
   final IconData icon;
   final String label;
-  final Color accent;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.18),
+        color: color.withOpacity(0.18),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: accent.withOpacity(0.95)),
-          const SizedBox(width: 10),
+          Icon(icon, size: 16, color: color.withOpacity(0.9)),
+          const SizedBox(width: 8),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(

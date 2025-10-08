@@ -3,36 +3,6 @@ import 'package:get/get.dart';
 
 import '../controllers/login_controller.dart';
 
-const double _compactBreakpoint = 480.0;
-const double _mediumBreakpoint = 840.0;
-
-bool _isCompactWidth(double width) => width < _compactBreakpoint;
-
-bool _isExpandedWidth(double width) => width >= _mediumBreakpoint;
-
-T _valueForWidth<T>({
-  required double width,
-  required T compact,
-  T? medium,
-  T? expanded,
-}) {
-  T result;
-
-  if (_isExpandedWidth(width) && expanded != null) {
-    result = expanded;
-  } else if (!_isCompactWidth(width) && medium != null) {
-    result = medium;
-  } else {
-    result = compact;
-  }
-
-  if (T == double && result is num) {
-    return result.toDouble() as T;
-  }
-
-  return result;
-}
-
 class LoginPage extends GetView<LoginController> {
   const LoginPage({super.key});
 
@@ -42,530 +12,292 @@ class LoginPage extends GetView<LoginController> {
     final background = theme.colorScheme.background;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.08), background),
-                  background,
-                  Color.alphaBlend(Colors.black.withOpacity(0.18), background),
-                ],
-              ),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.08), background),
+              background,
+              Color.alphaBlend(theme.colorScheme.secondary.withOpacity(0.06), background),
+            ],
           ),
-          Positioned(
-            top: -160,
-            right: -120,
-            child: _BlurOrb(color: theme.colorScheme.primary.withOpacity(0.25)),
-          ),
-          Positioned(
-            bottom: -220,
-            left: -120,
-            child: _BlurOrb(color: theme.colorScheme.secondary.withOpacity(0.16)),
-          ),
-          SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final horizontalPadding = _valueForWidth<double>(
-                  width: width,
-                  compact: 20,
-                  medium: 32,
-                  expanded: 48,
-                );
-                final maxWidth = _valueForWidth<double>(
-                  width: width,
-                  compact: width,
-                  medium: 520,
-                  expanded: 560,
-                );
+        ),
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final horizontalPadding = width < 420
+                  ? 20.0
+                  : width < 720
+                      ? 32.0
+                      : 48.0;
+              final maxWidth = width < 720 ? width : 640.0;
 
-                return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding,
-                    vertical: 32,
+              return Center(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    32,
+                    horizontalPadding,
+                    40,
                   ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: maxWidth),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          LayoutBuilder(
-                            builder: (context, headerConstraints) {
-                              final headerWidth = headerConstraints.maxWidth;
-                              final isCompactHeader = _isCompactWidth(headerWidth);
-                              final avatar = CircleAvatar(
-                                radius: 28,
-                                backgroundColor: theme.colorScheme.surfaceVariant,
-                                child: Icon(
-                                  Icons.person_rounded,
-                                  color: theme.colorScheme.onSurface.withOpacity(0.8),
-                                  size: 30,
-                                ),
-                              );
-
-                              final headline = Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Olá, convidado'.toUpperCase(),
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                      letterSpacing: 1.4,
-                                      color: theme.colorScheme.onBackground.withOpacity(0.68),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Pronto para cozinhar?\nDescubra combinações perfeitas.',
-                                    style: theme.textTheme.headlineSmall?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.1,
-                                    ),
-                                  ),
-                                ],
-                              );
-
-                              if (isCompactHeader) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    avatar,
-                                    const SizedBox(height: 18),
-                                    headline,
-                                  ],
-                                );
-                              }
-
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(child: headline),
-                                  const SizedBox(width: 18),
-                                  avatar,
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 32),
-                          const _HeroCard(),
-                          const SizedBox(height: 32),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(28, 32, 28, 30),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Text(
-                                    'Entre como visitante',
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Descubra receitas em segundos. Você pode fazer até três buscas por dia no modo visitante.',
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                      height: 1.5,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 28),
-                                  Obx(
-                                    () => FilledButton(
-                                      onPressed: controller.isLoading.value
-                                          ? null
-                                          : controller.continueAsGuest,
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 4),
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            if (controller.isLoading.value)
-                                              SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                                    theme.colorScheme.onPrimary,
-                                                  ),
-                                                ),
-                                              )
-                                            else
-                                              const Icon(Icons.bolt_rounded),
-                                            const SizedBox(width: 12),
-                                            const Text('Começar agora'),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Obx(
-                                    () => OutlinedButton.icon(
-                                      icon: _GoogleBadge(theme: theme),
-                                      label: const Text('Google (em breve)'),
-                                      onPressed: controller.isLoading.value
-                                          ? null
-                                          : controller.signInWithGoogle,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 26),
-                                  _GuestQuotaHint(theme: theme),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          Text(
-                            'Receitas elegantes, filtros inteligentes e um visual inspirado em apps premium de culinária.',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onBackground.withOpacity(0.62),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _LoginHeader(theme: theme),
+                        const SizedBox(height: 28),
+                        const _HighlightCard(),
+                        const SizedBox(height: 28),
+                        _GuestCard(controller: controller),
+                        const SizedBox(height: 20),
+                        _ComingSoonCard(controller: controller),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _HeroCard extends StatelessWidget {
-  const _HeroCard();
+class _LoginHeader extends StatelessWidget {
+  const _LoginHeader({required this.theme});
+
+  final ThemeData theme;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final cardHeight = _valueForWidth<double>(
-          width: width,
-          compact: 280,
-          medium: 260,
-          expanded: 240,
+        final isCompact = width < 520;
+
+        final avatar = Container(
+          height: 72,
+          width: 72,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [
+                theme.colorScheme.primary.withOpacity(0.9),
+                theme.colorScheme.primary.withOpacity(0.4),
+              ],
+            ),
+          ),
+          child: Icon(Icons.restaurant_menu, color: theme.colorScheme.onPrimary, size: 32),
         );
-        final gradient = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primary.withOpacity(0.86),
-            theme.colorScheme.primary.withOpacity(0.35),
-            theme.colorScheme.primary.withOpacity(0.12),
+
+        final text = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Receita Agora',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Descubra receitas que combinam com os ingredientes que você tem à mão.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.68),
+                height: 1.45,
+              ),
+            ),
           ],
         );
 
-        final metaItems = [
-          const _HeroMeta(icon: Icons.schedule_rounded, label: '40 min'),
-          const _HeroMeta(icon: Icons.whatshot_outlined, label: 'Fácil'),
-          const _HeroMeta(icon: Icons.star_rounded, label: '4.8'),
-        ];
+        if (isCompact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              avatar,
+              const SizedBox(height: 20),
+              text,
+            ],
+          );
+        }
 
-        return Card(
-          elevation: 0,
-          margin: EdgeInsets.zero,
-          child: SizedBox(
-            height: cardHeight,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: gradient,
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: -30,
-                    top: 36,
-                    child: Container(
-                      width: _valueForWidth<double>(
-                        width: width,
-                        compact: 160,
-                        medium: 180,
-                        expanded: 190,
-                      ),
-                      height: _valueForWidth<double>(
-                        width: width,
-                        compact: 160,
-                        medium: 180,
-                        expanded: 190,
-                      ),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.18),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: _valueForWidth<double>(
-                      width: width,
-                      compact: 22,
-                      medium: 24,
-                      expanded: 26,
-                    ),
-                    top: 30,
-                    child: Container(
-                      width: _valueForWidth<double>(
-                        width: width,
-                        compact: 120,
-                        medium: 130,
-                        expanded: 140,
-                      ),
-                      height: _valueForWidth<double>(
-                        width: width,
-                        compact: 120,
-                        medium: 130,
-                        expanded: 140,
-                      ),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.35),
-                      ),
-                      child: Icon(
-                        Icons.ramen_dining,
-                        color: Colors.black.withOpacity(0.78),
-                        size: _valueForWidth<double>(
-                          width: width,
-                          compact: 48,
-                          medium: 52,
-                          expanded: 54,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      _valueForWidth<double>(
-                        width: width,
-                        compact: 22,
-                        medium: 26,
-                        expanded: 28,
-                      ),
-                      _valueForWidth<double>(
-                        width: width,
-                        compact: 26,
-                        medium: 28,
-                        expanded: 32,
-                      ),
-                      _valueForWidth<double>(
-                        width: width,
-                        compact: 22,
-                        medium: 26,
-                        expanded: 28,
-                      ),
-                      _valueForWidth<double>(
-                        width: width,
-                        compact: 26,
-                        medium: 28,
-                        expanded: 28,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: Text(
-                            'Sugestão do dia',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.6,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        Text(
-                          'Chicken baked com ervas',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Uma inspiração para você começar — e nós cuidamos do resto na próxima busca.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.85),
-                            height: 1.45,
-                          ),
-                        ),
-                        const Spacer(),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: metaItems,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(child: text),
+            const SizedBox(width: 24),
+            avatar,
+          ],
         );
       },
     );
   }
 }
 
-class _HeroMeta extends StatelessWidget {
-  const _HeroMeta({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
+class _HighlightCard extends StatelessWidget {
+  const _HighlightCard();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.22),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.white),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.3),
+              theme.colorScheme.primary.withOpacity(0.08),
+            ],
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onPrimary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Text(
+                'Experiência personalizada'.toUpperCase(),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onPrimary,
+                  letterSpacing: 1.2,
                   fontWeight: FontWeight.w600,
                 ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GuestQuotaHint extends StatelessWidget {
-  const _GuestQuotaHint({required this.theme});
-
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black26,
+              ),
             ),
-            child: Icon(Icons.hourglass_bottom_rounded, color: theme.colorScheme.primary),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Modo visitante',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Até 3 buscas por dia com duas receitas por vez. Entre com o Google futuramente para salvar favoritos.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.72),
-                    height: 1.45,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 18),
+            Text(
+              'Conte o que tem na sua cozinha e o ChatGPT cria sugestões sob medida. Cada receita vem com tempo de preparo, dificuldade e modo de fazer.',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                height: 1.5,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _GoogleBadge extends StatelessWidget {
-  const _GoogleBadge({required this.theme});
-
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF4285F4),
-            Color(0xFF34A853),
-            Color(0xFFFABB05),
-            Color(0xFFEA4335),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          'G',
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-          ),
         ),
       ),
     );
   }
 }
 
-class _BlurOrb extends StatelessWidget {
-  const _BlurOrb({required this.color});
+class _GuestCard extends StatelessWidget {
+  const _GuestCard({required this.controller});
 
-  final Color color;
+  final LoginController controller;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 260,
-      height: 260,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withOpacity(0.05)],
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(26, 30, 26, 26),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Entrar como visitante',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Você pode realizar até três buscas por dia e cada pesquisa retorna duas sugestões exclusivas.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Obx(
+              () => FilledButton(
+                onPressed: controller.isLoading.value ? null : controller.continueAsGuest,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (controller.isLoading.value) ...[
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                      ]
+                      else ...[
+                        const Icon(Icons.rocket_launch_rounded),
+                        const SizedBox(width: 12),
+                      ],
+                      const Text('Começar agora'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ComingSoonCard extends StatelessWidget {
+  const _ComingSoonCard({required this.controller});
+
+  final LoginController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(26, 28, 26, 26),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Preferir entrar com Google?',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Estamos finalizando uma experiência de login social para liberar buscas ilimitadas e sincronizar suas receitas favoritas.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 18),
+            OutlinedButton.icon(
+              onPressed: controller.signInWithGoogle,
+              icon: const Icon(Icons.login_rounded),
+              label: const Text('Entrar com Google (em breve)'),
+            ),
+          ],
         ),
       ),
     );

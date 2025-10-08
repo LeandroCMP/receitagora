@@ -14,19 +14,15 @@ class SplashPage extends GetView<SplashController> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
               Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.08),
+                theme.colorScheme.primary.withOpacity(0.1),
                 theme.colorScheme.background,
               ),
               theme.colorScheme.background,
-              Color.alphaBlend(
-                theme.colorScheme.secondary.withOpacity(0.06),
-                theme.colorScheme.background,
-              ),
             ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
           ),
         ),
         child: Center(
@@ -34,48 +30,50 @@ class SplashPage extends GetView<SplashController> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                height: 96,
-                width: 96,
+                height: 92,
+                width: 92,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
                       theme.colorScheme.primary,
-                      theme.colorScheme.primary.withOpacity(0.72),
+                      theme.colorScheme.secondary,
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
                       color: theme.colorScheme.primary.withOpacity(0.25),
-                      blurRadius: 30,
-                      spreadRadius: 2,
+                      blurRadius: 32,
+                      offset: const Offset(0, 20),
                     ),
                   ],
                 ),
                 child: Icon(
                   Icons.restaurant_menu,
                   color: theme.colorScheme.onPrimary,
-                  size: 42,
+                  size: 40,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
               Text(
                 'Receita Agora',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.1,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
-                'Sabores sob medida para o seu momento.',
+                'Sabores feitos para o seu momento.',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onBackground.withOpacity(0.68),
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 26),
               SizedBox(
                 width: 60,
                 child: LinearProgressIndicator(
