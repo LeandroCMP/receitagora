@@ -21,14 +21,7 @@ class RecipeCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gradient = LinearGradient(
-      colors: [
-        theme.colorScheme.primary.withOpacity(0.85),
-        theme.colorScheme.primary.withOpacity(0.18),
-      ],
-      begin: Alignment.topRight,
-      end: Alignment.bottomLeft,
-    );
+    final highlight = theme.colorScheme.primary;
 
     return Hero(
       tag: heroTag,
@@ -37,32 +30,51 @@ class RecipeCover extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: gradient,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              highlight.withOpacity(0.92),
+              highlight.withOpacity(0.45),
+              highlight.withOpacity(0.18),
+            ],
+          ),
           boxShadow: [
             BoxShadow(
-              color: theme.colorScheme.primary.withOpacity(0.25),
-              blurRadius: 32,
+              color: highlight.withOpacity(0.3),
+              blurRadius: 28,
               offset: const Offset(0, 18),
             ),
           ],
         ),
         child: Stack(
           children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.2),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
             if (showLabel)
               Positioned(
-                top: 14,
-                left: 14,
+                top: 16,
+                left: 16,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(18),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     'Receita ${position + 1}'.toUpperCase(),
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: Colors.white,
-                      letterSpacing: 1.1,
+                      letterSpacing: 1.2,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -71,9 +83,9 @@ class RecipeCover extends StatelessWidget {
             Align(
               alignment: Alignment.center,
               child: Icon(
-                Icons.local_dining,
-                color: Colors.white.withOpacity(0.9),
-                size: size * 0.36,
+                Icons.ramen_dining,
+                color: Colors.black.withOpacity(0.78),
+                size: size * 0.38,
               ),
             ),
             Positioned(
@@ -82,7 +94,7 @@ class RecipeCover extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.black.withOpacity(0.28),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(

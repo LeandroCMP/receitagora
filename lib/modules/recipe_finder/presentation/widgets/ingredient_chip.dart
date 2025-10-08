@@ -15,20 +15,23 @@ class IngredientChip extends StatelessWidget {
     final theme = Theme.of(context);
     return Chip(
       label: Text(label),
-      deleteIcon: const Icon(Icons.close, size: 18),
+      labelPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      deleteIcon: const Icon(Icons.close_rounded, size: 16),
       backgroundColor: Color.alphaBlend(
-        theme.colorScheme.primary.withOpacity(0.18),
-        theme.colorScheme.surface,
+        theme.colorScheme.primary.withOpacity(0.12),
+        Colors.black.withOpacity(0.18),
       ),
       labelStyle: theme.textTheme.bodyMedium?.copyWith(
         height: 1.3,
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
       ),
-      deleteIconColor: theme.colorScheme.onSurface.withOpacity(0.55),
+      deleteIconColor: Colors.white.withOpacity(0.9),
       onDeleted: onDeleted,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.35)),
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: Colors.white.withOpacity(0.18)),
       ),
     );
   }

@@ -248,81 +248,183 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
         ? '${sanitized[0].toUpperCase()}${sanitized.length > 1 ? sanitized.substring(1) : ''}'
         : 'Convidado';
 
-    final gradient = LinearGradient(
+    final heroGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
       colors: [
-        theme.colorScheme.primary.withOpacity(0.55),
-        theme.colorScheme.primary.withOpacity(0.08),
+        theme.colorScheme.primary.withOpacity(0.75),
+        theme.colorScheme.primary.withOpacity(0.32),
+        theme.colorScheme.primary.withOpacity(0.12),
       ],
-      begin: Alignment.topRight,
-      end: Alignment.bottomLeft,
     );
 
-    return Card(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(32),
-          gradient: gradient,
-        ),
-        padding: const EdgeInsets.fromLTRB(28, 32, 28, 32),
-        child: Column(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
+                Text(
+                  'Olá, $greeting',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Pronto para cozinhar hoje à noite?',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.68),
+                  ),
+                ),
+              ],
+            ),
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: theme.colorScheme.surfaceVariant,
+              child: Icon(
+                Icons.person_outline,
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 26),
+        Card(
+          margin: EdgeInsets.zero,
+          child: Container(
+            height: 220,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: heroGradient,
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: -24,
+                  top: 40,
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.18),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 28,
+                  top: 36,
+                  child: Container(
+                    width: 132,
+                    height: 132,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.32),
+                    ),
+                    child: Icon(
+                      Icons.ramen_dining,
+                      color: Colors.black.withOpacity(0.75),
+                      size: 50,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 24,
+                  right: 24,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.redAccent.withOpacity(0.85),
+                    ),
+                    child: const SizedBox(
+                      width: 42,
+                      height: 42,
+                      child: Icon(Icons.favorite, color: Colors.white, size: 22),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Text(
+                          'Chicken baked',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
-                        'Olá, $greeting',
+                        'Um clássico dourado com ervas frescas.',
                         style: theme.textTheme.titleLarge?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Text(
-                        'Pronto para descobrir algo delicioso hoje? Informe os ingredientes e nós cuidamos do resto.',
+                        'Comece adicionando seus ingredientes favoritos e receba sugestões sob medida.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: Colors.white.withOpacity(0.85),
-                          height: 1.45,
+                          height: 1.4,
                         ),
+                      ),
+                      const Spacer(),
+                      Wrap(
+                        spacing: 12,
+                        children: const [
+                          _HeroStat(icon: Icons.schedule_rounded, label: '40 min'),
+                          _HeroStat(icon: Icons.group_outlined, label: 'Serve 3'),
+                          _HeroStat(icon: Icons.local_fire_department_rounded, label: '480 kcal'),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 18),
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.18),
-                  ),
-                  child: Icon(
-                    Icons.restaurant_menu,
-                    color: Colors.white.withOpacity(0.9),
-                    size: 32,
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 26),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: const [
-                _CategoryChip(label: 'Café da manhã'),
-                _CategoryChip(label: 'Almoço'),
-                _CategoryChip(label: 'Jantar'),
-                _CategoryChip(label: 'Snacks'),
-              ],
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 28),
+        Text(
+          'Categorias de refeição',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
+        ),
+        const SizedBox(height: 14),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: const [
+              _CategoryChip(label: 'Café da manhã', selected: false),
+              SizedBox(width: 12),
+              _CategoryChip(label: 'Almoço', selected: true),
+              SizedBox(width: 12),
+              _CategoryChip(label: 'Jantar', selected: false),
+              SizedBox(width: 12),
+              _CategoryChip(label: 'Snacks', selected: false),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -343,17 +445,28 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
           : 'Modo visitante: limite diário atingido. Relaxe um pouco e volte amanhã para descobrir novas sugestões.';
 
       return Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accentColor.withOpacity(0.18),
+                accentColor.withOpacity(0.08),
+              ],
+            ),
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: accentColor.withOpacity(0.16),
+                  color: Colors.black.withOpacity(0.22),
                 ),
                 child: Icon(icon, color: accentColor, size: 24),
               ),
@@ -364,17 +477,17 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                   children: [
                     Text(
                       hasQuota ? 'Limite diário disponível' : 'Limite diário atingido',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                         letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       message,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withOpacity(0.72),
-                        height: 1.5,
+                        height: 1.45,
                       ),
                     ),
                   ],
@@ -390,8 +503,20 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
   Widget _buildIngredientSection(ThemeData theme) {
     return Obx(
       () => Card(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(26, 28, 26, 30),
+        margin: EdgeInsets.zero,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(28, 30, 28, 32),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.surfaceVariant.withOpacity(0.35),
+                theme.colorScheme.surfaceVariant.withOpacity(0.12),
+              ],
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -399,15 +524,15 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: theme.colorScheme.primary.withOpacity(0.16),
+                      color: Colors.black.withOpacity(0.18),
                     ),
                     child: Icon(Icons.shopping_basket_outlined, color: theme.colorScheme.primary),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 18),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,7 +545,7 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Adicione um ingrediente por vez para receber sugestões equilibradas.',
+                          'Adicione um ingrediente de cada vez e veja sugestões alinhadas ao seu paladar.',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.68),
                             height: 1.45,
@@ -431,29 +556,47 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
                   ),
                 ],
               ),
-              const SizedBox(height: 22),
-              TextField(
-                controller: controller.ingredientTextController,
-                focusNode: controller.ingredientFocusNode,
-                textInputAction: TextInputAction.done,
-                onSubmitted: controller.addIngredient,
-                decoration: InputDecoration(
-                  hintText: 'Digite um ingrediente e toque em adicionar',
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.add_circle_outline),
-                    onPressed: () => controller.addIngredient(
-                      controller.ingredientTextController.text,
+              const SizedBox(height: 24),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(
+                    color: theme.colorScheme.onSurface.withOpacity(0.08),
+                  ),
+                ),
+                child: TextField(
+                  controller: controller.ingredientTextController,
+                  focusNode: controller.ingredientFocusNode,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: controller.addIngredient,
+                  decoration: InputDecoration(
+                    hintText: 'Digite um ingrediente e toque em adicionar',
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.add_circle_outline),
+                      onPressed: () => controller.addIngredient(
+                        controller.ingredientTextController.text,
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 22),
               if (controller.ingredients.isEmpty)
-                Text(
-                  'empty_ingredient_hint'.tr,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    height: 1.5,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  child: Text(
+                    'empty_ingredient_hint'.tr,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.62),
+                      height: 1.45,
+                    ),
                   ),
                 )
               else
@@ -481,6 +624,10 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
       () => SizedBox(
         width: double.infinity,
         child: FilledButton.icon(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 20),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          ),
           icon: controller.isLoading.value
               ? SizedBox(
                   height: 18,
@@ -506,25 +653,77 @@ class _RecipeFinderPageState extends State<RecipeFinderPage>
 }
 
 class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.label});
+  const _CategoryChip({required this.label, this.selected = false});
 
+  final String label;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final background = selected
+        ? Colors.white.withOpacity(0.18)
+        : Colors.white.withOpacity(0.08);
+    final textColor = selected ? Colors.white : Colors.white.withOpacity(0.7);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(24),
+        border: selected
+            ? Border.all(color: Colors.white.withOpacity(0.45), width: 1)
+            : Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (selected)
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Icon(Icons.local_dining, size: 16, color: Colors.white),
+            ),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroStat extends StatelessWidget {
+  const _HeroStat({required this.icon, required this.label});
+
+  final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(22),
+        color: Colors.black.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.2,
-            ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
       ),
     );
   }

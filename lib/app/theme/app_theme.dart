@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   static ThemeData buildTheme(TextTheme baseTextTheme) {
-    const primary = Color(0xFFFFC24C);
-    const primaryContainer = Color(0xFF2F2412);
-    const background = Color(0xFF16171B);
-    const surface = Color(0xFF1F2025);
-    const surfaceVariant = Color(0xFF24252B);
-    const onSurface = Color(0xFFECEEF6);
-    const outline = Color(0xFF35363F);
+    const primary = Color(0xFFFFC447);
+    const primaryContainer = Color(0xFF2E2210);
+    const background = Color(0xFF121214);
+    const surface = Color(0xFF1A1B1F);
+    const surfaceVariant = Color(0xFF212125);
+    const onSurface = Color(0xFFEDEEF6);
+    const outline = Color(0xFF2E2F36);
 
     final colorScheme = const ColorScheme.dark().copyWith(
       primary: primary,
@@ -37,15 +37,15 @@ class AppTheme {
     );
 
     final surfaceTint = Color.alphaBlend(
-      colorScheme.primary.withOpacity(0.05),
+      colorScheme.primary.withOpacity(0.04),
       colorScheme.surface,
     );
     final borderColor = Color.alphaBlend(
-      colorScheme.onSurface.withOpacity(0.08),
+      colorScheme.onSurface.withOpacity(0.06),
       colorScheme.surface,
     );
     final subtleBorder = Color.alphaBlend(
-      colorScheme.onSurface.withOpacity(0.05),
+      colorScheme.onSurface.withOpacity(0.04),
       colorScheme.surface,
     );
 
@@ -58,7 +58,7 @@ class AppTheme {
       fontFamily: 'Roboto',
       appBarTheme: AppBarTheme(
         backgroundColor: Color.alphaBlend(
-          colorScheme.primary.withOpacity(0.04),
+          colorScheme.primary.withOpacity(0.03),
           colorScheme.surface,
         ),
         foregroundColor: colorScheme.onSurface,
@@ -66,15 +66,16 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.2,
+          letterSpacing: 0.4,
         ),
       ),
       cardTheme: CardTheme(
         color: surfaceTint,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        margin: const EdgeInsets.symmetric(vertical: 12),
+        margin: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(28),
           side: BorderSide(color: subtleBorder),
         ),
       ),
@@ -88,7 +89,7 @@ class AppTheme {
             letterSpacing: 0.2,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(26),
           ),
         ),
       ),
@@ -100,7 +101,7 @@ class AppTheme {
           elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(26),
             side: BorderSide(color: borderColor),
           ),
           textStyle: textTheme.titleMedium?.copyWith(
@@ -119,7 +120,7 @@ class AppTheme {
             letterSpacing: 0.2,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(26),
           ),
         ),
       ),
@@ -137,27 +138,27 @@ class AppTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
           borderSide: BorderSide(color: subtleBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
           borderSide: BorderSide(color: subtleBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
           borderSide: BorderSide(
             color: colorScheme.primary.withOpacity(0.9),
             width: 1.6,
           ),
         ),
         hintStyle: textTheme.bodyMedium?.copyWith(
-          color: colorScheme.onSurface.withOpacity(0.6),
+          color: colorScheme.onSurface.withOpacity(0.58),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: Color.alphaBlend(
-          colorScheme.primary.withOpacity(0.16),
+          colorScheme.primary.withOpacity(0.12),
           colorScheme.surface,
         ),
         disabledColor: colorScheme.onSurface.withOpacity(0.1),
@@ -169,7 +170,7 @@ class AppTheme {
           letterSpacing: 0.15,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -184,7 +185,7 @@ class AppTheme {
       dividerTheme: DividerThemeData(
         color: subtleBorder,
         thickness: 1,
-        space: 24,
+        space: 28,
       ),
       dialogTheme: DialogTheme(
         backgroundColor: surfaceTint,

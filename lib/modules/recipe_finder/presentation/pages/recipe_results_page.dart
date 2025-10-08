@@ -5,6 +5,7 @@ import '../../../../app/routes/app_routes.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
 import '../widgets/recipe_card.dart';
+import '../widgets/recipe_cover.dart';
 import 'recipe_detail_page.dart';
 
 class RecipeResultsArgs {
@@ -205,103 +206,239 @@ class _RecipeResultsPageState extends State<RecipeResultsPage>
   }
 
   Widget _buildHeader(ThemeData theme, bool hasRecipes) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(28, 30, 28, 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.primary.withOpacity(0.65),
-                        theme.colorScheme.primary.withOpacity(0.2),
-                      ],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                    ),
-                  ),
-                  child: const Icon(Icons.auto_awesome, color: Colors.white),
+    final highlight = hasRecipes ? _args.recipes.first : null;
+    final ingredients = _args.ingredients;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (highlight != null)
+          Card(
+            margin: EdgeInsets.zero,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(28, 30, 28, 28),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.75),
+                    theme.colorScheme.primary.withOpacity(0.32),
+                    theme.colorScheme.primary.withOpacity(0.12),
+                  ],
                 ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        hasRecipes
-                            ? 'Sugestões sob medida para agora'
-                            : 'Vamos tentar novamente?',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (_args.message != null) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          _args.message!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.65),
-                            height: 1.45,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Text(
+                            'Sugestão principal',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.6,
+                            ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        Text(
+                          highlight.name,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            _HeaderMeta(
+                              icon: Icons.schedule_rounded,
+                              label: highlight.duration,
+                            ),
+                            _HeaderMeta(
+                              icon: Icons.auto_awesome,
+                              label: highlight.difficulty,
+                            ),
+                            _HeaderMeta(
+                              icon: Icons.receipt_long,
+                              label: '${highlight.ingredients.length} ingredientes',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          highlight.description.isNotEmpty
+                              ? highlight.description
+                              : 'Abra a receita para ver o preparo completo e os ingredientes detalhados.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.85),
+                            height: 1.45,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
-                    ],
+                    ),
                   ),
+                  const SizedBox(width: 20),
+                  RecipeCover(
+                    theme: theme,
+                    recipe: highlight,
+                    position: 0,
+                    heroTag: 'highlight-${highlight.name}',
+                    size: 130,
+                    showLabel: false,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (highlight != null) const SizedBox(height: 28),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(26, 26, 26, 30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            theme.colorScheme.primary.withOpacity(0.6),
+                            theme.colorScheme.primary.withOpacity(0.18),
+                          ],
+                          begin: Alignment.topRight,
+                          end: Alignment.bottomLeft,
+                        ),
+                      ),
+                      child: const Icon(Icons.auto_awesome, color: Colors.white),
+                    ),
+                    const SizedBox(width: 18),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            hasRecipes
+                                ? 'Sugestões sob medida para agora'
+                                : 'Vamos tentar novamente?',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (_args.message != null) ...[
+                            const SizedBox(height: 10),
+                            Text(
+                              _args.message!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                                height: 1.45,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                if (ingredients.isNotEmpty)
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: ingredients
+                        .map(
+                          (ingredient) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withOpacity(0.16),
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: Text(
+                              ingredient,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.onSurface.withOpacity(0.75),
+                                    letterSpacing: 0.2,
+                                  ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  )
+                else
+                  Text(
+                    'Ajuste os ingredientes quando quiser para explorar novas combinações.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.65),
+                      height: 1.45,
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.search),
+                  label: const Text('Nova pesquisa'),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            if (_args.ingredients.isNotEmpty)
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: _args.ingredients
-                    .map(
-                      (ingredient) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.16),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Text(
-                          ingredient,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.75),
-                                letterSpacing: 0.2,
-                              ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              )
-            else
-              Text(
-                'Ajuste os ingredientes quando quiser para explorar novas combinações.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.65),
-                  height: 1.45,
-                ),
-              ),
-            const SizedBox(height: 26),
-            FilledButton.icon(
-              onPressed: () => Get.back(),
-              icon: const Icon(Icons.search),
-              label: const Text('Nova pesquisa'),
-            ),
-          ],
+          ),
         ),
+      ],
+    );
+  }
+  }
+
+}
+
+class _HeaderMeta extends StatelessWidget {
+  const _HeaderMeta({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.22),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
       ),
     );
   }
-
 }
 
 class _ResultsOrb extends StatelessWidget {

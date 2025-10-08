@@ -105,56 +105,97 @@ class _OverviewCard extends StatelessWidget {
     final description = recipe.description.trim();
 
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 26, 24, 30),
+      margin: EdgeInsets.zero,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(28, 28, 28, 32),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.68),
+              theme.colorScheme.primary.withOpacity(0.28),
+              theme.colorScheme.primary.withOpacity(0.12),
+            ],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.center,
-              child: RecipeCover(
-                theme: theme,
-                recipe: recipe,
-                position: args.position,
-                heroTag: args.heroTag,
-                size: 180,
-                showLabel: false,
-              ),
-            ),
-            const SizedBox(height: 26),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _OverviewPill(
-                  icon: Icons.auto_awesome,
-                  label: recipe.difficulty,
-                  accent: theme.colorScheme.primary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Text(
+                          'Receita ${args.position + 1}'.toUpperCase(),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        recipe.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _OverviewPill(
+                            icon: Icons.auto_awesome,
+                            label: recipe.difficulty,
+                            accent: Colors.black.withOpacity(0.28),
+                          ),
+                          _OverviewPill(
+                            icon: Icons.schedule_rounded,
+                            label: recipe.duration,
+                            accent: Colors.black.withOpacity(0.28),
+                          ),
+                          _OverviewPill(
+                            icon: Icons.receipt_long,
+                            label: '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
+                            accent: Colors.black.withOpacity(0.28),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                _OverviewPill(
-                  icon: Icons.schedule_rounded,
-                  label: recipe.duration,
-                  accent: theme.colorScheme.secondary,
-                ),
-                _OverviewPill(
-                  icon: Icons.restaurant_menu,
-                  label: '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
-                  accent: theme.colorScheme.primary.withOpacity(0.8),
-                ),
-                _OverviewPill(
-                  icon: Icons.format_list_numbered,
-                  label: '${recipe.steps.length} etapa${recipe.steps.length == 1 ? '' : 's'}',
-                  accent: theme.colorScheme.primary.withOpacity(0.8),
+                const SizedBox(width: 24),
+                RecipeCover(
+                  theme: theme,
+                  recipe: recipe,
+                  position: args.position,
+                  heroTag: args.heroTag,
+                  size: 160,
+                  showLabel: false,
                 ),
               ],
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 26),
             Text(
               description.isNotEmpty
                   ? description
                   : 'Explore os ingredientes e o modo de preparo para seguir com a receita.',
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                color: Colors.white.withOpacity(0.9),
                 height: 1.55,
               ),
             ),
@@ -180,20 +221,21 @@ class _OverviewPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.18),
+        color: accent,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: accent.withOpacity(0.95)),
-          const SizedBox(width: 10),
+          Icon(icon, size: 16, color: Colors.white),
+          const SizedBox(width: 8),
           Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
               letterSpacing: 0.2,
             ),
           ),
@@ -212,8 +254,19 @@ class _IngredientsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.surfaceVariant.withOpacity(0.35),
+              theme.colorScheme.surfaceVariant.withOpacity(0.12),
+            ],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -221,6 +274,7 @@ class _IngredientsCard extends StatelessWidget {
               'Ingredientes',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
             ),
             const SizedBox(height: 18),
@@ -229,9 +283,19 @@ class _IngredientsCard extends StatelessWidget {
               runSpacing: 12,
               children: recipe.ingredients
                   .map(
-                    (ingredient) => Chip(
-                      label: Text(ingredient),
-                      labelStyle: theme.textTheme.bodyMedium,
+                    (ingredient) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        ingredient,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          letterSpacing: 0.2,
+                        ),
+                      ),
                     ),
                   )
                   .toList(),
@@ -252,8 +316,19 @@ class _StepsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      child: Padding(
+      child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              theme.colorScheme.surfaceVariant.withOpacity(0.1),
+            ],
+          ),
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -261,6 +336,7 @@ class _StepsCard extends StatelessWidget {
               'Modo de preparo',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
+                letterSpacing: 0.2,
               ),
             ),
             const SizedBox(height: 20),
@@ -269,22 +345,27 @@ class _StepsCard extends StatelessWidget {
               (index) {
                 final step = recipe.steps[index];
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        width: 28,
-                        alignment: Alignment.topLeft,
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: theme.colorScheme.primary.withOpacity(0.2),
+                        ),
+                        alignment: Alignment.center,
                         child: Text(
-                          '${index + 1}'.padLeft(2, '0'),
+                          '${index + 1}',
                           style: theme.textTheme.titleSmall?.copyWith(
                             color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Text(
                           step,
