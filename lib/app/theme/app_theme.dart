@@ -36,7 +36,7 @@ class AppTheme {
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
       inverseSurface: Color(0xFFE6E1E5),
-      inverseOnSurface: Color(0xFF313033),
+      onInverseSurface: Color(0xFF313033),
       inversePrimary: Color(0xFF6750A4),
       surfaceTint: Color(0xFFD0BCFF),
     );
