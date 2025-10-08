@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   static ThemeData buildTheme(TextTheme baseTextTheme) {
-    const seed = Color(0xFFFFC876);
+    const seed = Color(0xFF9C8CFF);
     final colorScheme = ColorScheme.fromSeed(
       seedColor: seed,
       brightness: Brightness.dark,
-      surface: const Color(0xFF1A1E27),
-      background: const Color(0xFF121521),
-      onSurface: const Color(0xFFF5F6FA),
+      surface: const Color(0xFF171B26),
+      background: const Color(0xFF10131C),
+      onSurface: const Color(0xFFE7E9F4),
     ).copyWith(
-      secondary: const Color(0xFF8ED6FF),
-      tertiary: const Color(0xFFFF9AA2),
-      surfaceVariant: const Color(0xFF232734),
-      outline: const Color(0xFF2E3340),
-      outlineVariant: const Color(0xFF3B4050),
-      error: const Color(0xFFFF8B7E),
+      secondary: const Color(0xFF74E0FF),
+      tertiary: const Color(0xFFFFB0D1),
+      surfaceVariant: const Color(0xFF202533),
+      outline: const Color(0xFF2B3141),
+      outlineVariant: const Color(0xFF383E50),
+      error: const Color(0xFFFFB4A9),
     );
 
     final textTheme = baseTextTheme.apply(
@@ -46,8 +46,8 @@ class AppTheme {
       ),
       cardTheme: CardTheme(
         color: Color.alphaBlend(
-          colorScheme.surface.withOpacity(0.72),
-          Colors.black.withOpacity(0.1),
+          colorScheme.surface.withOpacity(0.78),
+          Colors.black.withOpacity(0.08),
         ),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
@@ -62,6 +62,8 @@ class AppTheme {
           minimumSize: const Size.fromHeight(52),
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
+          shadowColor: colorScheme.primary.withOpacity(0.2),
+          elevation: 1,
           textStyle: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
@@ -104,8 +106,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Color.alphaBlend(
-          colorScheme.surface.withOpacity(0.7),
-          Colors.black.withOpacity(0.05),
+          colorScheme.surface.withOpacity(0.82),
+          Colors.black.withOpacity(0.04),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
@@ -140,8 +142,8 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: Color.alphaBlend(
-          colorScheme.surface.withOpacity(0.9),
-          Colors.black.withOpacity(0.3),
+          colorScheme.surface.withOpacity(0.88),
+          Colors.black.withOpacity(0.22),
         ),
         contentTextStyle: textTheme.bodyMedium,
         behavior: SnackBarBehavior.floating,
