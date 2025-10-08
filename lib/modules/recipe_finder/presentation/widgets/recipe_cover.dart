@@ -23,6 +23,7 @@ class RecipeCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final highlight = theme.colorScheme.primary;
     final secondary = theme.colorScheme.secondary;
+    final outline = theme.colorScheme.onPrimary.withOpacity(0.22);
 
     return Hero(
       tag: heroTag,
@@ -54,10 +55,7 @@ class RecipeCover extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: outline, width: 1.4),
                 ),
               ),
             ),
@@ -67,17 +65,17 @@ class RecipeCover extends StatelessWidget {
                 left: 16,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.onPrimary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  'Receita ${position + 1}'.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onPrimary,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w600,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.onPrimary.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(20),
                   ),
+                  child: Text(
+                    'Receita ${position + 1}'.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
