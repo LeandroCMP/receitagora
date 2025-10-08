@@ -88,30 +88,35 @@ class RecipeDetailPage extends StatelessWidget {
               final maxWidth = width < 820 ? width : 760.0;
 
               return Center(
-                child: CustomScrollView(
+                child: Padding(
                   padding: EdgeInsets.fromLTRB(
                     horizontalPadding,
                     28,
                     horizontalPadding,
                     40,
                   ),
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: _OverviewSection(args: args),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: CustomScrollView(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: _OverviewSection(args: args),
+                        ),
+                        if (args.recipe.ingredients.isNotEmpty) ...[
+                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                          SliverToBoxAdapter(
+                            child: _IngredientsSection(recipe: args.recipe),
+                          ),
+                        ],
+                        if (args.recipe.steps.isNotEmpty) ...[
+                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                          SliverToBoxAdapter(
+                            child: _StepsSection(recipe: args.recipe),
+                          ),
+                        ],
+                      ],
                     ),
-                    if (args.recipe.ingredients.isNotEmpty) ...[
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                        child: _IngredientsSection(recipe: args.recipe),
-                      ),
-                    ],
-                    if (args.recipe.steps.isNotEmpty) ...[
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                        child: _StepsSection(recipe: args.recipe),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               );
             },

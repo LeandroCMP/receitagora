@@ -529,8 +529,8 @@ class _GenerateButton extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-              ]
-              else ...[
+              ],
+              if (!isLoading) ...[
                 const Icon(Icons.search_rounded),
                 const SizedBox(width: 12),
               ],
