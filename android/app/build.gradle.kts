@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.Copy
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -48,4 +50,17 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     // Add additional Firebase dependencies here as needed, they will inherit the BoM version.
+}
+
+val rootGoogleServices = rootProject.file("google-services.json")
+if (rootGoogleServices.exists()) {
+    val copyGoogleServices = tasks.register<Copy>("copyGoogleServices") {
+        from(rootGoogleServices)
+        into(projectDir)
+        include("google-services.json")
+    }
+
+    tasks.matching { it.name == "preBuild" }.configureEach {
+        dependsOn(copyGoogleServices)
+    }
 }
