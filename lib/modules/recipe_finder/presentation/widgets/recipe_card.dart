@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../domain/entities/recipe_entity.dart';
 import 'recipe_cover.dart';
 
@@ -34,6 +35,7 @@ class RecipeSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final preview = _previewText();
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -144,8 +146,11 @@ class RecipeSummaryCard extends StatelessWidget {
               padding: padding,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                color: theme.colorScheme.surface.withOpacity(0.95),
-                border: Border.all(color: theme.colorScheme.outline.withOpacity(0.28)),
+                color: surfaces?.high ?? theme.colorScheme.surface,
+                border: Border.all(
+                  color:
+                      (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4),
+                ),
               ),
               child: child,
             ),
@@ -170,17 +175,22 @@ class _MetaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.18),
+        color: color.withOpacity(0.28),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+              .withOpacity(0.35),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color.withOpacity(0.9)),
+          Icon(icon, size: 16, color: theme.colorScheme.onPrimaryContainer),
           const SizedBox(width: 8),
           Text(
             label,

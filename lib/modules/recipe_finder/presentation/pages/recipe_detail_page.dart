@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../domain/entities/recipe_entity.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/app_layout.dart';
 import '../widgets/recipe_cover.dart';
 
@@ -61,6 +62,7 @@ class RecipeDetailPage extends StatelessWidget {
     final args = _resolveArgs();
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Scaffold(
       appBar: AppBar(
@@ -70,7 +72,10 @@ class RecipeDetailPage extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.05), background),
+              Color.alphaBlend(
+                theme.colorScheme.primary.withOpacity(0.05),
+                surfaces?.lowest ?? background,
+              ),
               background,
             ],
             begin: Alignment.topCenter,
@@ -83,7 +88,7 @@ class RecipeDetailPage extends StatelessWidget {
               final layout = AppPageLayout.resolve(
                 constraints,
                 maxWidth: 760,
-                topPadding: 28,
+                topPadding: 36,
               );
 
               return Align(
@@ -132,6 +137,7 @@ class _OverviewSection extends StatelessWidget {
     final theme = Theme.of(context);
     final recipe = args.recipe;
     final description = recipe.description.trim();
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Card(
       child: Padding(
@@ -156,13 +162,17 @@ class _OverviewSection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.18),
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+                          .withOpacity(0.35),
+                    ),
                   ),
                   child: Text(
                     recipe.difficulty,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurface,
+                      color: theme.colorScheme.onPrimaryContainer,
                       letterSpacing: 0.3,
                       fontWeight: FontWeight.w600,
                     ),
@@ -248,16 +258,21 @@ class _OverviewPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.18),
+        color: accent.withOpacity(0.28),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+              .withOpacity(0.35),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: accent.withOpacity(0.9)),
+          Icon(icon, size: 16, color: theme.colorScheme.onPrimaryContainer),
           const SizedBox(width: 8),
           Text(
             label,
@@ -280,6 +295,7 @@ class _IngredientsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
@@ -299,7 +315,11 @@ class _IngredientsSection extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.check_circle, size: 18, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.check_circle,
+                      size: 18,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -329,6 +349,7 @@ class _StepsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
@@ -354,14 +375,19 @@ class _StepsSection extends StatelessWidget {
                       height: 28,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.18),
+                        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color:
+                              (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+                                  .withOpacity(0.35),
+                        ),
                       ),
                       child: Text(
                         '${index + 1}',
                         style: theme.textTheme.labelMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
+                          color: theme.colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),

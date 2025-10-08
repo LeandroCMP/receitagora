@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/app_layout.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
@@ -41,6 +42,7 @@ class RecipeResultsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
+    final surfaces = theme.extension<AppSurfaceColors>();
     final args = _resolveArgs();
 
     return Scaffold(
@@ -60,7 +62,10 @@ class RecipeResultsPage extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.05), background),
+              Color.alphaBlend(
+                theme.colorScheme.primary.withOpacity(0.05),
+                surfaces?.lowest ?? background,
+              ),
               background,
             ],
           ),
@@ -71,7 +76,7 @@ class RecipeResultsPage extends StatelessWidget {
               final layout = AppPageLayout.resolve(
                 constraints,
                 maxWidth: 780,
-                topPadding: 28,
+                topPadding: 36,
               );
 
               return SingleChildScrollView(
@@ -140,19 +145,24 @@ class _ResultsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaces = theme.extension<AppSurfaceColors>();
     final chips = args.ingredients
         .map(
           (ingredient) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             margin: const EdgeInsets.only(right: 8, bottom: 8),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
               borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+                    .withOpacity(0.35),
+              ),
             ),
             child: Text(
               ingredient,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
           ),
@@ -196,18 +206,23 @@ class _InfoBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
+        color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+            .withOpacity(0.35),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+        border: Border.all(
+          color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+              .withOpacity(0.45),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, color: theme.colorScheme.primary),
+          Icon(Icons.info_outline, color: theme.colorScheme.onPrimaryContainer),
           const SizedBox(width: 12),
           Expanded(
             child: Text(

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/app_layout.dart';
 import '../controllers/login_controller.dart';
 
@@ -13,6 +14,7 @@ class LoginPage extends GetView<LoginController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Scaffold(
       body: Container(
@@ -21,9 +23,15 @@ class LoginPage extends GetView<LoginController> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color.alphaBlend(theme.colorScheme.primary.withOpacity(0.08), background),
+              Color.alphaBlend(
+                theme.colorScheme.primary.withOpacity(0.08),
+                surfaces?.lowest ?? background,
+              ),
               background,
-              Color.alphaBlend(theme.colorScheme.secondary.withOpacity(0.06), background),
+              Color.alphaBlend(
+                theme.colorScheme.secondary.withOpacity(0.06),
+                surfaces?.low ?? background,
+              ),
             ],
           ),
         ),
@@ -33,7 +41,8 @@ class LoginPage extends GetView<LoginController> {
               final layout = AppPageLayout.resolve(
                 constraints,
                 maxWidth: 640,
-                topPadding: 36,
+                topPadding: 44,
+                bottomPadding: 44,
               );
 
               return SingleChildScrollView(
@@ -82,12 +91,16 @@ class _LoginHeader extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: LinearGradient(
               colors: [
-                theme.colorScheme.primary.withOpacity(0.9),
-                theme.colorScheme.primary.withOpacity(0.4),
+                theme.colorScheme.primaryContainer.withOpacity(0.85),
+                theme.colorScheme.primary.withOpacity(0.35),
               ],
             ),
           ),
-          child: Icon(Icons.restaurant_menu, color: theme.colorScheme.onSurface, size: 32),
+          child: Icon(
+            Icons.restaurant_menu,
+            color: theme.colorScheme.onPrimaryContainer,
+            size: 32,
+          ),
         );
 
         final text = Column(
@@ -104,7 +117,7 @@ class _LoginHeader extends StatelessWidget {
             Text(
               'Encontre combinações deliciosas com os ingredientes que você já tem em casa.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.68),
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
                 height: 1.45,
               ),
             ),
@@ -160,7 +173,7 @@ class _GuestCard extends StatelessWidget {
             Text(
               'Acesse rapidamente o Receitagora com até três buscas por dia e visualize duas sugestões por pesquisa.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
                 height: 1.45,
               ),
             ),
@@ -210,6 +223,7 @@ class _ComingSoonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Card(
       child: Padding(
@@ -227,7 +241,7 @@ class _ComingSoonCard extends StatelessWidget {
             Text(
               'Estamos preparando o login social para liberar mais buscas e salvar suas receitas preferidas.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
                 height: 1.45,
               ),
             ),
@@ -238,7 +252,8 @@ class _ComingSoonCard extends StatelessWidget {
                 children: [
                   Material(
                     shape: const CircleBorder(),
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                    color: surfaces?.surface.withOpacity(0.8) ??
+                        theme.colorScheme.surfaceVariant.withOpacity(0.4),
                     child: InkWell(
                       onTap: controller.signInWithGoogle,
                       customBorder: const CircleBorder(),

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 /// Values returned by [AppPageLayout.resolve] to keep content consistently
@@ -22,24 +24,29 @@ class AppPageLayoutValues {
 class AppPageLayout {
   const AppPageLayout._();
 
-  /// Calculates the recommended padding and max width for a page.
+  /// Calculates the recommended padding and max width for a page using
+  /// Material Design's compact (phones), medium (small tablets) and expanded
+  /// (large tablet/desktop) breakpoints.
   static AppPageLayoutValues resolve(
     BoxConstraints constraints, {
     double maxWidth = 760,
     double compactGutter = 20,
     double mediumGutter = 32,
     double expandedGutter = 48,
-    double topPadding = 32,
-    double bottomPadding = 40,
+    double topPadding = 40,
+    double bottomPadding = 48,
   }) {
     final width = constraints.maxWidth;
-    final horizontalPadding = width < 420
+    final horizontalPadding = width < 600
         ? compactGutter
-        : width < 720
+        : width < 840
             ? mediumGutter
             : expandedGutter;
 
-    final resolvedMaxWidth = width < maxWidth ? width : maxWidth;
+    final resolvedMaxWidth = math.max(
+      0,
+      math.min(width - (horizontalPadding * 2), maxWidth),
+    );
 
     return AppPageLayoutValues(
       padding: EdgeInsets.fromLTRB(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme/app_colors.dart';
+
 class EmptyRecipesView extends StatelessWidget {
   const EmptyRecipesView({
     required this.message,
@@ -11,6 +13,7 @@ class EmptyRecipesView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
@@ -24,15 +27,16 @@ class EmptyRecipesView extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.primary.withOpacity(0.25),
-                    theme.colorScheme.primary.withOpacity(0.05),
+                    theme.colorScheme.primaryContainer.withOpacity(0.35),
+                    (surfaces?.surface ?? theme.colorScheme.surface)
+                        .withOpacity(0.9),
                   ],
                 ),
               ),
               child: Icon(
                 Icons.restaurant_menu,
                 size: 28,
-                color: theme.colorScheme.onSurface,
+                color: theme.colorScheme.onPrimaryContainer,
               ),
             ),
             const SizedBox(height: 18),

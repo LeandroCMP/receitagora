@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../controllers/splash_controller.dart';
 
 class SplashPage extends GetView<SplashController> {
@@ -9,6 +10,7 @@ class SplashPage extends GetView<SplashController> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Scaffold(
       body: Container(
@@ -18,8 +20,8 @@ class SplashPage extends GetView<SplashController> {
             end: Alignment.bottomCenter,
             colors: [
               Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.1),
-                theme.colorScheme.background,
+                theme.colorScheme.primary.withOpacity(0.08),
+                surfaces?.lowest ?? theme.colorScheme.background,
               ),
               theme.colorScheme.background,
             ],
@@ -38,27 +40,27 @@ class SplashPage extends GetView<SplashController> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
+                      theme.colorScheme.primaryContainer.withOpacity(0.85),
                       theme.colorScheme.primary,
-                      theme.colorScheme.secondary,
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.25),
+                      color: theme.colorScheme.primary.withOpacity(0.2),
                       blurRadius: 32,
                       offset: const Offset(0, 20),
                     ),
                   ],
                 ),
-              child: Icon(
-                Icons.restaurant_menu,
-                color: theme.colorScheme.onSurface,
-                size: 40,
-              ),
+                child: Icon(
+                  Icons.restaurant_menu,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  size: 40,
+                ),
               ),
               const SizedBox(height: 24),
               Text(
-                'Receita Agora',
+                'Receitagora',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,

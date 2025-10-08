@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/app_layout.dart';
 import '../../../../core/services/session_service.dart';
 import '../controllers/recipe_finder_controller.dart';
@@ -13,6 +14,7 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Scaffold(
       appBar: AppBar(
@@ -60,12 +62,12 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
             colors: [
               Color.alphaBlend(
                 theme.colorScheme.primary.withOpacity(0.06),
-                background,
+                surfaces?.lowest ?? background,
               ),
               background,
               Color.alphaBlend(
                 theme.colorScheme.secondary.withOpacity(0.05),
-                background,
+                surfaces?.low ?? background,
               ),
             ],
           ),
@@ -76,7 +78,7 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
               final layout = AppPageLayout.resolve(
                 constraints,
                 maxWidth: 720,
-                topPadding: 32,
+                topPadding: 40,
               );
 
               return SingleChildScrollView(
@@ -149,6 +151,8 @@ class _HeroHeader extends StatelessWidget {
           vertical: isCompact ? 26 : 32,
         );
 
+        final surfaces = theme.extension<AppSurfaceColors>();
+
         return Card(
           elevation: 0,
           child: Container(
@@ -159,8 +163,9 @@ class _HeroHeader extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  theme.colorScheme.primary.withOpacity(0.25),
-                  theme.colorScheme.primary.withOpacity(0.05),
+                  theme.colorScheme.primaryContainer.withOpacity(0.35),
+                  (surfaces?.surface ?? theme.colorScheme.surface)
+                      .withOpacity(0.9),
                 ],
               ),
             ),
@@ -199,21 +204,31 @@ class _HeroChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaces = theme.extension<AppSurfaceColors>();
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.18),
+        color: theme.colorScheme.primaryContainer.withOpacity(0.32),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+              .withOpacity(0.4),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.auto_awesome, color: theme.colorScheme.primary, size: 16),
+          Icon(
+            Icons.auto_awesome,
+            color: theme.colorScheme.onPrimaryContainer,
+            size: 16,
+          ),
           const SizedBox(width: 8),
           Text(
             'Sugestões fresquinhas',
             style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
+              color: theme.colorScheme.onPrimaryContainer,
               letterSpacing: 0.4,
               fontWeight: FontWeight.w600,
             ),
@@ -272,6 +287,7 @@ class _HeroIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final surfaces = theme.extension<AppSurfaceColors>();
     return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -279,13 +295,13 @@ class _HeroIllustration extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: <Color>[
-            theme.colorScheme.primary.withOpacity(0.85),
-            theme.colorScheme.primary,
+            theme.colorScheme.primaryContainer.withOpacity(0.85),
+            theme.colorScheme.primary.withOpacity(0.75),
           ],
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.24),
+            color: theme.colorScheme.primary.withOpacity(0.2),
             blurRadius: 32,
             spreadRadius: 6,
             offset: const Offset(0, 8),
@@ -298,7 +314,7 @@ class _HeroIllustration extends StatelessWidget {
         child: Center(
           child: Icon(
             Icons.restaurant_menu,
-            color: theme.colorScheme.onSurface,
+            color: surfaces?.highest ?? theme.colorScheme.onPrimaryContainer,
             size: 48,
           ),
         ),
@@ -316,21 +332,26 @@ class _HeroMeta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.18),
+        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color:
+              (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.35),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: theme.colorScheme.primary),
+          Icon(icon, size: 16, color: theme.colorScheme.onPrimaryContainer),
           const SizedBox(width: 8),
           Text(
             label,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurface,
+              color: theme.colorScheme.onPrimaryContainer,
               letterSpacing: 0.2,
             ),
           ),
@@ -348,6 +369,7 @@ class _GuestNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
     return Obx(() {
       if (!controller.isGuest.value) {
         return Card(
@@ -385,10 +407,14 @@ class _GuestNotice extends StatelessWidget {
                     width: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: theme.colorScheme.primary.withOpacity(0.18),
+                      color: theme.colorScheme.primaryContainer.withOpacity(0.32),
+                      border: Border.all(
+                        color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+                            .withOpacity(0.35),
+                      ),
                     ),
                     child: Icon(Icons.hourglass_top_rounded,
-                        color: theme.colorScheme.primary),
+                        color: theme.colorScheme.onPrimaryContainer),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -418,6 +444,7 @@ class _IngredientComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final surfaces = theme.extension<AppSurfaceColors>();
 
     return Card(
       child: Padding(
@@ -442,10 +469,11 @@ class _IngredientComposer extends StatelessWidget {
             const SizedBox(height: 24),
             DecoratedBox(
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
+                color: surfaces?.surface ?? theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: theme.colorScheme.outline.withOpacity(0.2),
+                  color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+                      .withOpacity(0.35),
                 ),
               ),
               child: TextField(
@@ -475,7 +503,8 @@ class _IngredientComposer extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.2),
+                    color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+                        .withOpacity(0.35),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

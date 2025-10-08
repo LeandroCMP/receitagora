@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../domain/entities/recipe_entity.dart';
 
 class RecipeCover extends StatelessWidget {
@@ -23,7 +24,9 @@ class RecipeCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final highlight = theme.colorScheme.primary;
     final secondary = theme.colorScheme.secondary;
-    final outline = theme.colorScheme.primary.withOpacity(0.28);
+    final surfaces = theme.extension<AppSurfaceColors>();
+    final outline =
+        (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4);
 
     return Hero(
       tag: heroTag,
@@ -34,16 +37,16 @@ class RecipeCover extends StatelessWidget {
           shape: BoxShape.circle,
           gradient: SweepGradient(
             colors: [
-              highlight.withOpacity(0.85),
-              secondary.withOpacity(0.6),
-              highlight.withOpacity(0.35),
-              highlight.withOpacity(0.85),
+              highlight.withOpacity(0.8),
+              secondary.withOpacity(0.55),
+              highlight.withOpacity(0.32),
+              highlight.withOpacity(0.8),
             ],
             stops: const [0.0, 0.45, 0.75, 1.0],
           ),
           boxShadow: [
             BoxShadow(
-              color: highlight.withOpacity(0.25),
+              color: highlight.withOpacity(0.2),
               blurRadius: 32,
               offset: const Offset(0, 18),
             ),
@@ -63,21 +66,22 @@ class RecipeCover extends StatelessWidget {
               Positioned(
                 top: 16,
                 left: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Receita ${position + 1}'.toUpperCase(),
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w600,
-                      ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: outline),
+                  ),
+                  child: Text(
+                    'Receita ${position + 1}'.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                ),
               ),
             Align(
               alignment: Alignment.center,
@@ -93,7 +97,8 @@ class RecipeCover extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withOpacity(0.7),
+                  color: (surfaces?.high ?? theme.colorScheme.surface)
+                      .withOpacity(0.85),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
@@ -102,7 +107,7 @@ class RecipeCover extends StatelessWidget {
                     Icon(
                       Icons.schedule_rounded,
                       size: 14,
-                      color: theme.colorScheme.primary,
+                      color: theme.colorScheme.onPrimaryContainer,
                     ),
                     const SizedBox(width: 6),
                     Text(
