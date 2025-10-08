@@ -15,7 +15,18 @@ Google já aparece na interface e será habilitado em uma versão futura.
    ```bash
    flutter pub get
    ```
-2. Edite o arquivo `.env` que acompanha o projeto e preencha com as suas
+2. (Opcional, mas recomendado) Configure o Firebase para cada plataforma:
+   - **Android:** faça o download do `google-services.json` no [Console do Firebase](https://console.firebase.google.com/)
+     e coloque o arquivo em `android/app/google-services.json`.
+   - **iOS:** baixe o `GoogleService-Info.plist` e adicione ao runner em `ios/Runner/GoogleService-Info.plist`.
+     Ambos os arquivos estão listados no `.gitignore` para evitar commits acidentais.
+   - Caso utilize o FlutterFire CLI para gerar `firebase_options.dart`, basta importar
+     o arquivo dentro de `FirebaseInitializer.ensureInitialized` para aplicar as
+     opções explicitamente.
+   - Quando os arquivos não estiverem presentes, o app iniciará normalmente e registrará
+     no log que a configuração do Firebase está pendente, permitindo que você inclua os
+     arquivos posteriormente sem travar o fluxo de execução.
+3. Edite o arquivo `.env` que acompanha o projeto e preencha com as suas
    credenciais da OpenAI:
    ```env
    OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
@@ -27,7 +38,7 @@ Google já aparece na interface e será habilitado em uma versão futura.
    > exista durante o empacotamento, mas você pode manter um arquivo separado
    > com as chaves reais fora do Git ao distribuir o projeto.
 
-3. Execute o aplicativo:
+4. Execute o aplicativo:
    ```bash
    flutter run
    ```
