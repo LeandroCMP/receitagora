@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/utils/app_layout.dart';
 import '../../../../core/services/session_service.dart';
 import '../controllers/recipe_finder_controller.dart';
 import '../widgets/ingredient_chip.dart';
@@ -72,35 +73,31 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final horizontalPadding = width < 420
-                  ? 20.0
-                  : width < 720
-                      ? 32.0
-                      : 48.0;
-              final maxWidth = width < 720 ? width : 720.0;
+              final layout = AppPageLayout.resolve(
+                constraints,
+                maxWidth: 720,
+                topPadding: 32,
+              );
 
-              return Center(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    28,
-                    horizontalPadding,
-                    40,
-                  ),
+              return SingleChildScrollView(
+                padding: layout.padding,
+                child: Align(
+                  alignment: Alignment.topCenter,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    constraints: BoxConstraints(
+                      maxWidth: layout.maxContentWidth,
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _HeroHeader(controller: controller),
-                        const SizedBox(height: 28),
-                        _GuestNotice(controller: controller),
-                        const SizedBox(height: 28),
-                        _IngredientComposer(controller: controller),
                         const SizedBox(height: 32),
+                        _GuestNotice(controller: controller),
+                        const SizedBox(height: 32),
+                        _IngredientComposer(controller: controller),
+                        const SizedBox(height: 36),
                         _GenerateButton(controller: controller),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 18),
                         Text(
                           'Os resultados aparecem em cartões resumidos '
                           'e você pode abrir cada receita para ver o preparo completo.',

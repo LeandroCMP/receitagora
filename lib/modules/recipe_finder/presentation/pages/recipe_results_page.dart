@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../app/utils/app_layout.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
 import '../widgets/recipe_card.dart';
@@ -67,29 +68,25 @@ class RecipeResultsPage extends StatelessWidget {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final horizontalPadding = width < 420
-                  ? 20.0
-                  : width < 720
-                      ? 28.0
-                      : 48.0;
-              final maxWidth = width < 820 ? width : 780.0;
+              final layout = AppPageLayout.resolve(
+                constraints,
+                maxWidth: 780,
+                topPadding: 28,
+              );
 
-              return Center(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    24,
-                    horizontalPadding,
-                    40,
-                  ),
+              return SingleChildScrollView(
+                padding: layout.padding,
+                child: Align(
+                  alignment: Alignment.topCenter,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    constraints: BoxConstraints(
+                      maxWidth: layout.maxContentWidth,
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _ResultsHeader(theme: theme, args: args),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 28),
                         if (args.message != null)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 20),

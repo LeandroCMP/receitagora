@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/utils/app_layout.dart';
 import '../controllers/login_controller.dart';
 
 class LoginPage extends GetView<LoginController> {
@@ -29,31 +30,25 @@ class LoginPage extends GetView<LoginController> {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final horizontalPadding = width < 420
-                  ? 20.0
-                  : width < 720
-                      ? 32.0
-                      : 48.0;
-              final maxWidth = width < 720 ? width : 640.0;
+              final layout = AppPageLayout.resolve(
+                constraints,
+                maxWidth: 640,
+                topPadding: 36,
+              );
 
-              return Center(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    32,
-                    horizontalPadding,
-                    40,
-                  ),
+              return SingleChildScrollView(
+                padding: layout.padding,
+                child: Align(
+                  alignment: Alignment.topCenter,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         _LoginHeader(theme: theme),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 36),
                         _GuestCard(controller: controller),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
                         _ComingSoonCard(controller: controller),
                       ],
                     ),

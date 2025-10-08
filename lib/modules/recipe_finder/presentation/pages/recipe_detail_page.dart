@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../domain/entities/recipe_entity.dart';
+import '../../../../app/utils/app_layout.dart';
 import '../widgets/recipe_cover.dart';
 
 class RecipeDetailArgs {
@@ -79,24 +80,18 @@ class RecipeDetailPage extends StatelessWidget {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final width = constraints.maxWidth;
-              final horizontalPadding = width < 420
-                  ? 20.0
-                  : width < 720
-                      ? 28.0
-                      : 48.0;
-              final maxWidth = width < 820 ? width : 760.0;
+              final layout = AppPageLayout.resolve(
+                constraints,
+                maxWidth: 760,
+                topPadding: 28,
+              );
 
-              return Center(
+              return Align(
+                alignment: Alignment.topCenter,
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    horizontalPadding,
-                    28,
-                    horizontalPadding,
-                    40,
-                  ),
+                  padding: layout.padding,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
                     child: CustomScrollView(
                       slivers: [
                         SliverToBoxAdapter(
