@@ -44,7 +44,7 @@ class AppPageLayout {
             : expandedGutter;
 
     final resolvedMaxWidth = math.max(
-      0,
+      0.0,
       math.min(width - (horizontalPadding * 2), maxWidth),
     );
 
