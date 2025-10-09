@@ -17,8 +17,7 @@ Google já aparece na interface e será habilitado em uma versão futura.
    ```
 2. (Opcional, mas recomendado) Configure o Firebase para cada plataforma:
    - **Android:** faça o download do `google-services.json` no [Console do Firebase](https://console.firebase.google.com/)
-     e coloque o arquivo diretamente em `android/app/google-services.json`, garantindo que o plugin
-     `com.google.gms.google-services` consiga gerar os recursos nativos durante o build.
+     e coloque o arquivo em `android/app/google-services.json`.
    - **iOS:** baixe o `GoogleService-Info.plist` e adicione ao runner em `ios/Runner/GoogleService-Info.plist`.
      Ambos os arquivos estão listados no `.gitignore` para evitar commits acidentais.
    - Caso utilize o FlutterFire CLI para gerar `firebase_options.dart`, basta importar
