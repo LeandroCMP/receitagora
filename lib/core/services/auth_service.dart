@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -33,9 +34,12 @@ class AuthService extends GetxService {
     try {
       await _ensureGoogleSignInInitialized();
 
-      final account = await googleSignIn.authenticate();
+      final account = await googleSignIn.signIn();
+      if (account == null) {
+        throw AuthFailure.cancelled();
+      }
 
-      final authTokens = account.authentication;
+      final authTokens = await account.authentication;
       final idToken = authTokens.idToken;
       if (idToken == null || idToken.isEmpty) {
         throw AuthFailure.message(
@@ -45,6 +49,7 @@ class AuthService extends GetxService {
 
       final credential = GoogleAuthProvider.credential(
         idToken: idToken,
+        accessToken: authTokens.accessToken,
       );
 
       final result = await firebaseAuth.signInWithCredential(credential);
@@ -72,7 +77,11 @@ class AuthService extends GetxService {
 
       await sessionService.ensureInitialized();
       await sessionService.startAuthenticatedSession(sessionUser);
-      await _saveUserProfile(sessionUser);
+      await _saveUserProfile(
+        sessionUser: sessionUser,
+        firebaseUser: firebaseUser,
+        account: account,
+      );
 
       return sessionUser;
     } on GoogleSignInException catch (error) {
@@ -80,6 +89,8 @@ class AuthService extends GetxService {
         throw AuthFailure.cancelled();
       }
       throw AuthFailure.message(_translateGoogleSignInError(error));
+    } on PlatformException catch (error) {
+      throw AuthFailure.message(_translatePlatformError(error));
     } on UnsupportedError {
       throw AuthFailure.message(
         'O login com Google não está disponível para esta plataforma no momento.',
@@ -95,17 +106,27 @@ class AuthService extends GetxService {
     }
   }
 
-  Future<void> _saveUserProfile(SessionUser user) async {
-    final document = firestore.collection('users').doc(user.id);
+  Future<void> _saveUserProfile({
+    required SessionUser sessionUser,
+    required User firebaseUser,
+    required GoogleSignInAccount account,
+  }) async {
+    final document = firestore.collection('users').doc(sessionUser.id);
 
     await firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(document);
 
       final data = <String, dynamic>{
-        'name': user.displayName,
-        'email': user.email,
-        if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
-          'avatarUrl': user.avatarUrl,
+        'uid': firebaseUser.uid,
+        'googleAccountId': account.id,
+        'name': sessionUser.displayName,
+        'email': sessionUser.email,
+        if (sessionUser.avatarUrl != null && sessionUser.avatarUrl!.isNotEmpty)
+          'avatarUrl': sessionUser.avatarUrl,
+        'emailVerified': firebaseUser.emailVerified,
+        if (firebaseUser.phoneNumber != null && firebaseUser.phoneNumber!.isNotEmpty)
+          'phoneNumber': firebaseUser.phoneNumber,
+        'lastLoginPlatform': _resolvePlatform(),
         'provider': 'google',
         'updatedAt': FieldValue.serverTimestamp(),
         'lastLoginAt': FieldValue.serverTimestamp(),
@@ -167,6 +188,46 @@ class AuthService extends GetxService {
         }
         return 'Ocorreu um erro inesperado ao validar o login com Google.';
     }
+  }
+
+  String _translatePlatformError(PlatformException error) {
+    switch (error.code) {
+      case 'network_error':
+        return 'Sem conexão com a internet. Verifique sua rede e tente novamente.';
+      case 'sign_in_canceled':
+      case 'canceled':
+        return 'O login com Google foi cancelado.';
+      case 'sign_in_failed':
+        return 'Não foi possível completar o login com Google. Tente novamente em instantes.';
+      default:
+        final message = error.message?.trim();
+        if (message != null && message.isNotEmpty) {
+          return message;
+        }
+        return 'Ocorreu um erro inesperado ao validar o login com Google.';
+    }
+  }
+
+  String _resolvePlatform() {
+    if (GetPlatform.isAndroid) {
+      return 'android';
+    }
+    if (GetPlatform.isIOS) {
+      return 'ios';
+    }
+    if (GetPlatform.isWeb) {
+      return 'web';
+    }
+    if (GetPlatform.isMacOS) {
+      return 'macos';
+    }
+    if (GetPlatform.isWindows) {
+      return 'windows';
+    }
+    if (GetPlatform.isLinux) {
+      return 'linux';
+    }
+    return 'unknown';
   }
 
   Future<void> _ensureGoogleSignInInitialized() async {
