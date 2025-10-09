@@ -45,6 +45,9 @@ dependencies:
   firebase_auth: ^4.20.0
   google_sign_in: ^6.2.1
 
+dependency_overrides:
+  google_sign_in_android: ^7.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
