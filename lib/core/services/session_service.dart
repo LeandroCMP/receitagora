@@ -7,11 +7,13 @@ enum UserMode { guest, authenticated }
 
 class SessionUser {
   const SessionUser({
+    required this.id,
     required this.displayName,
     required this.email,
     this.avatarUrl,
   });
 
+  final String id;
   final String displayName;
   final String email;
   final String? avatarUrl;
@@ -24,6 +26,7 @@ class SessionService extends GetxService {
   final SharedPreferences preferences;
 
   static const _modeKey = 'session.mode';
+  static const _userIdKey = 'session.user.id';
   static const _userNameKey = 'session.user.name';
   static const _userEmailKey = 'session.user.email';
   static const _userAvatarKey = 'session.user.avatar';
@@ -51,6 +54,7 @@ class SessionService extends GetxService {
       guestDailyLimit - _guestSearchCount.value < 0 ? 0 : guestDailyLimit - _guestSearchCount.value;
 
   Stream<UserMode?> get modeStream => _mode.stream;
+  Stream<SessionUser?> get userStream => _user.stream;
   Stream<int> get guestSearchCountStream => _guestSearchCount.stream;
 
   Future<SessionService> init() async {
@@ -86,10 +90,62 @@ class SessionService extends GetxService {
     _mode.value = UserMode.guest;
     _user.value = null;
     await preferences.setString(_modeKey, UserMode.guest.name);
+    await preferences.remove(_userIdKey);
     await preferences.remove(_userNameKey);
     await preferences.remove(_userEmailKey);
     await preferences.remove(_userAvatarKey);
     _ensureGuestQuotaFreshness();
+  }
+
+  Future<void> startAuthenticatedSession(SessionUser user) async {
+    _mode.value = UserMode.authenticated;
+    _user.value = user;
+    await preferences.setString(_modeKey, UserMode.authenticated.name);
+    await preferences.setString(_userIdKey, user.id);
+    await preferences.setString(_userNameKey, user.displayName);
+    await preferences.setString(_userEmailKey, user.email);
+
+    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
+      await preferences.setString(_userAvatarKey, user.avatarUrl!);
+    } else {
+      await preferences.remove(_userAvatarKey);
+    }
+
+    _guestSearchCount.value = 0;
+    await preferences.remove(_guestCountKey);
+    await preferences.remove(_guestDateKey);
+  }
+
+  Future<void> clearSession() async {
+    _mode.value = null;
+    _user.value = null;
+    await preferences.remove(_modeKey);
+    await preferences.remove(_userIdKey);
+    await preferences.remove(_userNameKey);
+    await preferences.remove(_userEmailKey);
+    await preferences.remove(_userAvatarKey);
+  }
+
+  Future<void> updateDisplayName(String displayName) async {
+    final sanitized = displayName.trim();
+    if (sanitized.isEmpty) {
+      return;
+    }
+
+    final current = _user.value;
+    if (current == null) {
+      return;
+    }
+
+    final updated = SessionUser(
+      id: current.id,
+      displayName: sanitized,
+      email: current.email,
+      avatarUrl: current.avatarUrl,
+    );
+
+    _user.value = updated;
+    await preferences.setString(_userNameKey, sanitized);
   }
 
   bool canPerformGuestSearch() {
@@ -117,11 +173,13 @@ class SessionService extends GetxService {
     _mode.value = _parseMode(preferences.getString(_modeKey));
 
     if (isAuthenticated) {
+      final id = preferences.getString(_userIdKey);
       final name = preferences.getString(_userNameKey);
       final email = preferences.getString(_userEmailKey);
       final avatar = preferences.getString(_userAvatarKey);
-      if (email != null) {
+      if (email != null && id != null) {
         _user.value = SessionUser(
+          id: id,
           displayName: (name == null || name.isEmpty) ? email : name,
           email: email,
           avatarUrl: avatar,

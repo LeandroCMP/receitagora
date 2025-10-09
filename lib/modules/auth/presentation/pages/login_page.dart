@@ -58,7 +58,7 @@ class LoginPage extends GetView<LoginController> {
                         const SizedBox(height: 36),
                         _GuestCard(controller: controller),
                         const SizedBox(height: 24),
-                        _ComingSoonCard(controller: controller),
+                        _GoogleSignInCard(controller: controller),
                       ],
                     ),
                   ),
@@ -180,14 +180,15 @@ class _GuestCard extends StatelessWidget {
             const SizedBox(height: 24),
             Obx(
               () => FilledButton(
-                onPressed: controller.isLoading.value ? null : controller.continueAsGuest,
+                onPressed:
+                    controller.isGuestLoading.value ? null : controller.continueAsGuest,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (controller.isLoading.value) ...[
+                      if (controller.isGuestLoading.value) ...[
                         SizedBox(
                           width: 18,
                           height: 18,
@@ -215,8 +216,8 @@ class _GuestCard extends StatelessWidget {
   }
 }
 
-class _ComingSoonCard extends StatelessWidget {
-  const _ComingSoonCard({required this.controller});
+class _GoogleSignInCard extends StatelessWidget {
+  const _GoogleSignInCard({required this.controller});
 
   final LoginController controller;
 
@@ -239,39 +240,86 @@ class _ComingSoonCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Estamos preparando o login social para liberar mais buscas e salvar suas receitas preferidas.',
+              'Conecte-se com sua conta Google para liberar buscas ilimitadas e salvar combinações favoritas.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.72),
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 20),
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Material(
-                    shape: const CircleBorder(),
-                    color: surfaces?.surface.withOpacity(0.8) ??
-                        theme.colorScheme.surfaceVariant.withOpacity(0.4),
-                    child: InkWell(
-                      onTap: controller.signInWithGoogle,
-                      customBorder: const CircleBorder(),
-                      child: const Padding(
-                        padding: EdgeInsets.all(18),
-                        child: _GoogleMark(size: 32),
-                      ),
-                    ),
+            const SizedBox(height: 24),
+            Obx(
+              () {
+                final loading = controller.isGoogleLoading.value;
+                return FilledButton(
+                  onPressed: loading ? null : controller.signInWithGoogle,
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Em breve',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (loading) ...[
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Text('Entrando...'),
+                      ] else ...[
+                        Container(
+                          height: 26,
+                          width: 26,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: (surfaces?.surface ?? theme.colorScheme.onPrimary)
+                                .withOpacity(0.9),
+                          ),
+                          padding: const EdgeInsets.all(5),
+                          child: const _GoogleMark(size: 16),
+                        ),
+                        const SizedBox(width: 14),
+                        const Text('Entrar com Google'),
+                      ],
+                    ],
                   ),
-                ],
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Botão temporário para desconectar o login social durante os testes:',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
+            ),
+            const SizedBox(height: 8),
+            Obx(
+              () {
+                final loading = controller.isGoogleSignOutLoading.value;
+                return OutlinedButton.icon(
+                  onPressed: loading ? null : controller.signOutFromGoogle,
+                  icon: loading
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.primary,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.logout_rounded),
+                  label: Text(loading ? 'Saindo...' : 'Logout temporário'),
+                );
+              },
             ),
           ],
         ),

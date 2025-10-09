@@ -6,6 +6,10 @@ import '../../modules/recipe_finder/presentation/bindings/recipe_finder_binding.
 import '../../modules/recipe_finder/presentation/pages/recipe_finder_page.dart';
 import '../../modules/recipe_finder/presentation/pages/recipe_results_page.dart';
 import '../../modules/recipe_finder/presentation/pages/recipe_detail_page.dart';
+import '../../modules/favorites/presentation/bindings/favorites_binding.dart';
+import '../../modules/favorites/presentation/pages/favorites_page.dart';
+import '../../modules/user_profile/presentation/bindings/user_profile_binding.dart';
+import '../../modules/user_profile/presentation/pages/user_profile_page.dart';
 import '../../modules/splash/presentation/bindings/splash_binding.dart';
 import '../../modules/splash/presentation/pages/splash_page.dart';
 import 'app_routes.dart';
@@ -36,6 +40,16 @@ class AppPages {
     GetPage(
       name: AppRoutes.recipeDetail,
       page: RecipeDetailPage.new,
+    ),
+    GetPage(
+      name: AppRoutes.userProfile,
+      page: UserProfilePage.new,
+      binding: UserProfileBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.favorites,
+      page: FavoritesPage.new,
+      binding: FavoritesBinding(),
     ),
   ];
 }

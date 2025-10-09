@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "652588029247-0ainoh9id4f686eeeusq8vv457rob5n8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.receitagora",
+            "certificate_hash": "659e743d6bd71c980661878ef0999cb59903a475"
+          }
+        },
+        {
           "client_id": "652588029247-a3bn9717gqr9dcleb3jvshcbgmdnt8r9.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/app_layout.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/services/recipe_favorites_service.dart';
 import '../controllers/recipe_finder_controller.dart';
 import '../widgets/ingredient_chip.dart';
 
@@ -15,6 +17,7 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final surfaces = theme.extension<AppSurfaceColors>();
+    final favoritesService = Get.find<RecipeFavoritesService>();
 
     return Scaffold(
       appBar: AppBar(
@@ -22,10 +25,26 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
         actions: [
           Obx(() {
             if (controller.isGuest.value) {
+              return const SizedBox(width: 8);
+            }
+
+            final hasFavorites = favoritesService.favoriteIds.isNotEmpty;
+
+            return IconButton(
+              tooltip: 'Ver favoritos',
+              icon: Icon(
+                hasFavorites ? Icons.favorite : Icons.favorite_border,
+                color: hasFavorites ? theme.colorScheme.primary : null,
+              ),
+              onPressed: () => Get.toNamed(AppRoutes.favorites),
+            );
+          }),
+          Obx(() {
+            if (controller.isGuest.value) {
               return const SizedBox(width: 16);
             }
 
-            final user = controller.sessionService.user;
+            final user = controller.currentUser.value;
             if (user == null) {
               return const SizedBox(width: 16);
             }
@@ -38,17 +57,21 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.25),
-                backgroundImage:
-                    user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
-                child: user.avatarUrl == null
-                    ? Text(
-                        initials,
-                        style: theme.textTheme.titleMedium,
-                      )
-                    : null,
+              child: InkWell(
+                onTap: () => Get.toNamed(AppRoutes.userProfile),
+                customBorder: const CircleBorder(),
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: theme.colorScheme.primary.withOpacity(0.25),
+                  backgroundImage:
+                      user.avatarUrl != null ? NetworkImage(user.avatarUrl!) : null,
+                  child: user.avatarUrl == null
+                      ? Text(
+                          initials,
+                          style: theme.textTheme.titleMedium,
+                        )
+                      : null,
+                ),
               ),
             );
           }),
@@ -129,71 +152,73 @@ class _HeroHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = controller.sessionService.user;
-    final rawName = user?.displayName?.trim() ?? '';
-    final firstName = rawName
-        .split(' ')
-        .firstWhere(
-          (segment) => segment.trim().isNotEmpty,
-          orElse: () => '',
-        )
-        .trim();
-    final greeting = firstName.isEmpty
-        ? 'Convidado'
-        : '${firstName[0].toUpperCase()}${firstName.length > 1 ? firstName.substring(1) : ''}';
+    return Obx(() {
+      final user = controller.currentUser.value;
+      final rawName = (user?.displayName ?? '').trim();
+      final firstName = rawName
+          .split(' ')
+          .firstWhere(
+            (segment) => segment.trim().isNotEmpty,
+            orElse: () => '',
+          )
+          .trim();
+      final greeting = firstName.isEmpty
+          ? 'Convidado'
+          : '${firstName[0].toUpperCase()}${firstName.length > 1 ? firstName.substring(1) : ''}';
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final isCompact = width < 520;
-        final padding = EdgeInsets.symmetric(
-          horizontal: isCompact ? 24 : 32,
-          vertical: isCompact ? 26 : 32,
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final isCompact = width < 520;
+          final padding = EdgeInsets.symmetric(
+            horizontal: isCompact ? 24 : 32,
+            vertical: isCompact ? 26 : 32,
         );
 
         final surfaces = theme.extension<AppSurfaceColors>();
 
-        return Card(
-          elevation: 0,
-          child: Container(
-            padding: padding,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.colorScheme.primaryContainer.withOpacity(0.35),
-                  (surfaces?.surface ?? theme.colorScheme.surface)
-                      .withOpacity(0.9),
-                ],
+          return Card(
+            elevation: 0,
+            child: Container(
+              padding: padding,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.colorScheme.primaryContainer.withOpacity(0.35),
+                    (surfaces?.surface ?? theme.colorScheme.surface)
+                        .withOpacity(0.9),
+                  ],
+                ),
+              ),
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+                child: isCompact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _HeroChip(theme: theme),
+                          const SizedBox(height: 18),
+                          _HeroText(theme: theme, greeting: greeting),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(child: _HeroText(theme: theme, greeting: greeting)),
+                          const SizedBox(width: 28),
+                          _HeroIllustration(theme: theme),
+                        ],
+                      ),
               ),
             ),
-            child: AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              child: isCompact
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _HeroChip(theme: theme),
-                        const SizedBox(height: 18),
-                        _HeroText(theme: theme, greeting: greeting),
-                      ],
-                    )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(child: _HeroText(theme: theme, greeting: greeting)),
-                        const SizedBox(width: 28),
-                        _HeroIllustration(theme: theme),
-                      ],
-                    ),
-            ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    });
   }
 }
 

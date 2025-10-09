@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../domain/entities/recipe_entity.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/app_layout.dart';
+import '../../../../core/services/recipe_favorites_service.dart';
+import '../../../../core/services/session_service.dart';
 import '../widgets/recipe_cover.dart';
 
 class RecipeDetailArgs {
@@ -63,10 +65,72 @@ class RecipeDetailPage extends StatelessWidget {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final surfaces = theme.extension<AppSurfaceColors>();
+    final sessionService = Get.find<SessionService>();
+    final favoritesService = Get.find<RecipeFavoritesService>();
+
+    void showFavoriteError(String message) {
+      Get.snackbar(
+        'Algo deu errado',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
+        colorText: theme.colorScheme.onErrorContainer,
+      );
+    }
+
+    Future<void> toggleFavorite() async {
+      if (!sessionService.isAuthenticated) {
+        Get.snackbar(
+          'Faça login',
+          'Entre com sua conta para salvar receitas favoritas.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+      }
+
+      final recipe = args.recipe;
+      final alreadyFavorite = favoritesService.isFavoriteSync(recipe);
+
+      try {
+        await favoritesService.toggleFavorite(recipe);
+        Get.snackbar(
+          alreadyFavorite ? 'Favorito removido' : 'Adicionado aos favoritos',
+          alreadyFavorite
+              ? 'Esta receita foi removida da sua lista.'
+              : 'Ela agora aparece na tela de favoritos.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+      } on FavoritesFailure catch (error) {
+        showFavoriteError(error.message);
+      } catch (_) {
+        showFavoriteError('Não foi possível atualizar seus favoritos agora.');
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: Text(args.recipe.name),
+        actions: [
+          Obx(() {
+            if (!sessionService.isAuthenticated) {
+              return const SizedBox.shrink();
+            }
+
+            final isFavorite = favoritesService.isFavoriteSync(args.recipe);
+            return IconButton(
+              tooltip:
+                  isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos',
+              icon: Icon(
+                isFavorite ? Icons.favorite : Icons.favorite_outline,
+                color: isFavorite ? theme.colorScheme.primary : null,
+              ),
+              onPressed: toggleFavorite,
+            );
+          }),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(

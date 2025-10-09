@@ -25,12 +25,14 @@ class RecipeFinderController extends GetxController {
   final errorMessage = RxnString();
   final isGuest = false.obs;
   final guestSearchesRemaining = SessionService.guestDailyLimit.obs;
+  final currentUser = Rxn<SessionUser>();
 
   final TextEditingController ingredientTextController = TextEditingController();
   final FocusNode ingredientFocusNode = FocusNode();
 
   StreamSubscription<UserMode?>? _modeSubscription;
   StreamSubscription<int>? _guestQuotaSubscription;
+  StreamSubscription<SessionUser?>? _userSubscription;
 
   @override
   void onInit() {
@@ -39,6 +41,9 @@ class RecipeFinderController extends GetxController {
     _modeSubscription = sessionService.modeStream.listen((_) => _syncSessionState());
     _guestQuotaSubscription =
         sessionService.guestSearchCountStream.listen((_) => _syncGuestQuota());
+    _userSubscription = sessionService.userStream.listen((user) {
+      currentUser.value = user;
+    });
   }
 
   void addIngredient(String ingredient) {
@@ -139,11 +144,13 @@ class RecipeFinderController extends GetxController {
     ingredientFocusNode.dispose();
     _modeSubscription?.cancel();
     _guestQuotaSubscription?.cancel();
+    _userSubscription?.cancel();
     super.onClose();
   }
 
   void _syncSessionState() {
     isGuest.value = sessionService.isGuest;
+    currentUser.value = sessionService.user;
     _syncGuestQuota();
   }
 

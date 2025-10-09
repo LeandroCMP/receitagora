@@ -10,6 +10,7 @@ class RecipeSummaryCard extends StatelessWidget {
     required this.position,
     required this.heroTag,
     required this.onTap,
+    this.action,
     super.key,
   });
 
@@ -17,6 +18,7 @@ class RecipeSummaryCard extends StatelessWidget {
   final int position;
   final String heroTag;
   final VoidCallback onTap;
+  final Widget? action;
 
   String _previewText() {
     final description = recipe.description.trim();
@@ -74,24 +76,47 @@ class RecipeSummaryCard extends StatelessWidget {
           ],
         );
 
+        final headerChildren = <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Sugestão ${position + 1}'.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    letterSpacing: 1.2,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  recipe.name,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ];
+
+        if (action != null) {
+          headerChildren.add(
+            Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: action!,
+            ),
+          );
+        }
+
         final content = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Sugestão ${position + 1}'.toUpperCase(),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              recipe.name,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: headerChildren,
             ),
             const SizedBox(height: 14),
             meta,

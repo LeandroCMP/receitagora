@@ -12,7 +12,7 @@ class EnvironmentConfig {
   final String model;
 
   factory EnvironmentConfig.fromEnv() {
-    final apiKey = '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'; //(dotenv.maybeGet('OPENAI_API_KEY') ?? '').trim();
+    final apiKey = (dotenv.maybeGet('OPENAI_API_KEY') ?? '').trim();
     final baseUrl =
         (dotenv.maybeGet('OPENAI_BASE_URL') ?? 'https://api.openai.com/v1')
             .trim();
