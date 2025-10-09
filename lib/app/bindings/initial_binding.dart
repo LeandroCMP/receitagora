@@ -3,12 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/config/environment_config.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/openai_service.dart';
-import '../../core/services/session_service.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -26,18 +24,6 @@ class InitialBinding extends Bindings {
     Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);
     Get.put<GoogleSignIn>(
       GoogleSignIn.instance,
-      permanent: true,
-    );
-    Get.putAsync<SessionService>(
-      () async {
-        final preferences = await SharedPreferences.getInstance();
-        Get.put<SharedPreferences>(preferences, permanent: true);
-
-        final service = SessionService(
-          preferences: preferences,
-        );
-        return service.init();
-      },
       permanent: true,
     );
     Get.lazyPut<AuthService>(
