@@ -5,6 +5,7 @@ import '../../../../app/routes/app_routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/utils/app_layout.dart';
 import '../../../../core/services/session_service.dart';
+import '../../../../core/services/recipe_favorites_service.dart';
 import '../controllers/recipe_finder_controller.dart';
 import '../widgets/ingredient_chip.dart';
 
@@ -16,11 +17,28 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
     final theme = Theme.of(context);
     final background = theme.colorScheme.background;
     final surfaces = theme.extension<AppSurfaceColors>();
+    final favoritesService = Get.find<RecipeFavoritesService>();
 
     return Scaffold(
       appBar: AppBar(
         title: Text('app_title'.tr),
         actions: [
+          Obx(() {
+            if (controller.isGuest.value) {
+              return const SizedBox(width: 8);
+            }
+
+            final hasFavorites = favoritesService.favoriteIds.isNotEmpty;
+
+            return IconButton(
+              tooltip: 'Ver favoritos',
+              icon: Icon(
+                hasFavorites ? Icons.favorite : Icons.favorite_border,
+                color: hasFavorites ? theme.colorScheme.primary : null,
+              ),
+              onPressed: () => Get.toNamed(AppRoutes.favorites),
+            );
+          }),
           Obx(() {
             if (controller.isGuest.value) {
               return const SizedBox(width: 16);

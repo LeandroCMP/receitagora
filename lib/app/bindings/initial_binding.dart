@@ -6,7 +6,9 @@ import 'package:http/http.dart' as http;
 
 import '../../core/config/environment_config.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/recipe_favorites_service.dart';
 import '../../core/services/openai_service.dart';
+import '../../core/services/session_service.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -31,6 +33,13 @@ class InitialBinding extends Bindings {
         firebaseAuth: Get.find<FirebaseAuth>(),
         googleSignIn: Get.find<GoogleSignIn>(),
         firestore: Get.find<FirebaseFirestore>(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut<RecipeFavoritesService>(
+      () => RecipeFavoritesService(
+        firestore: Get.find<FirebaseFirestore>(),
+        sessionService: Get.find<SessionService>(),
       ),
       fenix: true,
     );

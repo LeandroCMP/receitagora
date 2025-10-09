@@ -8,6 +8,8 @@ import '../../domain/entities/recipe_entity.dart';
 import '../widgets/empty_recipes_view.dart';
 import '../widgets/recipe_card.dart';
 import 'recipe_detail_page.dart';
+import '../../../../core/services/session_service.dart';
+import '../../../../core/services/recipe_favorites_service.dart';
 
 class RecipeResultsArgs {
   RecipeResultsArgs({
@@ -44,12 +46,67 @@ class RecipeResultsPage extends StatelessWidget {
     final background = theme.colorScheme.background;
     final surfaces = theme.extension<AppSurfaceColors>();
     final args = _resolveArgs();
+    final sessionService = Get.find<SessionService>();
+    final favoritesService = Get.find<RecipeFavoritesService>();
+
+    void showFavoriteError(String message) {
+      Get.snackbar(
+        'Algo deu errado',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
+        colorText: theme.colorScheme.onErrorContainer,
+      );
+    }
+
+    Future<void> toggleFavorite(RecipeEntity recipe) async {
+      if (!sessionService.isAuthenticated) {
+        Get.snackbar(
+          'Faça login',
+          'Entre com sua conta para salvar e organizar suas receitas favoritas.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+        return;
+      }
+
+      final alreadyFavorite = favoritesService.isFavoriteSync(recipe);
+
+      try {
+        await favoritesService.toggleFavorite(recipe);
+        Get.snackbar(
+          alreadyFavorite ? 'Favorito removido' : 'Adicionado aos favoritos',
+          alreadyFavorite
+              ? 'Esta receita foi removida da sua lista de favoritos.'
+              : 'Você encontra esta receita na tela de favoritos.',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+        );
+      } on FavoritesFailure catch (error) {
+        showFavoriteError(error.message);
+      } catch (_) {
+        showFavoriteError(
+          'Não foi possível atualizar seus favoritos agora. Tente novamente.',
+        );
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Resultados'),
         automaticallyImplyLeading: true,
         actions: [
+          Obx(() {
+            if (!sessionService.isAuthenticated) {
+              return const SizedBox.shrink();
+            }
+            return IconButton(
+              tooltip: 'Ver favoritos',
+              icon: const Icon(Icons.favorite),
+              onPressed: () => Get.toNamed(AppRoutes.favorites),
+            );
+          }),
           TextButton(
             onPressed: () => Get.offAllNamed(AppRoutes.recipeFinder),
             child: const Text('Nova busca'),
@@ -121,6 +178,24 @@ class RecipeResultsPage extends StatelessWidget {
                                     transition: Transition.cupertino,
                                   );
                                 },
+                                action: Obx(() {
+                                  final isFavorite =
+                                      favoritesService.isFavoriteSync(recipe);
+                                  return IconButton(
+                                    tooltip: isFavorite
+                                        ? 'Remover dos favoritos'
+                                        : 'Salvar nos favoritos',
+                                    icon: Icon(
+                                      isFavorite
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      color: isFavorite
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                    onPressed: () => toggleFavorite(recipe),
+                                  );
+                                }),
                               );
                             },
                           ),
