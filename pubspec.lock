@@ -212,12 +212,12 @@ packages:
     dependency: "direct main"
     description:
       name: google_sign_in
-      sha256: 0b8787cb9c1a68ad398e8010e8c8766bfa33556d2ab97c439fb4137756d7308f
+      sha256: 521031b65853b4409b8213c0387d57edaad7e2a949ce6dea0d8b2afc9cb29763
       url: "https://pub.dev"
     source: hosted
-    version: "6.2.1"
+    version: "7.2.0"
   google_sign_in_android:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
       name: google_sign_in_android
       sha256: 799165f4c0621ed233bccdded4c2e92739bc1fe73e970163b2f7493b301adad3
@@ -228,26 +228,26 @@ packages:
     dependency: transitive
     description:
       name: google_sign_in_ios
-      sha256: e050cd907db1ee441b8efc0d8db63f3514f343872fdef6de36940fb09a92b2d7
+      sha256: 10830fd37e6b4402b5c71373d3d8687e95ce7e9504738605237f23a76456c973
       url: "https://pub.dev"
     source: hosted
-    version: "5.7.0"
+    version: "6.2.0"
   google_sign_in_platform_interface:
     dependency: transitive
     description:
       name: google_sign_in_platform_interface
-      sha256: 95a9e0a8701b5485f2ca330fd1fc6f918f5ce088042ce1019c5e389d8574ae4c
+      sha256: 7f59208c42b415a3cca203571128d6f84f885fead2d5b53eb65a9e27f2965bb5
       url: "https://pub.dev"
     source: hosted
-    version: "2.4.0"
+    version: "3.1.0"
   google_sign_in_web:
     dependency: transitive
     description:
       name: google_sign_in_web
-      sha256: 7e0ec507f4752383a6daa67d0cc775253cfc3b1d87907e7004e2c1b99c0a723f
+      sha256: 2fc1f941e6443b2d6984f4056a727a3eaeab15d8ee99ba7125d79029be75a1da
       url: "https://pub.dev"
     source: hosted
-    version: "0.12.0"
+    version: "1.1.0"
   http:
     dependency: "direct main"
     description:
