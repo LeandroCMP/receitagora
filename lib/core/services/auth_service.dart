@@ -29,17 +29,19 @@ class AuthService extends GetxService {
   final FirebaseFirestore firestore;
   Future<void>? _googleSignInInitialization;
   SessionService get sessionService => Get.find<SessionService>();
+  static const List<String> _scopeHint = <String>[
+    'email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+  ];
 
   Future<SessionUser> signInWithGoogle() async {
     try {
       await _ensureGoogleSignInInitialized();
 
-      final account = await googleSignIn.signIn();
-      if (account == null) {
-        throw AuthFailure.cancelled();
-      }
+      final GoogleSignInAccount account =
+          await googleSignIn.authenticate(scopeHint: _scopeHint);
 
-      final authTokens = await account.authentication;
+      final authTokens = account.authentication;
       final idToken = authTokens.idToken;
       if (idToken == null || idToken.isEmpty) {
         throw AuthFailure.message(
@@ -49,7 +51,6 @@ class AuthService extends GetxService {
 
       final credential = GoogleAuthProvider.credential(
         idToken: idToken,
-        accessToken: authTokens.accessToken,
       );
 
       final result = await firebaseAuth.signInWithCredential(credential);
@@ -103,6 +104,35 @@ class AuthService extends GetxService {
       throw AuthFailure.message(
         'Não foi possível completar o login com Google. Tente novamente em instantes.',
       );
+    }
+  }
+
+  Future<void> signOut() async {
+    AuthFailure? failure;
+
+    try {
+      await _ensureGoogleSignInInitialized();
+      await googleSignIn.signOut();
+    } on GoogleSignInException catch (error) {
+      failure ??= AuthFailure.message(_translateGoogleSignInError(error));
+    } on PlatformException catch (error) {
+      failure ??= AuthFailure.message(_translatePlatformError(error));
+    } on UnsupportedError {
+      failure ??=
+          AuthFailure.message('O logout com Google não está disponível para esta plataforma.');
+    }
+
+    try {
+      await firebaseAuth.signOut();
+    } on FirebaseAuthException catch (error) {
+      failure ??= AuthFailure.message(_translateFirebaseAuthError(error));
+    }
+
+    await sessionService.ensureInitialized();
+    await sessionService.clearSession();
+
+    if (failure != null) {
+      throw failure;
     }
   }
 

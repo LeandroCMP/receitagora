@@ -25,12 +25,7 @@ class InitialBinding extends Bindings {
     Get.put<FirebaseAuth>(FirebaseAuth.instance, permanent: true);
     Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);
     Get.put<GoogleSignIn>(
-      GoogleSignIn(
-        scopes: const <String>[
-          'email',
-          'https://www.googleapis.com/auth/userinfo.profile',
-        ],
-      ),
+      GoogleSignIn.instance,
       permanent: true,
     );
     Get.putAsync<SessionService>(

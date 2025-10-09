@@ -115,6 +115,16 @@ class SessionService extends GetxService {
     await preferences.remove(_guestDateKey);
   }
 
+  Future<void> clearSession() async {
+    _mode.value = null;
+    _user.value = null;
+    await preferences.remove(_modeKey);
+    await preferences.remove(_userIdKey);
+    await preferences.remove(_userNameKey);
+    await preferences.remove(_userEmailKey);
+    await preferences.remove(_userAvatarKey);
+  }
+
   bool canPerformGuestSearch() {
     if (!isGuest) {
       return true;

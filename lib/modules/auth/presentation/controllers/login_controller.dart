@@ -16,6 +16,7 @@ class LoginController extends GetxController {
 
   final isGuestLoading = false.obs;
   final isGoogleLoading = false.obs;
+  final isGoogleSignOutLoading = false.obs;
 
   Future<void> signInWithGoogle() async {
     if (isGoogleLoading.value) {
@@ -64,6 +65,37 @@ class LoginController extends GetxController {
     }
   }
 
+  Future<void> signOutFromGoogle() async {
+    if (isGoogleSignOutLoading.value) {
+      return;
+    }
+
+    isGoogleSignOutLoading.value = true;
+
+    try {
+      await authService.signOut();
+      _showInfoSnackbar(
+        titulo: 'Sessão encerrada',
+        mensagem: 'O login social foi desconectado para um novo teste.',
+      );
+    } on AuthFailure catch (error) {
+      final message = error.message.isEmpty
+          ? 'Não foi possível desconectar o login com Google. Tente novamente.'
+          : error.message;
+      _showErrorSnackbar(
+        titulo: 'Falha ao sair',
+        mensagem: message,
+      );
+    } catch (_) {
+      _showErrorSnackbar(
+        titulo: 'Erro inesperado',
+        mensagem: 'Não conseguimos finalizar o logout. Tente novamente em instantes.',
+      );
+    } finally {
+      isGoogleSignOutLoading.value = false;
+    }
+  }
+
   void _showErrorSnackbar({required String titulo, required String mensagem}) {
     Get.snackbar(
       titulo,
@@ -74,6 +106,20 @@ class LoginController extends GetxController {
       margin: const EdgeInsets.all(16),
       borderRadius: 16,
       duration: const Duration(seconds: 4),
+    );
+  }
+
+  void _showInfoSnackbar({required String titulo, required String mensagem}) {
+    final theme = Get.theme;
+    Get.snackbar(
+      titulo,
+      mensagem,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: theme.colorScheme.primaryContainer.withOpacity(0.92),
+      colorText: theme.colorScheme.onPrimaryContainer,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 16,
+      duration: const Duration(seconds: 3),
     );
   }
 }

@@ -292,6 +292,35 @@ class _GoogleSignInCard extends StatelessWidget {
                 );
               },
             ),
+            const SizedBox(height: 16),
+            Text(
+              'Botão temporário para desconectar o login social durante os testes:',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(
+              () {
+                final loading = controller.isGoogleSignOutLoading.value;
+                return OutlinedButton.icon(
+                  onPressed: loading ? null : controller.signOutFromGoogle,
+                  icon: loading
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              theme.colorScheme.primary,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.logout_rounded),
+                  label: Text(loading ? 'Saindo...' : 'Logout temporário'),
+                );
+              },
+            ),
           ],
         ),
       ),
