@@ -16,11 +16,6 @@ class FirebaseInitializer {
   /// is not available yet, the error is logged and the app continues so the
   /// credential files can be added later without blocking execution.
   static Future<void> ensureInitialized() async {
-    if (_probeFuture != null) {
-      await _probeFuture;
-      return;
-    }
-
     _initializationFuture ??= _initializeFirebase();
 
     try {
@@ -37,27 +32,37 @@ class FirebaseInitializer {
     }
 
     _probeFuture ??= _writeIntegrationProbe();
-    await _probeFuture;
+    try {
+      await _probeFuture;
+    } finally {
+      _probeFuture = null;
+    }
   }
 
   static Future<void> _writeIntegrationProbe() async {
     try {
       final firestore = FirebaseFirestore.instanceFor(app: Firebase.app());
-      await firestore.collection('integration_tests').doc('bootstrap_probe').set(
-        {
-          'status': 'ok',
-          'checkedAt': FieldValue.serverTimestamp(),
-          'platform': _currentPlatformName(),
-          'buildMode': kReleaseMode ? 'release' : 'debug',
-          'source': 'receitagora_bootstrap',
-        },
-        SetOptions(merge: true),
+      final now = DateTime.now().toUtc().toIso8601String();
+      await firestore.collection('integration_probes').add({
+        'status': 'ok',
+        'checkedAt': FieldValue.serverTimestamp(),
+        'platform': _currentPlatformName(),
+        'buildMode': kReleaseMode ? 'release' : 'debug',
+        'source': 'receitagora_bootstrap',
+        'triggeredAt': now,
+      });
+      debugPrint(
+        'Firebase integration test document recorded successfully at $now.',
       );
-      debugPrint('Firebase integration test document recorded successfully.');
     } on FirebaseException catch (error, stackTrace) {
       debugPrint(
         'Firebase integration test failed: ${error.code} -> ${error.message}\n$stackTrace',
       );
+      if (error.code == 'permission-denied') {
+        debugPrint(
+          'Reveja as regras do Cloud Firestore para permitir gravações do aplicativo durante os testes.',
+        );
+      }
     } catch (error, stackTrace) {
       debugPrint('Firebase integration test error: $error\n$stackTrace');
     }
