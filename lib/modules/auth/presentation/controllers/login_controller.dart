@@ -2,40 +2,78 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/session_service.dart';
 
 class LoginController extends GetxController {
-  LoginController({required this.sessionService});
+  LoginController({
+    required this.sessionService,
+    required this.authService,
+  });
 
   final SessionService sessionService;
+  final AuthService authService;
 
-  final isLoading = false.obs;
+  final isGuestLoading = false.obs;
+  final isGoogleLoading = false.obs;
 
-  void signInWithGoogle() {
-    Get.snackbar(
-      'Em breve',
-      'O login com Google estará disponível nas próximas versões.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Get.theme.colorScheme.surfaceVariant.withOpacity(0.9),
-      colorText: Get.theme.colorScheme.onSurfaceVariant,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 16,
-    );
-  }
-
-  Future<void> continueAsGuest() async {
-    if (isLoading.value) {
+  Future<void> signInWithGoogle() async {
+    if (isGoogleLoading.value) {
       return;
     }
 
-    isLoading.value = true;
+    isGoogleLoading.value = true;
+
+    try {
+      await sessionService.ensureInitialized();
+      await authService.signInWithGoogle();
+      await Get.offAllNamed(AppRoutes.recipeFinder);
+    } on AuthFailure catch (error) {
+      if (!error.isCancelled) {
+        final message = error.message.isEmpty
+            ? 'Não foi possível completar o login com Google. Tente novamente.'
+            : error.message;
+        _showErrorSnackbar(
+          titulo: 'Não foi possível entrar',
+          mensagem: message,
+        );
+      }
+    } catch (_) {
+      _showErrorSnackbar(
+        titulo: 'Erro inesperado',
+        mensagem: 'Não conseguimos concluir o login com Google. Tente novamente em instantes.',
+      );
+    } finally {
+      isGoogleLoading.value = false;
+    }
+  }
+
+  Future<void> continueAsGuest() async {
+    if (isGuestLoading.value) {
+      return;
+    }
+
+    isGuestLoading.value = true;
 
     try {
       await sessionService.ensureInitialized();
       await sessionService.continueAsGuest();
       await Get.offAllNamed(AppRoutes.recipeFinder);
     } finally {
-      isLoading.value = false;
+      isGuestLoading.value = false;
     }
+  }
+
+  void _showErrorSnackbar({required String titulo, required String mensagem}) {
+    Get.snackbar(
+      titulo,
+      mensagem,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Get.theme.colorScheme.errorContainer.withOpacity(0.95),
+      colorText: Get.theme.colorScheme.onErrorContainer,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 16,
+      duration: const Duration(seconds: 4),
+    );
   }
 }

@@ -7,11 +7,13 @@ enum UserMode { guest, authenticated }
 
 class SessionUser {
   const SessionUser({
+    required this.id,
     required this.displayName,
     required this.email,
     this.avatarUrl,
   });
 
+  final String id;
   final String displayName;
   final String email;
   final String? avatarUrl;
@@ -24,6 +26,7 @@ class SessionService extends GetxService {
   final SharedPreferences preferences;
 
   static const _modeKey = 'session.mode';
+  static const _userIdKey = 'session.user.id';
   static const _userNameKey = 'session.user.name';
   static const _userEmailKey = 'session.user.email';
   static const _userAvatarKey = 'session.user.avatar';
@@ -86,10 +89,30 @@ class SessionService extends GetxService {
     _mode.value = UserMode.guest;
     _user.value = null;
     await preferences.setString(_modeKey, UserMode.guest.name);
+    await preferences.remove(_userIdKey);
     await preferences.remove(_userNameKey);
     await preferences.remove(_userEmailKey);
     await preferences.remove(_userAvatarKey);
     _ensureGuestQuotaFreshness();
+  }
+
+  Future<void> startAuthenticatedSession(SessionUser user) async {
+    _mode.value = UserMode.authenticated;
+    _user.value = user;
+    await preferences.setString(_modeKey, UserMode.authenticated.name);
+    await preferences.setString(_userIdKey, user.id);
+    await preferences.setString(_userNameKey, user.displayName);
+    await preferences.setString(_userEmailKey, user.email);
+
+    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
+      await preferences.setString(_userAvatarKey, user.avatarUrl!);
+    } else {
+      await preferences.remove(_userAvatarKey);
+    }
+
+    _guestSearchCount.value = 0;
+    await preferences.remove(_guestCountKey);
+    await preferences.remove(_guestDateKey);
   }
 
   bool canPerformGuestSearch() {
@@ -117,11 +140,13 @@ class SessionService extends GetxService {
     _mode.value = _parseMode(preferences.getString(_modeKey));
 
     if (isAuthenticated) {
+      final id = preferences.getString(_userIdKey);
       final name = preferences.getString(_userNameKey);
       final email = preferences.getString(_userEmailKey);
       final avatar = preferences.getString(_userAvatarKey);
-      if (email != null) {
+      if (email != null && id != null) {
         _user.value = SessionUser(
+          id: id,
           displayName: (name == null || name.isEmpty) ? email : name,
           email: email,
           avatarUrl: avatar,
