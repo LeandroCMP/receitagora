@@ -30,15 +30,25 @@ class AuthService extends GetxService {
 
   Future<SessionUser> signInWithGoogle() async {
     try {
-      final account = await googleSignIn.signIn();
-      if (account == null) {
-        throw AuthFailure.cancelled();
+      if (!googleSignIn.supportsAuthenticate()) {
+        throw AuthFailure.message(
+          'O login com Google não é suportado nesta plataforma. Utilize o botão oficial disponibilizado pelo Google.',
+        );
       }
 
-      final auth = await account.authentication;
+      final account = await googleSignIn.authenticate();
+      final authTokens = account.authentication;
+      final idToken = authTokens.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        throw AuthFailure.message(
+          'Não foi possível obter o token de autenticação da sua conta Google.',
+        );
+      }
+
+      final accessToken = await _tryFetchAccessToken(account);
       final credential = GoogleAuthProvider.credential(
-        idToken: auth.idToken,
-        accessToken: auth.accessToken,
+        idToken: idToken,
+        accessToken: accessToken,
       );
 
       final result = await firebaseAuth.signInWithCredential(credential);
@@ -69,6 +79,15 @@ class AuthService extends GetxService {
       await _saveUserProfile(sessionUser);
 
       return sessionUser;
+    } on GoogleSignInException catch (error) {
+      if (error.code == GoogleSignInExceptionCode.canceled) {
+        throw AuthFailure.cancelled();
+      }
+      throw AuthFailure.message(_translateGoogleSignInError(error));
+    } on UnsupportedError {
+      throw AuthFailure.message(
+        'O login com Google não está disponível para esta plataforma no momento.',
+      );
     } on FirebaseAuthException catch (error) {
       throw AuthFailure.message(_translateFirebaseAuthError(error));
     } on AuthFailure {
@@ -91,6 +110,41 @@ class AuthService extends GetxService {
       },
       SetOptions(merge: true),
     );
+  }
+
+  Future<String?> _tryFetchAccessToken(GoogleSignInAccount account) async {
+    try {
+      final authorization = await account.authorizationClient.authorizationForScopes(
+        const <String>['email', 'profile'],
+      );
+      return authorization?.accessToken;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _translateGoogleSignInError(GoogleSignInException error) {
+    switch (error.code) {
+      case GoogleSignInExceptionCode.canceled:
+        return 'O login com Google foi cancelado.';
+      case GoogleSignInExceptionCode.interrupted:
+        return 'A autenticação foi interrompida antes da conclusão. Tente novamente.';
+      case GoogleSignInExceptionCode.clientConfigurationError:
+        return 'Configuração inválida do login com Google. Verifique o ID do cliente OAuth e o arquivo google-services.';
+      case GoogleSignInExceptionCode.providerConfigurationError:
+        return 'O serviço de autenticação do Google está indisponível no momento. Tente novamente mais tarde.';
+      case GoogleSignInExceptionCode.uiUnavailable:
+        return 'Não foi possível exibir a interface do Google para login nesta plataforma.';
+      case GoogleSignInExceptionCode.userMismatch:
+        return 'Detectamos um conflito com a conta autenticada anteriormente. Saia da conta atual e tente novamente.';
+      case GoogleSignInExceptionCode.unknownError:
+      default:
+        final details = error.description?.trim();
+        if (details != null && details.isNotEmpty) {
+          return details;
+        }
+        return 'Ocorreu um erro inesperado ao validar o login com Google.';
+    }
   }
 
   String _translateFirebaseAuthError(FirebaseAuthException error) {
