@@ -136,6 +136,48 @@ class AuthService extends GetxService {
     }
   }
 
+  Future<void> updateDisplayName(String newName) async {
+    final sanitized = newName.trim();
+    if (sanitized.isEmpty) {
+      throw AuthFailure.message('Informe um nome válido para continuar.');
+    }
+
+    try {
+      await sessionService.ensureInitialized();
+      final currentUser = firebaseAuth.currentUser;
+      final sessionUser = sessionService.user;
+
+      if (currentUser == null || sessionUser == null) {
+        throw AuthFailure.message('Nenhuma sessão autenticada foi encontrada.');
+      }
+
+      if (currentUser.displayName != sanitized) {
+        await currentUser.updateDisplayName(sanitized);
+        await currentUser.reload();
+      }
+
+      final document = firestore.collection('users').doc(currentUser.uid);
+      await document.set(
+        {
+          'name': sanitized,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      await sessionService.updateDisplayName(sanitized);
+    } on FirebaseAuthException catch (error) {
+      throw AuthFailure.message(_translateFirebaseAuthError(error));
+    } on FirebaseException catch (error) {
+      final message = error.message?.trim();
+      throw AuthFailure.message(
+        message == null || message.isEmpty
+            ? 'Não foi possível atualizar seu nome agora. Tente novamente.'
+            : message,
+      );
+    }
+  }
+
   Future<void> _saveUserProfile({
     required SessionUser sessionUser,
     required User firebaseUser,

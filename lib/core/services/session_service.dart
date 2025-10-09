@@ -54,6 +54,7 @@ class SessionService extends GetxService {
       guestDailyLimit - _guestSearchCount.value < 0 ? 0 : guestDailyLimit - _guestSearchCount.value;
 
   Stream<UserMode?> get modeStream => _mode.stream;
+  Stream<SessionUser?> get userStream => _user.stream;
   Stream<int> get guestSearchCountStream => _guestSearchCount.stream;
 
   Future<SessionService> init() async {
@@ -123,6 +124,28 @@ class SessionService extends GetxService {
     await preferences.remove(_userNameKey);
     await preferences.remove(_userEmailKey);
     await preferences.remove(_userAvatarKey);
+  }
+
+  Future<void> updateDisplayName(String displayName) async {
+    final sanitized = displayName.trim();
+    if (sanitized.isEmpty) {
+      return;
+    }
+
+    final current = _user.value;
+    if (current == null) {
+      return;
+    }
+
+    final updated = SessionUser(
+      id: current.id,
+      displayName: sanitized,
+      email: current.email,
+      avatarUrl: current.avatarUrl,
+    );
+
+    _user.value = updated;
+    await preferences.setString(_userNameKey, sanitized);
   }
 
   bool canPerformGuestSearch() {
