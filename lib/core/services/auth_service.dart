@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -30,14 +31,12 @@ class AuthService extends GetxService {
 
   Future<SessionUser> signInWithGoogle() async {
     try {
-      if (!googleSignIn.supportsAuthenticate()) {
-        throw AuthFailure.message(
-          'O login com Google não é suportado nesta plataforma. Utilize o botão oficial disponibilizado pelo Google.',
-        );
+      final account = await googleSignIn.signIn();
+      if (account == null) {
+        throw AuthFailure.cancelled();
       }
 
-      final account = await googleSignIn.authenticate();
-      final authTokens = account.authentication;
+      final authTokens = await account.authentication;
       final idToken = authTokens.idToken;
       if (idToken == null || idToken.isEmpty) {
         throw AuthFailure.message(
@@ -45,7 +44,7 @@ class AuthService extends GetxService {
         );
       }
 
-      final accessToken = await _tryFetchAccessToken(account);
+      final accessToken = authTokens.accessToken;
       final credential = GoogleAuthProvider.credential(
         idToken: idToken,
         accessToken: accessToken,
@@ -79,8 +78,8 @@ class AuthService extends GetxService {
       await _saveUserProfile(sessionUser);
 
       return sessionUser;
-    } on GoogleSignInException catch (error) {
-      if (error.code == GoogleSignInExceptionCode.canceled) {
+    } on PlatformException catch (error) {
+      if (error.code == GoogleSignIn.kSignInCanceledError) {
         throw AuthFailure.cancelled();
       }
       throw AuthFailure.message(_translateGoogleSignInError(error));
@@ -123,34 +122,17 @@ class AuthService extends GetxService {
     });
   }
 
-  Future<String?> _tryFetchAccessToken(GoogleSignInAccount account) async {
-    try {
-      final authorization = await account.authorizationClient.authorizationForScopes(
-        const <String>['email', 'profile'],
-      );
-      return authorization?.accessToken;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  String _translateGoogleSignInError(GoogleSignInException error) {
+  String _translateGoogleSignInError(PlatformException error) {
     switch (error.code) {
-      case GoogleSignInExceptionCode.canceled:
-        return 'O login com Google foi cancelado.';
-      case GoogleSignInExceptionCode.interrupted:
-        return 'A autenticação foi interrompida antes da conclusão. Tente novamente.';
-      case GoogleSignInExceptionCode.clientConfigurationError:
-        return 'Configuração inválida do login com Google. Verifique o ID do cliente OAuth e o arquivo google-services.';
-      case GoogleSignInExceptionCode.providerConfigurationError:
-        return 'O serviço de autenticação do Google está indisponível no momento. Tente novamente mais tarde.';
-      case GoogleSignInExceptionCode.uiUnavailable:
-        return 'Não foi possível exibir a interface do Google para login nesta plataforma.';
-      case GoogleSignInExceptionCode.userMismatch:
-        return 'Detectamos um conflito com a conta autenticada anteriormente. Saia da conta atual e tente novamente.';
-      case GoogleSignInExceptionCode.unknownError:
+      case GoogleSignIn.kSignInRequiredError:
+        return 'É necessário escolher uma conta Google para continuar.';
+      case GoogleSignIn.kSignInFailedError:
+        return 'Não foi possível entrar com sua conta Google. Tente novamente.';
+      case 'network_error':
+      case GoogleSignIn.kNetworkError:
+        return 'Sem conexão com a internet. Verifique sua rede e tente outra vez.';
       default:
-        final details = error.description?.trim();
+        final details = error.message?.trim();
         if (details != null && details.isNotEmpty) {
           return details;
         }

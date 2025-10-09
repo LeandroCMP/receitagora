@@ -24,7 +24,12 @@ class InitialBinding extends Bindings {
     );
     Get.put<FirebaseAuth>(FirebaseAuth.instance, permanent: true);
     Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);
-    Get.put<GoogleSignIn>(GoogleSignIn.instance, permanent: true);
+    Get.put<GoogleSignIn>(
+      GoogleSignIn(
+        scopes: const <String>['email', 'profile'],
+      ),
+      permanent: true,
+    );
     Get.putAsync<SessionService>(
       () async {
         final preferences = await SharedPreferences.getInstance();
