@@ -100,16 +100,27 @@ class AuthService extends GetxService {
   }
 
   Future<void> _saveUserProfile(SessionUser user) async {
-    await firestore.collection('users').doc(user.id).set(
-      {
-        'displayName': user.displayName,
+    final document = firestore.collection('users').doc(user.id);
+
+    await firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(document);
+
+      final data = <String, dynamic>{
+        'name': user.displayName,
         'email': user.email,
-        'avatarUrl': user.avatarUrl,
+        if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
+          'avatarUrl': user.avatarUrl,
         'provider': 'google',
+        'updatedAt': FieldValue.serverTimestamp(),
         'lastLoginAt': FieldValue.serverTimestamp(),
-      },
-      SetOptions(merge: true),
-    );
+      };
+
+      if (!snapshot.exists) {
+        data['createdAt'] = FieldValue.serverTimestamp();
+      }
+
+      transaction.set(document, data, SetOptions(merge: true));
+    });
   }
 
   Future<String?> _tryFetchAccessToken(GoogleSignInAccount account) async {
