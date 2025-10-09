@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -27,16 +26,16 @@ class AuthService extends GetxService {
   final FirebaseAuth firebaseAuth;
   final GoogleSignIn googleSignIn;
   final FirebaseFirestore firestore;
+  Future<void>? _googleSignInInitialization;
   SessionService get sessionService => Get.find<SessionService>();
 
   Future<SessionUser> signInWithGoogle() async {
     try {
-      final account = await googleSignIn.signIn();
-      if (account == null) {
-        throw AuthFailure.cancelled();
-      }
+      await _ensureGoogleSignInInitialized();
 
-      final authTokens = await account.authentication;
+      final account = await googleSignIn.authenticate();
+
+      final authTokens = account.authentication;
       final idToken = authTokens.idToken;
       if (idToken == null || idToken.isEmpty) {
         throw AuthFailure.message(
@@ -44,10 +43,8 @@ class AuthService extends GetxService {
         );
       }
 
-      final accessToken = authTokens.accessToken;
       final credential = GoogleAuthProvider.credential(
         idToken: idToken,
-        accessToken: accessToken,
       );
 
       final result = await firebaseAuth.signInWithCredential(credential);
@@ -78,8 +75,8 @@ class AuthService extends GetxService {
       await _saveUserProfile(sessionUser);
 
       return sessionUser;
-    } on PlatformException catch (error) {
-      if (error.code == GoogleSignIn.kSignInCanceledError) {
+    } on GoogleSignInException catch (error) {
+      if (error.code == GoogleSignInExceptionCode.canceled) {
         throw AuthFailure.cancelled();
       }
       throw AuthFailure.message(_translateGoogleSignInError(error));
@@ -122,22 +119,29 @@ class AuthService extends GetxService {
     });
   }
 
-  String _translateGoogleSignInError(PlatformException error) {
+  String _translateGoogleSignInError(GoogleSignInException error) {
     switch (error.code) {
-      case GoogleSignIn.kSignInRequiredError:
-        return 'É necessário escolher uma conta Google para continuar.';
-      case GoogleSignIn.kSignInFailedError:
-        return 'Não foi possível entrar com sua conta Google. Tente novamente.';
-      case 'network_error':
-      case GoogleSignIn.kNetworkError:
-        return 'Sem conexão com a internet. Verifique sua rede e tente outra vez.';
-      default:
-        final details = error.message?.trim();
-        if (details != null && details.isNotEmpty) {
-          return details;
-        }
-        return 'Ocorreu um erro inesperado ao validar o login com Google.';
+      case GoogleSignInExceptionCode.interrupted:
+        return 'A autenticação foi interrompida. Tente novamente.';
+      case GoogleSignInExceptionCode.clientConfigurationError:
+        return 'Configuração inválida do login com Google. Verifique suas credenciais.';
+      case GoogleSignInExceptionCode.providerConfigurationError:
+        return 'Não foi possível iniciar o login com Google. Tente novamente em instantes.';
+      case GoogleSignInExceptionCode.uiUnavailable:
+        return 'Não conseguimos exibir a tela do Google para finalizar o login.';
+      case GoogleSignInExceptionCode.userMismatch:
+        return 'A conta informada não corresponde à sessão atual. Tente novamente.';
+      case GoogleSignInExceptionCode.canceled:
+        return 'O login com Google foi cancelado.';
+      case GoogleSignInExceptionCode.unknownError:
+        break;
     }
+
+    final description = error.description?.trim();
+    if (description != null && description.isNotEmpty) {
+      return description;
+    }
+    return 'Ocorreu um erro inesperado ao validar o login com Google.';
   }
 
   String _translateFirebaseAuthError(FirebaseAuthException error) {
@@ -162,6 +166,24 @@ class AuthService extends GetxService {
           return details;
         }
         return 'Ocorreu um erro inesperado ao validar o login com Google.';
+    }
+  }
+
+  Future<void> _ensureGoogleSignInInitialized() async {
+    final existing = _googleSignInInitialization;
+    if (existing != null) {
+      await existing;
+      return;
+    }
+
+    final future = googleSignIn.initialize();
+    _googleSignInInitialization = future;
+
+    try {
+      await future;
+    } catch (error) {
+      _googleSignInInitialization = null;
+      rethrow;
     }
   }
 }
