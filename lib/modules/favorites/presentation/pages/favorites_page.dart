@@ -213,7 +213,7 @@ class _EmptyFavorites extends StatelessWidget {
   });
 
   final ThemeData theme;
-  final AppPageLayout layout;
+  final AppPageLayoutValues layout;
 
   @override
   Widget build(BuildContext context) {
