@@ -174,8 +174,7 @@ class AuthServiceImpl implements AuthService {
   }
 
   Future<void> _ensureGoogleSignInInitialized() {
-    return _googleSignInInitialization ??=
-        _googleSignIn.initialize(scopes: _scopeHint);
+    return _googleSignInInitialization ??= _googleSignIn.initialize();
   }
 
   Future<void> _saveUserProfile({
