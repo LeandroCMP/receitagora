@@ -39,7 +39,7 @@ class AuthServiceImpl implements AuthService {
       final GoogleSignInAccount account =
           await _googleSignIn.authenticate(scopeHint: _scopeHint);
 
-      final authTokens = await account.authentication;
+      final GoogleSignInAuthentication authTokens = account.authentication;
       final idToken = authTokens.idToken;
       if (idToken == null || idToken.isEmpty) {
         throw AuthFailure.message(
@@ -175,7 +175,7 @@ class AuthServiceImpl implements AuthService {
 
   Future<void> _ensureGoogleSignInInitialized() {
     return _googleSignInInitialization ??=
-        _googleSignIn.initialize(scope: _scopeHint);
+        _googleSignIn.initialize(scopes: _scopeHint);
   }
 
   Future<void> _saveUserProfile({
@@ -200,8 +200,8 @@ class AuthServiceImpl implements AuthService {
             'lastSignInTime': firebaseUser.metadata.lastSignInTime?.toIso8601String(),
           },
           'googleAccount': {
-            'scopes': account.scopes,
-            'hostedDomain': account.hostedDomain,
+            'id': account.id,
+            'email': account.email,
           },
           'updatedAt': FieldValue.serverTimestamp(),
         },
@@ -214,23 +214,28 @@ class AuthServiceImpl implements AuthService {
 
   String _translateGoogleSignInError(GoogleSignInException error) {
     switch (error.code) {
-      case GoogleSignInExceptionCode.networkError:
-        return 'Falha de rede durante o login. Verifique sua conexão e tente novamente.';
-      case GoogleSignInExceptionCode.signInFailed:
-        return 'Não foi possível conectar-se à sua conta Google. Tente novamente mais tarde.';
-      case GoogleSignInExceptionCode.signInRequired:
-        return 'É necessário escolher uma conta Google para continuar.';
+      case GoogleSignInExceptionCode.canceled:
+        return 'Login com Google cancelado pelo usuário.';
+      case GoogleSignInExceptionCode.interrupted:
+        return 'O login com Google foi interrompido. Tente novamente.';
+      case GoogleSignInExceptionCode.clientConfigurationError:
+      case GoogleSignInExceptionCode.providerConfigurationError:
+        return 'A configuração do login com Google está incorreta. Revise as credenciais do Firebase.';
+      case GoogleSignInExceptionCode.uiUnavailable:
+        return 'Não foi possível exibir a interface do Google para concluir o login.';
+      case GoogleSignInExceptionCode.userMismatch:
+        return 'A conta Google selecionada não corresponde à sessão atual.';
+      case GoogleSignInExceptionCode.unknownError:
       default:
-        return 'Ocorreu um erro inesperado durante o login com Google (código: ${error.code}).';
+        final description = error.description;
+        if (description != null && description.isNotEmpty) {
+          return 'Ocorreu um erro inesperado durante o login com Google: $description';
+        }
+        return 'Ocorreu um erro inesperado durante o login com Google.';
     }
   }
 
   String _translatePlatformError(PlatformException error) {
-    if (error.code == GoogleSignIn.kSignInCanceledError ||
-        error.code == GoogleSignIn.kNetworkError) {
-      return 'Não foi possível completar a autenticação com o Google. Tente novamente em instantes.';
-    }
-
     return 'Falha inesperada ao acessar o Google Sign-In (código: ${error.code}).';
   }
 
