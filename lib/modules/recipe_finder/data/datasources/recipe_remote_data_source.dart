@@ -1,8 +1,9 @@
 import 'dart:convert';
 
-import '../../../../core/errors/app_exception.dart';
-import '../../../../core/services/openai_service.dart';
-import '../models/recipe_model.dart';
+import 'package:receitagora/core/errors/app_exception.dart';
+import 'package:receitagora/services/openai/openai_service.dart';
+
+import 'package:receitagora/modules/recipe_finder/data/models/recipe_model.dart';
 
 class RecipeRemoteDataSource {
   RecipeRemoteDataSource({required this.service});

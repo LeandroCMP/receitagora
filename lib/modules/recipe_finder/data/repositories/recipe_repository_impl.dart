@@ -1,7 +1,7 @@
-import '../../../../core/errors/app_exception.dart';
-import '../../domain/entities/recipe_entity.dart';
-import '../../domain/repositories/recipe_repository.dart';
-import '../datasources/recipe_remote_data_source.dart';
+import 'package:receitagora/core/errors/app_exception.dart';
+import 'package:receitagora/modules/recipe_finder/data/datasources/recipe_remote_data_source.dart';
+import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
+import 'package:receitagora/modules/recipe_finder/domain/repositories/recipe_repository.dart';
 
 class RecipeRepositoryImpl implements RecipeRepository {
   RecipeRepositoryImpl({required this.remoteDataSource});
