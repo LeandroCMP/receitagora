@@ -11,6 +11,8 @@ import 'package:receitagora/services/openai/openai_service.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service_impl.dart';
 import 'package:receitagora/services/session/session_service.dart';
+import 'package:receitagora/services/share/recipe_share_service.dart';
+import 'package:receitagora/services/share/recipe_share_service_impl.dart';
 
 class ApplicationBindings extends Bindings {
   @override
@@ -44,6 +46,10 @@ class ApplicationBindings extends Bindings {
         firestore: Get.find<FirebaseFirestore>(),
         firebaseAuth: Get.find<FirebaseAuth>(),
       ),
+      fenix: true,
+    );
+    Get.lazyPut<RecipeShareService>(
+      () => RecipeShareServiceImpl(),
       fenix: true,
     );
   }

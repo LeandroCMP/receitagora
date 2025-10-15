@@ -6,6 +6,7 @@ import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
+import 'package:receitagora/services/share/recipe_share_service.dart';
 
 import 'widgets/recipe_cover.dart';
 
@@ -68,6 +69,7 @@ class RecipeDetailPage extends StatelessWidget {
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
     final sessionService = Get.find<SessionService>();
     final favoritesService = Get.find<RecipeFavoritesService>();
+    final shareService = Get.find<RecipeShareService>();
 
     void showFavoriteError(String message) {
       Get.snackbar(
@@ -111,10 +113,64 @@ class RecipeDetailPage extends StatelessWidget {
       }
     }
 
+    Future<void> shareRecipe() async {
+      var overlayShown = false;
+      if (!(Get.isDialogOpen ?? false)) {
+        overlayShown = true;
+        Get.dialog(
+          const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+      }
+
+      void closeOverlay() {
+        if (overlayShown && (Get.isDialogOpen ?? false)) {
+          Get.back();
+          overlayShown = false;
+        }
+      }
+
+      void showShareError(String message) {
+        Get.snackbar(
+          'Não foi possível compartilhar',
+          message,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+          backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
+          colorText: theme.colorScheme.onErrorContainer,
+        );
+      }
+
+      try {
+        await shareService.shareRecipe(args.recipe);
+      } on ShareFailure catch (error) {
+        closeOverlay();
+        showShareError(error.message);
+        return;
+      } catch (_) {
+        closeOverlay();
+        showShareError('Tente novamente em instantes.');
+        return;
+      }
+
+      closeOverlay();
+      Get.snackbar(
+        'Pronto para compartilhar',
+        'Escolha o aplicativo desejado para enviar esta receita deliciosa.',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(args.recipe.name),
         actions: [
+          IconButton(
+            tooltip: 'Compartilhar receita',
+            icon: const Icon(Icons.ios_share_rounded),
+            onPressed: shareRecipe,
+          ),
           Obx(() {
             if (!sessionService.isAuthenticated) {
               return const SizedBox.shrink();
