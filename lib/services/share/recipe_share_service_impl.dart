@@ -9,14 +9,14 @@ import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.
 
 import 'recipe_share_service.dart';
 
-class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
-  static const _backgroundTop = Color(0xFF1B5E20);
-  static const _backgroundBottom = Color(0xFF4CAF50);
-  static const _accentColor = Color(0xFFFFF176);
-  static const _contentBackground = Color(0xFFFAFAFA);
-  static const _titleColor = Color(0xFF1B5E20);
-  static const _textColor = Color(0xFF37474F);
+const _backgroundTop = Color(0xFF1B5E20);
+const _backgroundBottom = Color(0xFF4CAF50);
+const _accentColor = Color(0xFFFFF176);
+const _contentBackground = Color(0xFFFAFAFA);
+const _titleColor = Color(0xFF1B5E20);
+const _textColor = Color(0xFF37474F);
 
+class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
   @override
   Future<void> shareRecipe(RecipeEntity recipe) async {
     try {
