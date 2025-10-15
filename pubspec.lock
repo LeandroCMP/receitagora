@@ -420,18 +420,18 @@ packages:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: 468c43f285207c84bcabf5737f33b914ceb8eb38398b91e5e3ad1698d1b72a52
+      sha256: 3ef39599b00059db0990ca2e30fca0a29d8b37aae924d60063f8e0184cf20900
       url: "https://pub.dev"
     source: hosted
-    version: "10.0.2"
+    version: "7.2.2"
   share_plus_platform_interface:
     dependency: transitive
     description:
       name: share_plus_platform_interface
-      sha256: 88023e53a13429bd65d8e85e11a9b484f49d4c190abbd96c7932b74d6927cc9a
+      sha256: df08bc3a07d01f5ea47b45d03ffcba1fa9cd5370fb44b3f38c70e42cced0f956
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.0"
+    version: "3.3.1"
   shared_preferences_android:
     dependency: transitive
     description:
