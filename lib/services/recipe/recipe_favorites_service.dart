@@ -13,6 +13,7 @@ abstract class RecipeFavoritesService {
   Set<String> get favoriteIds;
   List<FavoritedRecipeEntity> get favorites;
 
+  String favoriteIdFor(RecipeEntity recipe);
   bool isFavoriteSync(RecipeEntity recipe);
   Future<void> addFavorite(RecipeEntity recipe);
   Future<void> removeFavoriteForRecipe(RecipeEntity recipe);

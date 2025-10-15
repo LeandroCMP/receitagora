@@ -29,15 +29,22 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
               return const SizedBox(width: 8);
             }
 
-            final hasFavorites = favoritesService.favoriteIds.isNotEmpty;
+            return StreamBuilder<Set<String>>(
+              stream: favoritesService.favoriteIdsStream,
+              initialData: favoritesService.favoriteIds,
+              builder: (context, snapshot) {
+                final favoriteIds = snapshot.data ?? favoritesService.favoriteIds;
+                final hasFavorites = favoriteIds.isNotEmpty;
 
-            return IconButton(
-              tooltip: 'Ver favoritos',
-              icon: Icon(
-                hasFavorites ? Icons.favorite : Icons.favorite_border,
-                color: hasFavorites ? theme.colorScheme.primary : null,
-              ),
-              onPressed: () => Get.toNamed(AppRoutes.favorites),
+                return IconButton(
+                  tooltip: 'Ver favoritos',
+                  icon: Icon(
+                    hasFavorites ? Icons.favorite : Icons.favorite_border,
+                    color: hasFavorites ? theme.colorScheme.primary : null,
+                  ),
+                  onPressed: () => Get.toNamed(AppRoutes.favorites),
+                );
+              },
             );
           }),
           Obx(() {

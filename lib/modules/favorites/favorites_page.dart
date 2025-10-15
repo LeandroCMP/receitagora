@@ -61,37 +61,44 @@ class FavoritesPage extends GetView<FavoritesController> {
                   return _GuestNotice(theme: theme, controller: controller);
                 }
 
-                final favorites = favoritesService.favorites.toList();
-                if (favorites.isEmpty) {
-                  return _EmptyFavorites(theme: theme, layout: layout);
-                }
+                return StreamBuilder<List<FavoritedRecipeEntity>>(
+                  stream: favoritesService.favoritesStream,
+                  initialData: favoritesService.favorites,
+                  builder: (context, snapshot) {
+                    final favorites = snapshot.data ?? const <FavoritedRecipeEntity>[];
+                    if (favorites.isEmpty) {
+                      return _EmptyFavorites(theme: theme, layout: layout);
+                    }
 
-                return SingleChildScrollView(
-                  padding: layout.padding,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _FavoritesHeader(theme: theme, favorites: favorites),
-                          const SizedBox(height: 24),
-                          ...List.generate(
-                            favorites.length,
-                            (index) {
-                              final favorite = favorites[index];
-                              return _FavoriteRecipeCard(
-                                controller: controller,
-                                favorite: favorite,
-                                index: index,
-                              );
-                            },
+                    return SingleChildScrollView(
+                      padding: layout.padding,
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(maxWidth: layout.maxContentWidth),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _FavoritesHeader(theme: theme, favorites: favorites),
+                              const SizedBox(height: 24),
+                              ...List.generate(
+                                favorites.length,
+                                (index) {
+                                  final favorite = favorites[index];
+                                  return _FavoriteRecipeCard(
+                                    controller: controller,
+                                    favorite: favorite,
+                                    index: index,
+                                  );
+                                },
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 );
               });
             },

@@ -85,6 +85,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
     try {
       await _hydrateFromPreferences();
+      await _clearLegacyFavoriteEntries();
       _ensureGuestQuotaFreshness();
 
       if (!_readyCompleter.isCompleted) {
@@ -227,6 +228,26 @@ class SessionServiceImpl extends GetxService implements SessionService {
       _guestSearchCount.value = 0;
       _preferences.setString(_guestDateKey, now.toIso8601String());
       _preferences.setInt(_guestCountKey, 0);
+    }
+  }
+
+  Future<void> _clearLegacyFavoriteEntries() async {
+    final keys = Set<String>.from(_preferences.getKeys());
+    if (keys.isEmpty) {
+      return;
+    }
+
+    const legacyPatterns = <String>[
+      'favorite',
+      'favorites',
+      'recipeFavorites',
+    ];
+
+    for (final key in keys) {
+      final matchesPattern = legacyPatterns.any(key.contains);
+      if (matchesPattern) {
+        await _preferences.remove(key);
+      }
     }
   }
 

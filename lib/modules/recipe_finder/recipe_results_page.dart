@@ -161,42 +161,56 @@ class RecipeResultsPage extends StatelessWidget {
                                 'Não encontramos receitas com esses ingredientes. Tente ajustar a combinação.',
                           )
                         else
-                          ...List.generate(
-                            args.recipes.length,
-                            (index) {
-                              final recipe = args.recipes[index];
-                              final heroTag = 'recipe-${recipe.name.hashCode}-$index';
-                              return RecipeSummaryCard(
-                                recipe: recipe,
-                                position: index,
-                                heroTag: heroTag,
-                                onTap: () {
-                                  Get.to(
-                                    () => RecipeDetailPage(
+                          StreamBuilder<Set<String>>(
+                            stream: favoritesService.favoriteIdsStream,
+                            initialData: favoritesService.favoriteIds,
+                            builder: (context, snapshot) {
+                              final favoriteIds =
+                                  snapshot.data ?? favoritesService.favoriteIds;
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: List.generate(
+                                  args.recipes.length,
+                                  (index) {
+                                    final recipe = args.recipes[index];
+                                    final heroTag =
+                                        'recipe-${recipe.name.hashCode}-$index';
+                                    final isFavorite = favoriteIds.contains(
+                                      favoritesService.favoriteIdFor(recipe),
+                                    );
+
+                                    return RecipeSummaryCard(
                                       recipe: recipe,
+                                      position: index,
                                       heroTag: heroTag,
-                                    ),
-                                    transition: Transition.cupertino,
-                                  );
-                                },
-                                action: Obx(() {
-                                  final isFavorite =
-                                      favoritesService.isFavoriteSync(recipe);
-                                  return IconButton(
-                                    tooltip: isFavorite
-                                        ? 'Remover dos favoritos'
-                                        : 'Salvar nos favoritos',
-                                    icon: Icon(
-                                      isFavorite
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: isFavorite
-                                          ? theme.colorScheme.primary
-                                          : theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                    onPressed: () => toggleFavorite(recipe),
-                                  );
-                                }),
+                                      onTap: () {
+                                        Get.to(
+                                          () => RecipeDetailPage(
+                                            recipe: recipe,
+                                            heroTag: heroTag,
+                                          ),
+                                          transition: Transition.cupertino,
+                                        );
+                                      },
+                                      action: IconButton(
+                                        tooltip: isFavorite
+                                            ? 'Remover dos favoritos'
+                                            : 'Salvar nos favoritos',
+                                        icon: Icon(
+                                          isFavorite
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: isFavorite
+                                              ? theme.colorScheme.primary
+                                              : theme.colorScheme
+                                                  .onSurfaceVariant,
+                                        ),
+                                        onPressed: () => toggleFavorite(recipe),
+                                      ),
+                                    );
+                                  },
+                                ),
                               );
                             },
                           ),

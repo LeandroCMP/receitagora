@@ -120,15 +120,27 @@ class RecipeDetailPage extends StatelessWidget {
               return const SizedBox.shrink();
             }
 
-            final isFavorite = favoritesService.isFavoriteSync(args.recipe);
-            return IconButton(
-              tooltip:
-                  isFavorite ? 'Remover dos favoritos' : 'Salvar nos favoritos',
-              icon: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_outline,
-                color: isFavorite ? theme.colorScheme.primary : null,
-              ),
-              onPressed: toggleFavorite,
+            return StreamBuilder<Set<String>>(
+              stream: favoritesService.favoriteIdsStream,
+              initialData: favoritesService.favoriteIds,
+              builder: (context, snapshot) {
+                final favoriteIds =
+                    snapshot.data ?? favoritesService.favoriteIds;
+                final isFavorite = favoriteIds.contains(
+                  favoritesService.favoriteIdFor(args.recipe),
+                );
+
+                return IconButton(
+                  tooltip: isFavorite
+                      ? 'Remover dos favoritos'
+                      : 'Salvar nos favoritos',
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_outline,
+                    color: isFavorite ? theme.colorScheme.primary : null,
+                  ),
+                  onPressed: toggleFavorite,
+                );
+              },
             );
           }),
         ],

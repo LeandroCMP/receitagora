@@ -58,8 +58,11 @@ class RecipeFavoritesServiceImpl extends GetxService
   }
 
   @override
+  String favoriteIdFor(RecipeEntity recipe) => _buildRecipeId(recipe);
+
+  @override
   bool isFavoriteSync(RecipeEntity recipe) {
-    final id = _buildRecipeId(recipe);
+    final id = favoriteIdFor(recipe);
     return _favoriteIds.contains(id);
   }
 
@@ -68,7 +71,7 @@ class RecipeFavoritesServiceImpl extends GetxService
     final user = _requireAuthenticatedUser();
 
     final document =
-        _userFavoritesCollection(user.uid).doc(_buildRecipeId(recipe));
+        _userFavoritesCollection(user.uid).doc(favoriteIdFor(recipe));
 
     try {
       await document.set(
@@ -95,7 +98,7 @@ class RecipeFavoritesServiceImpl extends GetxService
 
   @override
   Future<void> removeFavoriteForRecipe(RecipeEntity recipe) async {
-    await removeFavoriteById(_buildRecipeId(recipe));
+    await removeFavoriteById(favoriteIdFor(recipe));
   }
 
   @override
@@ -121,8 +124,9 @@ class RecipeFavoritesServiceImpl extends GetxService
 
   @override
   Future<void> toggleFavorite(RecipeEntity recipe) async {
-    if (isFavoriteSync(recipe)) {
-      await removeFavoriteForRecipe(recipe);
+    final favoriteId = favoriteIdFor(recipe);
+    if (_favoriteIds.contains(favoriteId)) {
+      await removeFavoriteById(favoriteId);
     } else {
       await addFavorite(recipe);
     }
