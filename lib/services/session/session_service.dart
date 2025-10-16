@@ -3,7 +3,7 @@ import 'package:receitagora/models/user_model.dart';
 enum UserMode { guest, authenticated }
 
 abstract class SessionService {
-  static const int guestDailyLimit = 3;
+  static const int guestDailyLimit = 2;
   static const int guestRecipeLimit = 2;
 
   Future<void> get ready;

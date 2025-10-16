@@ -151,39 +151,68 @@ class RecipeDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(args.recipe.name),
         actions: [
-          IconButton(
-            tooltip: 'Compartilhar receita',
-            icon: const Icon(Icons.ios_share_rounded),
-            onPressed: shareRecipe,
-          ),
-          Obx(() {
-            if (!sessionService.isAuthenticated) {
-              return const SizedBox.shrink();
-            }
+          StreamBuilder<UserMode?>(
+            stream: sessionService.modeStream,
+            initialData: sessionService.mode,
+            builder: (context, snapshot) {
+              final isAuthenticated =
+                  snapshot.data == UserMode.authenticated;
 
-            return StreamBuilder<Set<String>>(
-              stream: favoritesService.favoriteIdsStream,
-              initialData: favoritesService.favoriteIds,
-              builder: (context, snapshot) {
-                final favoriteIds =
-                    snapshot.data ?? favoritesService.favoriteIds;
-                final isFavorite = favoriteIds.contains(
-                  favoritesService.favoriteIdFor(args.recipe),
-                );
+              final shareButton = IconButton(
+                tooltip: isAuthenticated
+                    ? 'Compartilhar receita'
+                    : 'Disponível após login',
+                icon: const Icon(Icons.ios_share_rounded),
+                onPressed: isAuthenticated ? shareRecipe : null,
+              );
 
-                return IconButton(
-                  tooltip: isFavorite
-                      ? 'Remover dos favoritos'
-                      : 'Salvar nos favoritos',
+              Widget favoriteButton;
+              if (!isAuthenticated) {
+                favoriteButton = IconButton(
+                  tooltip: 'Faça login para favoritar',
+                  onPressed: null,
                   icon: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_outline,
-                    color: isFavorite ? theme.colorScheme.primary : null,
+                    Icons.favorite_outline,
+                    color: theme.disabledColor,
                   ),
-                  onPressed: toggleFavorite,
                 );
-              },
-            );
-          }),
+              } else {
+                favoriteButton = StreamBuilder<Set<String>>(
+                  stream: favoritesService.favoriteIdsStream,
+                  initialData: favoritesService.favoriteIds,
+                  builder: (context, snapshot) {
+                    final favoriteIds =
+                        snapshot.data ?? favoritesService.favoriteIds;
+                    final isFavorite = favoriteIds.contains(
+                      favoritesService.favoriteIdFor(args.recipe),
+                    );
+
+                    return IconButton(
+                      tooltip: isFavorite
+                          ? 'Remover dos favoritos'
+                          : 'Salvar nos favoritos',
+                      icon: Icon(
+                        isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_outline,
+                        color:
+                            isFavorite ? theme.colorScheme.primary : null,
+                      ),
+                      onPressed: toggleFavorite,
+                    );
+                  },
+                );
+              }
+
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  shareButton,
+                  favoriteButton,
+                ],
+              );
+            },
+          ),
         ],
       ),
       body: Container(

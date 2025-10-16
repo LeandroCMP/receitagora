@@ -151,56 +151,73 @@ class RecipeResultsPage extends StatelessWidget {
                                 'Não encontramos receitas com esses ingredientes. Tente ajustar a combinação.',
                           )
                         else
-                          StreamBuilder<Set<String>>(
-                            stream: favoritesService.favoriteIdsStream,
-                            initialData: favoritesService.favoriteIds,
-                            builder: (context, snapshot) {
-                              final favoriteIds =
-                                  snapshot.data ?? favoritesService.favoriteIds;
+                          StreamBuilder<UserMode?>(
+                            stream: sessionService.modeStream,
+                            initialData: sessionService.mode,
+                            builder: (context, modeSnapshot) {
+                              final isAuthenticated =
+                                  modeSnapshot.data == UserMode.authenticated;
 
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: List.generate(
-                                  args.recipes.length,
-                                  (index) {
-                                    final recipe = args.recipes[index];
-                                    final heroTag =
-                                        'recipe-${recipe.name.hashCode}-$index';
-                                    final isFavorite = favoriteIds.contains(
-                                      favoritesService.favoriteIdFor(recipe),
-                                    );
+                              return StreamBuilder<Set<String>>(
+                                stream: favoritesService.favoriteIdsStream,
+                                initialData: favoritesService.favoriteIds,
+                                builder: (context, snapshot) {
+                                  final favoriteIds = snapshot.data ??
+                                      favoritesService.favoriteIds;
 
-                                    return RecipeSummaryCard(
-                                      recipe: recipe,
-                                      position: index,
-                                      heroTag: heroTag,
-                                      onTap: () {
-                                        Get.to(
-                                          () => RecipeDetailPage(
-                                            recipe: recipe,
-                                            heroTag: heroTag,
+                                  return Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: List.generate(
+                                      args.recipes.length,
+                                      (index) {
+                                        final recipe = args.recipes[index];
+                                        final heroTag =
+                                            'recipe-${recipe.name.hashCode}-$index';
+                                        final isFavorite = favoriteIds.contains(
+                                          favoritesService.favoriteIdFor(recipe),
+                                        );
+
+                                        return RecipeSummaryCard(
+                                          recipe: recipe,
+                                          position: index,
+                                          heroTag: heroTag,
+                                          onTap: () {
+                                            Get.to(
+                                              () => RecipeDetailPage(
+                                                recipe: recipe,
+                                                heroTag: heroTag,
+                                              ),
+                                              transition: Transition.cupertino,
+                                            );
+                                          },
+                                          action: IconButton(
+                                            tooltip: !isAuthenticated
+                                                ? 'Disponível após login'
+                                                : isFavorite
+                                                    ? 'Remover dos favoritos'
+                                                    : 'Salvar nos favoritos',
+                                            icon: Icon(
+                                              isFavorite
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              color: !isAuthenticated
+                                                  ? theme.disabledColor
+                                                  : isFavorite
+                                                      ? theme
+                                                          .colorScheme.primary
+                                                      : theme.colorScheme
+                                                          .onSurfaceVariant,
+                                            ),
+                                            onPressed: isAuthenticated
+                                                ? () =>
+                                                    toggleFavorite(recipe)
+                                                : null,
                                           ),
-                                          transition: Transition.cupertino,
                                         );
                                       },
-                                      action: IconButton(
-                                        tooltip: isFavorite
-                                            ? 'Remover dos favoritos'
-                                            : 'Salvar nos favoritos',
-                                        icon: Icon(
-                                          isFavorite
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color: isFavorite
-                                              ? theme.colorScheme.primary
-                                              : theme.colorScheme
-                                                  .onSurfaceVariant,
-                                        ),
-                                        onPressed: () => toggleFavorite(recipe),
-                                      ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                  );
+                                },
                               );
                             },
                           ),
