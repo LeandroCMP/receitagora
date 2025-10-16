@@ -345,6 +345,18 @@ class _OverviewSection extends StatelessWidget {
         final borderRadius = BorderRadius.circular(isCompact ? 28 : 36);
         final coverSize = isCompact ? 150.0 : 200.0;
 
+        final baseSurface = surfaces?.high ?? theme.colorScheme.surface;
+        final cardColors = [
+          Color.alphaBlend(
+            theme.colorScheme.primary.withOpacity(0.08),
+            baseSurface,
+          ),
+          Color.alphaBlend(
+            theme.colorScheme.secondary.withOpacity(0.04),
+            baseSurface,
+          ),
+        ];
+
         final cover = RecipeCover(
           theme: theme,
           recipe: recipe,
@@ -353,37 +365,27 @@ class _OverviewSection extends StatelessWidget {
           size: coverSize,
         );
 
+        final highlightLabel = args.position >= 0
+            ? 'Receita ${args.position + 1}'
+            : null;
+
         final content = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.local_fire_department_rounded,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  recipe.difficulty,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
+            if (highlightLabel != null) ...[
+              _OverviewBadge(label: highlightLabel),
+              const SizedBox(height: 16),
+            ],
             Text(
               recipe.name,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 height: 1.15,
                 fontSize: isCompact ? 26 : 32,
+                color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 14),
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -398,17 +400,17 @@ class _OverviewSection extends StatelessWidget {
                       '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
                 ),
                 _OverviewStatChip(
-                  icon: Icons.auto_awesome,
+                  icon: Icons.terrain_rounded,
                   label: recipe.difficulty,
                 ),
               ],
             ),
             if (description.isNotEmpty) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               Text(
                 description,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.75),
+                  color: theme.colorScheme.onSurface.withOpacity(0.78),
                   height: 1.55,
                 ),
               ),
@@ -422,11 +424,7 @@ class _OverviewSection extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                theme.colorScheme.primary.withOpacity(0.12),
-                theme.colorScheme.secondary.withOpacity(0.08),
-                theme.colorScheme.surfaceVariant.withOpacity(0.04),
-              ],
+              colors: cardColors,
             ),
             border: Border.all(
               color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
@@ -434,57 +432,39 @@ class _OverviewSection extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.shadow.withOpacity(0.04),
-                blurRadius: 18,
-                offset: const Offset(0, 12),
+                color: theme.colorScheme.shadow.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 14),
               ),
             ],
           ),
-          child: Stack(
-            children: [
-              Positioned(
-                top: -40,
-                right: -60,
-                child: Container(
-                  width: coverSize * 1.4,
-                  height: coverSize * 1.4,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        theme.colorScheme.primary.withOpacity(0.18),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  isCompact ? 24 : 32,
-                  isCompact ? 28 : 36,
-                  isCompact ? 24 : 36,
-                  isCompact ? 24 : 32,
-                ),
-                child: isCompact
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          cover,
-                          const SizedBox(height: 24),
-                          content,
-                        ],
-                      )
-                    : Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: content),
-                          const SizedBox(width: 32),
-                          cover,
-                        ],
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              isCompact ? 24 : 36,
+              isCompact ? 26 : 34,
+              isCompact ? 24 : 36,
+              isCompact ? 24 : 32,
+            ),
+            child: isCompact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Align(
+                        alignment: Alignment.center,
+                        child: cover,
                       ),
-              ),
-            ],
+                      const SizedBox(height: 26),
+                      content,
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: content),
+                      const SizedBox(width: 40),
+                      cover,
+                    ],
+                  ),
           ),
         );
       },
@@ -522,6 +502,48 @@ class _OverviewStatChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _OverviewBadge extends StatelessWidget {
+  const _OverviewBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.24),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.restaurant_rounded,
+              size: 16,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
