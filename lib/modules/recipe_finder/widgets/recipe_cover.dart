@@ -92,36 +92,6 @@ class RecipeCover extends StatelessWidget {
                 size: size * 0.38,
               ),
             ),
-            Positioned(
-              bottom: 20,
-              right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: (surfaces?.high ?? theme.colorScheme.surface)
-                      .withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 14,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      recipe.duration,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ],
         ),
       ),
