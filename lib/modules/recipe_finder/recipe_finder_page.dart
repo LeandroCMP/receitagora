@@ -205,7 +205,7 @@ class _WelcomeSection extends StatelessWidget {
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24),
-                          color: theme.colorScheme.secondaryContainer.withOpacity(0.78),
+                          color: theme.colorScheme.secondaryContainer.withOpacity(0.72),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -232,31 +232,43 @@ class _WelcomeSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Conte o que está à sua disposição e receba combinações pensadas para o seu momento — rápidas de preparar, equilibradas e fáceis de salvar.',
+                      'Adicione seus ingredientes e deixe o Receita Agora sugerir combinações pensadas para o seu dia.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontSize: isCompact ? 14 : 15,
                         color: theme.colorScheme.onPrimaryContainer.withOpacity(0.78),
                         height: 1.55,
                       ),
                     ),
-                    const SizedBox(height: 22),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: const [
-                        _HeroFeature(
-                          icon: Icons.auto_awesome_rounded,
-                          label: 'Sugestões inteligentes',
+                    const SizedBox(height: 24),
+                    Card(
+                      elevation: 0,
+                      color: theme.colorScheme.surface.withOpacity(0.28),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 20,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                'Receitas rápidas, equilibradas e sempre prontas para salvar.',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface.withOpacity(0.78),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        _HeroFeature(
-                          icon: Icons.favorite_border_rounded,
-                          label: 'Favoritos sincronizados',
-                        ),
-                        _HeroFeature(
-                          icon: Icons.ios_share_rounded,
-                          label: 'Compartilhe com estilo',
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 );
@@ -648,50 +660,6 @@ class _HeroIllustration extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _HeroFeature extends StatelessWidget {
-  const _HeroFeature({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: (surfaces?.highest ?? theme.colorScheme.surface).withOpacity(0.76),
-        border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.18),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withOpacity(0.86),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
