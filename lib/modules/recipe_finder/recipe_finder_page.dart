@@ -389,38 +389,61 @@ class _IngredientComposer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: controller.ingredientTextController,
-                    focusNode: controller.ingredientFocusNode,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: controller.addIngredient,
-                    decoration: InputDecoration(
-                      hintText: 'Ex.: tomate, frango, manjericão...',
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 18,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+            SizedBox(
+              height: 62,
+              child: Stack(
+                alignment: Alignment.centerRight,
+                children: [
+                  Positioned.fill(
+                    child: TextField(
+                      controller: controller.ingredientTextController,
+                      focusNode: controller.ingredientFocusNode,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: controller.addIngredient,
+                      decoration: InputDecoration(
+                        hintText: 'Ex.: tomate, frango, manjericão...',
+                        contentPadding: const EdgeInsets.fromLTRB(
+                          20,
+                          18,
+                          76,
+                          18,
+                        ),
+                        filled: false,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.outline.withOpacity(0.4),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                          borderSide: BorderSide(
+                            color: theme.colorScheme.primary,
+                            width: 1.6,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                FloatingActionButton.small(
-                  heroTag: null,
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: theme.colorScheme.onPrimary,
-                  onPressed: () => controller.addIngredient(
-                    controller.ingredientTextController.text,
+                  Positioned(
+                    right: 8,
+                    bottom: 8,
+                    child: FloatingActionButton.small(
+                      heroTag: null,
+                      elevation: 4,
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      onPressed: () => controller.addIngredient(
+                        controller.ingredientTextController.text,
+                      ),
+                      child: const Icon(Icons.add_rounded),
+                    ),
                   ),
-                  child: const Icon(Icons.add_rounded),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 24),
             Obx(() {

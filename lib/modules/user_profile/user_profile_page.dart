@@ -121,7 +121,7 @@ class _ProfileContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: 32),
         if (isOnboarding) ...[
           _OnboardingNotice(theme: theme),
           const SizedBox(height: 24),

@@ -128,70 +128,36 @@ class _BrandHeader extends StatelessWidget {
                 ],
               );
 
-              final illustration = SizedBox(
-                height: isCompact ? 160 : 190,
-                child: Stack(
+              final illustration = Padding(
+                padding: EdgeInsets.only(top: isCompact ? 12 : 0),
+                child: Align(
                   alignment: Alignment.center,
-                  children: [
-                    Positioned(
-                      top: isCompact ? 36 : 24,
-                      child: Container(
-                        height: isCompact ? 120 : 140,
-                        width: isCompact ? 120 : 140,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: RadialGradient(
-                            colors: [
-                              theme.colorScheme.primary,
-                              theme.colorScheme.primary.withOpacity(0.45),
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.24),
-                              blurRadius: 28,
-                              offset: const Offset(0, 18),
-                            ),
-                          ],
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface.withOpacity(0.94),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withOpacity(0.15),
+                          blurRadius: 24,
+                          offset: const Offset(0, 14),
                         ),
-                        child: Icon(
-                          Icons.bakery_dining_rounded,
-                          color: theme.colorScheme.onPrimary,
-                          size: isCompact ? 52 : 60,
+                      ],
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 20 : 28,
+                        vertical: isCompact ? 14 : 16,
+                      ),
+                      child: Text(
+                        'Sugestões personalizadas',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    Positioned(
-                      bottom: 12,
-                      right: 26,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withOpacity(0.92),
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.12),
-                              blurRadius: 20,
-                              offset: const Offset(0, 12),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          child: Text(
-                            'Sugestões personalizadas',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               );
 
