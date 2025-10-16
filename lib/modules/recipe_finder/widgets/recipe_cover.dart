@@ -25,9 +25,10 @@ class RecipeCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final highlight = theme.colorScheme.primary;
     final secondary = theme.colorScheme.secondary;
+    final tertiary = theme.colorScheme.tertiary;
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
     final outline =
-        (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4);
+        (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.45);
 
     return Hero(
       tag: heroTag,
@@ -36,19 +37,19 @@ class RecipeCover extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: SweepGradient(
+          gradient: RadialGradient(
+            center: const Alignment(-0.2, -0.25),
+            radius: 0.85,
             colors: [
-              highlight.withOpacity(0.8),
+              highlight.withOpacity(0.85),
               secondary.withOpacity(0.55),
-              highlight.withOpacity(0.32),
-              highlight.withOpacity(0.8),
+              tertiary.withOpacity(0.45),
             ],
-            stops: const [0.0, 0.45, 0.75, 1.0],
           ),
           boxShadow: [
             BoxShadow(
-              color: highlight.withOpacity(0.2),
-              blurRadius: 32,
+              color: highlight.withOpacity(0.24),
+              blurRadius: 28,
               offset: const Offset(0, 18),
             ),
           ],
@@ -59,39 +60,80 @@ class RecipeCover extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: outline, width: 1.4),
+                  border: Border.all(color: outline, width: 1.2),
+                  gradient: RadialGradient(
+                    center: const Alignment(-0.35, -0.4),
+                    radius: 1.05,
+                    colors: [
+                      Colors.white.withOpacity(0.18),
+                      Colors.white.withOpacity(0.02),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Container(
+                width: size * 0.58,
+                height: size * 0.58,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.onPrimary.withOpacity(0.22),
+                      Colors.white.withOpacity(0.08),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.35),
+                    width: 1.4,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.ramen_dining_rounded,
+                  color: Colors.white,
+                  size: size * 0.34,
                 ),
               ),
             ),
             if (showLabel)
-              Positioned(
-                top: 16,
-                left: 16,
+              Align(
+                alignment: Alignment.bottomCenter,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  margin: const EdgeInsets.only(bottom: 18),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: outline),
+                    color: Colors.white.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: highlight.withOpacity(0.22),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   child: Text(
-                    'Receita ${position + 1}'.toUpperCase(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      letterSpacing: 1.2,
-                      fontWeight: FontWeight.w600,
+                    'Receita ${position + 1}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: highlight,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
               ),
-            Align(
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.ramen_dining,
-                color: theme.colorScheme.primaryContainer,
-                size: size * 0.38,
-              ),
-            ),
           ],
         ),
       ),
