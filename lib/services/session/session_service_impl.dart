@@ -15,6 +15,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
   final SharedPreferences _preferences;
 
   static const _modeKey = 'session.mode';
+  static const _userJsonKey = 'session.user.data';
   static const _userIdKey = 'session.user.id';
   static const _userNameKey = 'session.user.name';
   static const _userEmailKey = 'session.user.email';
@@ -121,6 +122,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userNameKey);
     await _preferences.remove(_userEmailKey);
     await _preferences.remove(_userAvatarKey);
+    await _preferences.remove(_userJsonKey);
     _ensureGuestQuotaFreshness();
     _ensureShareQuotaFreshness();
   }
@@ -128,18 +130,8 @@ class SessionServiceImpl extends GetxService implements SessionService {
   @override
   Future<void> startAuthenticatedSession(UserModel user) async {
     _mode.value = UserMode.authenticated;
-    _user.value = user;
+    await _persistUser(user);
     await _preferences.setString(_modeKey, UserMode.authenticated.name);
-    await _preferences.setString(_userIdKey, user.id);
-    await _preferences.setString(_userNameKey, user.name);
-    await _preferences.setString(_userEmailKey, user.email);
-
-    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
-      await _preferences.setString(_userAvatarKey, user.avatarUrl!);
-    } else {
-      await _preferences.remove(_userAvatarKey);
-    }
-
     _guestSearchCount.value = 0;
     await _preferences.remove(_guestCountKey);
     await _preferences.remove(_guestDateKey);
@@ -155,6 +147,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userNameKey);
     await _preferences.remove(_userEmailKey);
     await _preferences.remove(_userAvatarKey);
+    await _preferences.remove(_userJsonKey);
     await _preferences.remove(_guestCountKey);
     await _preferences.remove(_guestDateKey);
     await _preferences.remove(_shareCountKey);
@@ -177,8 +170,22 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
     final updated = current.copyWith(name: sanitized);
 
-    _user.value = updated;
-    await _preferences.setString(_userNameKey, sanitized);
+    await updateProfile(updated);
+  }
+
+  @override
+  Future<void> updateProfile(UserModel user) async {
+    _user.value = user;
+    await _preferences.setString(_userJsonKey, user.toJson());
+    await _preferences.setString(_userIdKey, user.id);
+    await _preferences.setString(_userNameKey, user.name);
+    await _preferences.setString(_userEmailKey, user.email);
+
+    if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
+      await _preferences.setString(_userAvatarKey, user.avatarUrl!);
+    } else {
+      await _preferences.remove(_userAvatarKey);
+    }
   }
 
   @override
@@ -230,17 +237,28 @@ class SessionServiceImpl extends GetxService implements SessionService {
     _mode.value = _parseMode(_preferences.getString(_modeKey));
 
     if (isAuthenticated) {
-      final id = _preferences.getString(_userIdKey);
-      final name = _preferences.getString(_userNameKey);
-      final email = _preferences.getString(_userEmailKey);
-      final avatar = _preferences.getString(_userAvatarKey);
-      if (email != null && id != null) {
-        _user.value = UserModel(
-          id: id,
-          name: (name == null || name.isEmpty) ? email : name,
-          email: email,
-          avatarUrl: avatar,
-        );
+      final json = _preferences.getString(_userJsonKey);
+      if (json != null && json.isNotEmpty) {
+        try {
+          _user.value = UserModel.fromJson(json);
+        } catch (_) {
+          await _preferences.remove(_userJsonKey);
+        }
+      }
+
+      if (_user.value == null) {
+        final id = _preferences.getString(_userIdKey);
+        final name = _preferences.getString(_userNameKey);
+        final email = _preferences.getString(_userEmailKey);
+        final avatar = _preferences.getString(_userAvatarKey);
+        if (email != null && id != null) {
+          _user.value = UserModel(
+            id: id,
+            name: (name == null || name.isEmpty) ? email : name,
+            email: email,
+            avatarUrl: avatar,
+          );
+        }
       }
     }
 
@@ -316,5 +334,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
     }
 
     return UserMode.values.firstWhereOrNull((mode) => mode.name == value);
+  }
+
+  Future<void> _persistUser(UserModel user) async {
+    await updateProfile(user);
   }
 }

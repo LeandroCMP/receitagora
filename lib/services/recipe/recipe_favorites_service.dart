@@ -9,6 +9,7 @@ class FavoritesFailure implements Exception {
 
 abstract class RecipeFavoritesService {
   static const int maxFavorites = 10;
+  static const int maxTagsPerRecipe = 8;
 
   Stream<Set<String>> get favoriteIdsStream;
   Stream<List<FavoritedRecipeEntity>> get favoritesStream;
@@ -21,4 +22,5 @@ abstract class RecipeFavoritesService {
   Future<void> removeFavoriteForRecipe(RecipeEntity recipe);
   Future<void> removeFavoriteById(String id);
   Future<void> toggleFavorite(RecipeEntity recipe);
+  Future<void> updateTags({required String favoriteId, required List<String> tags});
 }

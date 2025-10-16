@@ -188,6 +188,16 @@ class _ProfileHeader extends StatelessWidget {
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
                           ),
                         ),
+                        if (user.hasBio) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            user.bio!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(0.72),
+                              height: 1.45,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         Wrap(
                           spacing: 8,
@@ -196,6 +206,30 @@ class _ProfileHeader extends StatelessWidget {
                             _InfoChip(icon: Icons.verified_user_outlined, label: 'Login social ativo'),
                             if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
                               _InfoChip(icon: Icons.image_outlined, label: 'Avatar sincronizado'),
+                            if (user.dietaryPreferences.isNotEmpty)
+                              _InfoChip(
+                                icon: Icons.restaurant,
+                                label:
+                                    '${user.dietaryPreferences.length} preferên${user.dietaryPreferences.length == 1 ? 'cia' : 'cias'} alimentares',
+                              ),
+                            if (user.favoriteCuisines.isNotEmpty)
+                              _InfoChip(
+                                icon: Icons.public,
+                                label:
+                                    '${user.favoriteCuisines.length} culinária${user.favoriteCuisines.length == 1 ? '' : 's'} preferida${user.favoriteCuisines.length == 1 ? '' : 's'}',
+                              ),
+                            if (user.cookingGoals.isNotEmpty)
+                              _InfoChip(
+                                icon: Icons.auto_awesome,
+                                label:
+                                    '${user.cookingGoals.length} objetivo${user.cookingGoals.length == 1 ? '' : 's'} na cozinha',
+                              ),
+                            if (user.allergies.isNotEmpty)
+                              _InfoChip(
+                                icon: Icons.health_and_safety,
+                                label:
+                                    '${user.allergies.length} alerta${user.allergies.length == 1 ? '' : 's'} de restrição',
+                              ),
                           ],
                         ),
                       ],
@@ -238,7 +272,7 @@ class _ProfileFormCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Este nome aparece nas telas e recomendações personalizadas.',
+                'Este nome aparece nas telas, no card compartilhado e em sugestões personalizadas.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
@@ -263,9 +297,71 @@ class _ProfileFormCard extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 24),
+              Text(
+                'Conte um pouco sobre você',
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Use esta área para compartilhar preferências gerais, restrições ou o que mais representa seu estilo na cozinha.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: controller.bioController,
+                decoration: const InputDecoration(
+                  labelText: 'Bio e observações',
+                  hintText: 'Ex.: Curto receitas rápidas e sem lactose',
+                ),
+                maxLines: 3,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: 32),
+              _PreferenceSection(
+                theme: theme,
+                title: 'Preferências alimentares',
+                description:
+                    'Escolha as dietas que combinam com você. Elas ajudam o app a priorizar receitas mais relevantes.',
+                suggestions: UserProfileController.dietarySuggestions,
+                controller: controller,
+                category: ProfilePreferenceCategory.dietary,
+              ),
+              const SizedBox(height: 24),
+              _PreferenceSection(
+                theme: theme,
+                title: 'Culinárias favoritas',
+                description:
+                    'Marque estilos culinários que você gosta para receber recomendações alinhadas ao seu paladar.',
+                suggestions: UserProfileController.cuisineSuggestions,
+                controller: controller,
+                category: ProfilePreferenceCategory.cuisine,
+              ),
+              const SizedBox(height: 24),
+              _PreferenceSection(
+                theme: theme,
+                title: 'Objetivos na cozinha',
+                description:
+                    'Diga o que você busca ao cozinhar: otimizar tempo, aprender técnicas ou ter uma alimentação específica.',
+                suggestions: UserProfileController.goalSuggestions,
+                controller: controller,
+                category: ProfilePreferenceCategory.goal,
+              ),
+              const SizedBox(height: 24),
+              _PreferenceSection(
+                theme: theme,
+                title: 'Alergias e restrições',
+                description:
+                    'Informe ingredientes que prefere evitar. Usamos estes dados para avisar sobre receitas que possam conter riscos.',
+                suggestions: UserProfileController.allergySuggestions,
+                controller: controller,
+                category: ProfilePreferenceCategory.allergy,
+              ),
+              const SizedBox(height: 24),
               Obx(
                 () => FilledButton.icon(
-                  onPressed: controller.isSaving.value ? null : controller.saveDisplayName,
+                  onPressed: controller.isSaving.value ? null : controller.saveProfile,
                   icon: controller.isSaving.value
                       ? const SizedBox(
                           height: 18,
@@ -281,6 +377,100 @@ class _ProfileFormCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _PreferenceSection extends StatelessWidget {
+  const _PreferenceSection({
+    required this.theme,
+    required this.title,
+    required this.description,
+    required this.suggestions,
+    required this.controller,
+    required this.category,
+  });
+
+  final ThemeData theme;
+  final String title;
+  final String description;
+  final List<String> suggestions;
+  final UserProfileController controller;
+  final ProfilePreferenceCategory category;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final selected = controller.preferencesFor(category).toList();
+      final suggestionChips = suggestions.map((option) {
+        final isSelected = selected.contains(option);
+        return FilterChip(
+          label: Text(option),
+          selected: isSelected,
+          onSelected: (_) => controller.togglePreference(category, option),
+        );
+      }).toList();
+
+      final customValues = selected
+          .where((item) => !suggestions.contains(item))
+          .toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (suggestionChips.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 12,
+              children: suggestionChips,
+            ),
+          if (customValues.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Itens personalizados',
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 12,
+              children: customValues
+                  .map(
+                    (item) => InputChip(
+                      label: Text(item),
+                      onDeleted: () => controller.togglePreference(category, item),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => controller.addCustomPreference(category),
+              icon: const Icon(Icons.add),
+              label: const Text('Adicionar item'),
+            ),
+          ),
+        ],
+      );
+    });
   }
 }
 

@@ -13,6 +13,7 @@ class RecipeSummaryCard extends StatelessWidget {
     required this.heroTag,
     required this.onTap,
     this.action,
+    this.footer,
     super.key,
   });
 
@@ -21,6 +22,7 @@ class RecipeSummaryCard extends StatelessWidget {
   final String heroTag;
   final VoidCallback onTap;
   final Widget? action;
+  final Widget? footer;
 
   String _previewText() {
     final description = recipe.description.trim();
@@ -140,6 +142,10 @@ class RecipeSummaryCard extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            if (footer != null) ...[
+              const SizedBox(height: 20),
+              footer!,
+            ],
           ],
         );
 

@@ -67,7 +67,7 @@ class AuthServiceImpl implements AuthService {
       }
 
       final name = firebaseUser.displayName?.trim();
-      final user = UserModel(
+      final baseUser = UserModel(
         id: firebaseUser.uid,
         name: name == null || name.isEmpty ? email : name,
         email: email,
@@ -75,14 +75,15 @@ class AuthServiceImpl implements AuthService {
       );
 
       await _sessionService.ensureInitialized();
-      await _sessionService.startAuthenticatedSession(user);
-      await _saveUserProfile(
-        user: user,
+      final enrichedUser = await _saveUserProfile(
+        user: baseUser,
         firebaseUser: firebaseUser,
         account: account,
       );
 
-      return user;
+      await _sessionService.startAuthenticatedSession(enrichedUser);
+
+      return enrichedUser;
     } on GoogleSignInException catch (error) {
       if (error.code == GoogleSignInExceptionCode.canceled) {
         throw AuthFailure.cancelled();
@@ -137,8 +138,28 @@ class AuthServiceImpl implements AuthService {
 
   @override
   Future<void> updateDisplayName(String newName) async {
-    final sanitized = newName.trim();
-    if (sanitized.isEmpty) {
+    final current = _sessionService.user;
+    await saveProfile(
+      displayName: newName,
+      bio: current?.bio,
+      dietaryPreferences: current?.dietaryPreferences ?? const <String>[],
+      favoriteCuisines: current?.favoriteCuisines ?? const <String>[],
+      cookingGoals: current?.cookingGoals ?? const <String>[],
+      allergies: current?.allergies ?? const <String>[],
+    );
+  }
+
+  @override
+  Future<UserModel> saveProfile({
+    required String displayName,
+    String? bio,
+    List<String> dietaryPreferences = const <String>[],
+    List<String> favoriteCuisines = const <String>[],
+    List<String> cookingGoals = const <String>[],
+    List<String> allergies = const <String>[],
+  }) async {
+    final sanitizedName = displayName.trim();
+    if (sanitizedName.isEmpty) {
       throw AuthFailure.message('Informe um nome válido para continuar.');
     }
 
@@ -151,21 +172,43 @@ class AuthServiceImpl implements AuthService {
         throw AuthFailure.message('Nenhuma sessão autenticada foi encontrada.');
       }
 
-      if (currentUser.displayName != sanitized) {
-        await currentUser.updateDisplayName(sanitized);
+      final normalizedUser = UserModel(
+        id: sessionUser.id,
+        name: sanitizedName,
+        email: sessionUser.email,
+        avatarUrl: sessionUser.avatarUrl,
+        bio: bio,
+        dietaryPreferences: dietaryPreferences,
+        favoriteCuisines: favoriteCuisines,
+        cookingGoals: cookingGoals,
+        allergies: allergies,
+      );
+
+      if (currentUser.displayName != normalizedUser.name) {
+        await currentUser.updateDisplayName(normalizedUser.name);
         await currentUser.reload();
       }
 
       final document = _firestore.collection('users').doc(currentUser.uid);
       await document.set(
         <String, dynamic>{
-          'displayName': sanitized,
+          'displayName': normalizedUser.name,
+          'email': normalizedUser.email,
+          'photoUrl': normalizedUser.avatarUrl,
           'updatedAt': FieldValue.serverTimestamp(),
+          'preferences': {
+            'bio': normalizedUser.bio,
+            'dietaryPreferences': normalizedUser.dietaryPreferences,
+            'favoriteCuisines': normalizedUser.favoriteCuisines,
+            'cookingGoals': normalizedUser.cookingGoals,
+            'allergies': normalizedUser.allergies,
+          },
         },
         SetOptions(merge: true),
       );
 
-      await _sessionService.updateDisplayName(sanitized);
+      await _sessionService.updateProfile(normalizedUser);
+      return normalizedUser;
     } on FirebaseAuthException catch (error) {
       throw AuthFailure.message(_translateFirebaseAuthError(error));
     } on FirebaseException catch (error) {
@@ -177,7 +220,7 @@ class AuthServiceImpl implements AuthService {
     return _googleSignInInitialization ??= _googleSignIn.initialize();
   }
 
-  Future<void> _saveUserProfile({
+  Future<UserModel> _saveUserProfile({
     required UserModel user,
     required User firebaseUser,
     required GoogleSignInAccount account,
@@ -206,9 +249,41 @@ class AuthServiceImpl implements AuthService {
         },
         SetOptions(merge: true),
       );
+      final snapshot = await document.get();
+      final data = snapshot.data();
+      if (data != null) {
+        return _mapUserDocument(data, fallback: user);
+      }
+      return user;
     } on FirebaseException catch (error) {
       throw AuthFailure.message(_translateFirestoreError(error));
     }
+  }
+
+  UserModel _mapUserDocument(
+    Map<String, dynamic> data, {
+    required UserModel fallback,
+  }) {
+    final preferences =
+        data['preferences'] is Map<String, dynamic> ? data['preferences'] as Map<String, dynamic> : null;
+
+    final mapped = <String, dynamic>{
+      'id': fallback.id,
+      'name': (data['displayName'] as String?) ?? fallback.name,
+      'email': (data['email'] as String?) ?? fallback.email,
+      'avatarUrl': data['photoUrl'] as String? ?? fallback.avatarUrl,
+      'bio': preferences != null ? preferences['bio'] : fallback.bio,
+      'dietaryPreferences':
+          preferences != null ? preferences['dietaryPreferences'] ?? fallback.dietaryPreferences : fallback.dietaryPreferences,
+      'favoriteCuisines':
+          preferences != null ? preferences['favoriteCuisines'] ?? fallback.favoriteCuisines : fallback.favoriteCuisines,
+      'cookingGoals':
+          preferences != null ? preferences['cookingGoals'] ?? fallback.cookingGoals : fallback.cookingGoals,
+      'allergies':
+          preferences != null ? preferences['allergies'] ?? fallback.allergies : fallback.allergies,
+    };
+
+    return UserModel.fromMap(mapped);
   }
 
   String _translateGoogleSignInError(GoogleSignInException error) {

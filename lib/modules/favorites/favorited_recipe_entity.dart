@@ -7,12 +7,14 @@ class FavoritedRecipeEntity extends Equatable {
     required this.id,
     required this.recipe,
     this.favoritedAt,
+    this.tags = const <String>[],
   });
 
   final String id;
   final RecipeEntity recipe;
   final DateTime? favoritedAt;
+  final List<String> tags;
 
   @override
-  List<Object?> get props => [id, recipe, favoritedAt];
+  List<Object?> get props => [id, recipe, favoritedAt, tags];
 }

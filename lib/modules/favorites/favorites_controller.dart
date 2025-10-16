@@ -19,6 +19,7 @@ class FavoritesController extends GetxController {
   final RecipeFavoritesService favoritesService;
 
   bool get isAuthenticated => sessionService.isAuthenticated;
+  final selectedTag = RxnString();
 
   Future<void> openFavorite(FavoritedRecipeEntity favorite, int index) async {
     await Get.to(
@@ -86,5 +87,85 @@ class FavoritesController extends GetxController {
       title: 'Faça login',
       message: 'Entre com sua conta para acessar suas receitas favoritas.',
     );
+  }
+
+  List<FavoritedRecipeEntity> applyTagFilter(
+    List<FavoritedRecipeEntity> favorites,
+  ) {
+    final tag = selectedTag.value;
+    if (tag == null) {
+      return favorites;
+    }
+    return favorites.where((favorite) => favorite.tags.contains(tag)).toList();
+  }
+
+  void toggleTagFilter(String tag) {
+    if (selectedTag.value == tag) {
+      selectedTag.value = null;
+    } else {
+      selectedTag.value = tag;
+    }
+  }
+
+  void clearTagFilter() {
+    selectedTag.value = null;
+  }
+
+  Future<void> applyTags(
+    FavoritedRecipeEntity favorite,
+    List<String> tags,
+  ) async {
+    final unique = <String>{};
+    final sanitized = <String>[];
+    for (final tag in tags) {
+      final trimmed = tag.trim();
+      if (trimmed.isEmpty) {
+        continue;
+      }
+      final key = trimmed.toLowerCase();
+      if (unique.add(key)) {
+        sanitized.add(trimmed);
+      }
+    }
+    sanitized.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    if (sanitized.isEmpty) {
+      await favoritesService.updateTags(favoriteId: favorite.id, tags: const <String>[]);
+      AppSnackbar.info(
+        title: 'Tags removidas',
+        message: 'Esta receita não possui mais categorias associadas.',
+      );
+      return;
+    }
+
+    if (sanitized.length > RecipeFavoritesService.maxTagsPerRecipe) {
+      AppSnackbar.info(
+        title: 'Limite de tags',
+        message:
+            'Use no máximo ${RecipeFavoritesService.maxTagsPerRecipe} tags por receita para manter a organização.',
+      );
+      return;
+    }
+
+    try {
+      await favoritesService.updateTags(
+        favoriteId: favorite.id,
+        tags: sanitized,
+      );
+      AppSnackbar.success(
+        title: 'Tags atualizadas',
+        message: 'As categorias desta receita foram sincronizadas.',
+      );
+    } on FavoritesFailure catch (error) {
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: 'Não foi possível atualizar as tags agora. Tente novamente.',
+      );
+    }
   }
 }

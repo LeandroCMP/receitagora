@@ -91,6 +91,7 @@ class RecipeFavoritesServiceImpl extends GetxService
           'difficulty': recipe.difficulty,
           'duration': recipe.duration,
           'favoritedAt': FieldValue.serverTimestamp(),
+          'tags': const <String>[],
         },
         SetOptions(merge: true),
       );
@@ -137,6 +138,40 @@ class RecipeFavoritesServiceImpl extends GetxService
       await removeFavoriteById(favoriteId);
     } else {
       await addFavorite(recipe);
+    }
+  }
+
+  @override
+  Future<void> updateTags({
+    required String favoriteId,
+    required List<String> tags,
+  }) async {
+    final user = _requireAuthenticatedUser();
+
+    final normalized = _normalizeTags(tags);
+    if (normalized.length > RecipeFavoritesService.maxTagsPerRecipe) {
+      throw FavoritesFailure(
+        'Organize até ${RecipeFavoritesService.maxTagsPerRecipe} tags por receita para manter a visualização clara.',
+      );
+    }
+
+    final document = _userFavoritesCollection(user.uid).doc(favoriteId);
+
+    try {
+      await document.set(
+        {
+          'tags': normalized,
+          'tagsUpdatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } on FirebaseException catch (error) {
+      final message = error.message?.trim();
+      throw FavoritesFailure(
+        message == null || message.isEmpty
+            ? 'Não foi possível atualizar as tags desta receita agora.'
+            : message,
+      );
     }
   }
 
@@ -204,6 +239,7 @@ class RecipeFavoritesServiceImpl extends GetxService
       id: doc.id,
       recipe: recipe,
       favoritedAt: favoritedAt,
+      tags: _readTags(data['tags']),
     );
   }
 
@@ -239,5 +275,28 @@ class RecipeFavoritesServiceImpl extends GetxService
       return value.map((item) => item.toString()).toList();
     }
     return const <String>[];
+  }
+
+  List<String> _readTags(dynamic value) {
+    if (value is Iterable) {
+      return _normalizeTags(value.map((item) => item.toString()));
+    }
+    return const <String>[];
+  }
+
+  List<String> _normalizeTags(Iterable<String> values) {
+    final set = <String>{};
+    for (final value in values) {
+      final sanitized = value.trim();
+      if (sanitized.isEmpty) {
+        continue;
+      }
+      final lower = sanitized.toLowerCase();
+      final normalized = lower[0].toUpperCase() + lower.substring(1);
+      set.add(normalized);
+    }
+    final result = set.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return result;
   }
 }

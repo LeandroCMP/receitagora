@@ -1,9 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
+import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/widgets/recipe_card.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
@@ -70,34 +72,67 @@ class FavoritesPage extends GetView<FavoritesController> {
                       return _EmptyFavorites(theme: theme, layout: layout);
                     }
 
-                    return SingleChildScrollView(
-                      padding: layout.padding,
-                      child: Align(
-                        alignment: Alignment.topCenter,
-                        child: ConstrainedBox(
-                          constraints:
-                              BoxConstraints(maxWidth: layout.maxContentWidth),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _FavoritesHeader(theme: theme, favorites: favorites),
-                              const SizedBox(height: 24),
-                              ...List.generate(
-                                favorites.length,
-                                (index) {
-                                  final favorite = favorites[index];
-                                  return _FavoriteRecipeCard(
+                    final analytics = _FavoriteAnalytics.fromFavorites(favorites);
+
+                    return Obx(() {
+                      final filteredFavorites =
+                          controller.applyTagFilter(favorites);
+                      final selectedTag = controller.selectedTag.value;
+
+                      return SingleChildScrollView(
+                        padding: layout.padding,
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ConstrainedBox(
+                            constraints:
+                                BoxConstraints(maxWidth: layout.maxContentWidth),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _FavoritesHeader(
+                                  theme: theme,
+                                  analytics: analytics,
+                                  activeTag: selectedTag,
+                                ),
+                                const SizedBox(height: 16),
+                                _FavoritesMetricsGrid(
+                                  theme: theme,
+                                  analytics: analytics,
+                                ),
+                                if (analytics.tagStats.isNotEmpty) ...[
+                                  const SizedBox(height: 16),
+                                  _TagFilterSection(
+                                    theme: theme,
                                     controller: controller,
-                                    favorite: favorite,
-                                    index: index,
-                                  );
-                                },
-                              ),
-                            ],
+                                    stats: analytics.tagStats,
+                                    selectedTag: selectedTag,
+                                  ),
+                                ],
+                                const SizedBox(height: 24),
+                                if (filteredFavorites.isEmpty)
+                                  _EmptyFilteredFavorites(
+                                    theme: theme,
+                                    selectedTag: selectedTag,
+                                    onClearFilter: controller.clearTagFilter,
+                                  )
+                                else
+                                  ...List.generate(
+                                    filteredFavorites.length,
+                                    (index) {
+                                      final favorite = filteredFavorites[index];
+                                      return _FavoriteRecipeCard(
+                                        controller: controller,
+                                        favorite: favorite,
+                                        index: index,
+                                      );
+                                    },
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
+                      );
+                    });
                   },
                 );
               });
@@ -112,11 +147,13 @@ class FavoritesPage extends GetView<FavoritesController> {
 class _FavoritesHeader extends StatelessWidget {
   const _FavoritesHeader({
     required this.theme,
-    required this.favorites,
+    required this.analytics,
+    this.activeTag,
   });
 
   final ThemeData theme;
-  final List<FavoritedRecipeEntity> favorites;
+  final _FavoriteAnalytics analytics;
+  final String? activeTag;
 
   @override
   Widget build(BuildContext context) {
@@ -136,14 +173,23 @@ class _FavoritesHeader extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              favorites.length == 1
+              analytics.totalFavorites == 1
                   ? 'Você tem 1 receita salva para revisitar quando quiser.'
-                  : 'Você tem ${favorites.length} receitas salvas. Toque em uma delas para ver os detalhes.',
+                  : 'Você tem ${analytics.totalFavorites} receitas salvas. Toque em uma delas para ver os detalhes.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 height: 1.5,
                 color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
             ),
+            if (activeTag != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Filtro aplicado: "$activeTag" (${analytics.countForTag(activeTag!)} receita${analytics.countForTag(activeTag!) == 1 ? '' : 's'}).',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -195,6 +241,29 @@ class _FavoriteRecipeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final recipe = favorite.recipe;
+    final equality = const ListEquality<String>();
+
+    Future<void> editTags() async {
+      final updatedTags = await Get.dialog<List<String>>(
+        _FavoriteTagEditorDialog(initialTags: favorite.tags),
+        barrierDismissible: false,
+      );
+
+      if (updatedTags == null) {
+        return;
+      }
+
+      if (equality.equals(updatedTags, favorite.tags)) {
+        AppSnackbar.info(
+          title: 'Sem mudanças',
+          message: 'As tags permaneceram as mesmas.',
+        );
+        return;
+      }
+
+      await controller.applyTags(favorite, updatedTags);
+    }
+
     return RecipeSummaryCard(
       recipe: recipe,
       position: index,
@@ -210,9 +279,579 @@ class _FavoriteRecipeCard extends StatelessWidget {
           onPressed: () => controller.confirmRemoval(favorite),
         ),
       ),
+      footer: _FavoriteTagsFooter(
+        theme: theme,
+        tags: favorite.tags,
+        onEdit: editTags,
+      ),
     );
   }
 }
+
+class _FavoriteTagsFooter extends StatelessWidget {
+  const _FavoriteTagsFooter({
+    required this.theme,
+    required this.tags,
+    required this.onEdit,
+  });
+
+  final ThemeData theme;
+  final List<String> tags;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final infoStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurface.withOpacity(0.7),
+      height: 1.5,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (tags.isEmpty)
+          Text(
+            'Nenhuma tag definida ainda. Use o botão abaixo para organizar suas categorias favoritas.',
+            style: infoStyle,
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: tags
+                .map(
+                  (tag) => Chip(
+                    label: Text(tag),
+                    backgroundColor:
+                        theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                  ),
+                )
+                .toList(),
+          ),
+        const SizedBox(height: 12),
+        Text(
+          'Você pode cadastrar até ${RecipeFavoritesService.maxTagsPerRecipe} tags por receita.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: onEdit,
+            icon: const Icon(Icons.edit_outlined),
+            label: Text(tags.isEmpty ? 'Adicionar tags' : 'Editar tags'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FavoriteTagEditorDialog extends StatefulWidget {
+  const _FavoriteTagEditorDialog({required this.initialTags});
+
+  final List<String> initialTags;
+
+  @override
+  State<_FavoriteTagEditorDialog> createState() => _FavoriteTagEditorDialogState();
+}
+
+class _FavoriteTagEditorDialogState extends State<_FavoriteTagEditorDialog> {
+  late List<String> tags;
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    tags = List<String>.from(widget.initialTags)
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  bool get _limitReached =>
+      tags.length >= RecipeFavoritesService.maxTagsPerRecipe;
+
+  void _addTag() {
+    final normalized = _normalize(_controller.text);
+    if (normalized == null) {
+      return;
+    }
+    if (tags.contains(normalized)) {
+      _controller.clear();
+      return;
+    }
+    if (_limitReached) {
+      AppSnackbar.info(
+        title: 'Limite de tags',
+        message:
+            'Use no máximo ${RecipeFavoritesService.maxTagsPerRecipe} tags por receita.',
+      );
+      return;
+    }
+    setState(() {
+      tags = <String>[...tags, normalized]
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    });
+    _controller.clear();
+  }
+
+  void _removeTag(String tag) {
+    setState(() {
+      tags = List<String>.from(tags)..remove(tag);
+    });
+  }
+
+  String? _normalize(String value) {
+    final sanitized = value.trim();
+    if (sanitized.isEmpty) {
+      return null;
+    }
+    final lower = sanitized.toLowerCase();
+    return lower[0].toUpperCase() + lower.substring(1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AlertDialog(
+      title: const Text('Organizar tags da receita'),
+      content: SizedBox(
+        width: 420,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (tags.isEmpty)
+              Text(
+                'Adicione palavras-chave para facilitar buscas futuras.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: tags
+                    .map(
+                      (tag) => InputChip(
+                        label: Text(tag),
+                        onDeleted: () => _removeTag(tag),
+                      ),
+                    )
+                    .toList(),
+              ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: 'Nova tag',
+                hintText: 'Ex.: Café da manhã',
+                helperText:
+                    'Pressione Enter para adicionar. Limite de ${RecipeFavoritesService.maxTagsPerRecipe} itens.',
+              ),
+              onSubmitted: (_) => _addTag(),
+              enabled: !_limitReached,
+            ),
+            if (_limitReached)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Limite atingido. Remova uma tag antes de adicionar outra.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Get.back<List<String>?>(result: null),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () => Get.back<List<String>>(result: tags),
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
+class _FavoritesMetricsGrid extends StatelessWidget {
+  const _FavoritesMetricsGrid({
+    required this.theme,
+    required this.analytics,
+  });
+
+  final ThemeData theme;
+  final _FavoriteAnalytics analytics;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <_MetricTileData>[
+      _MetricTileData(
+        icon: Icons.favorite_rounded,
+        label: 'Total salvos',
+        value: analytics.totalFavorites.toString(),
+      ),
+      _MetricTileData(
+        icon: Icons.local_dining_outlined,
+        label: 'Ingredientes únicos',
+        value: analytics.uniqueIngredients.toString(),
+      ),
+      _MetricTileData(
+        icon: Icons.sell_outlined,
+        label: 'Tags únicas',
+        value: analytics.uniqueTags.toString(),
+      ),
+      _MetricTileData(
+        icon: Icons.auto_awesome,
+        label: 'Dificuldade frequente',
+        value: analytics.topDifficulty ?? '—',
+      ),
+      _MetricTileData(
+        icon: Icons.history_rounded,
+        label: 'Último favorito',
+        value: analytics.formattedLastFavorited ?? '—',
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 640;
+        final tileWidth = isCompact
+            ? constraints.maxWidth
+            : (constraints.maxWidth - 32) / 3;
+
+        return Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          children: items
+              .map(
+                (item) => SizedBox(
+                  width: isCompact ? constraints.maxWidth : tileWidth,
+                  child: _MetricTile(theme: theme, data: item),
+                ),
+              )
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _MetricTileData {
+  const _MetricTileData({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({
+    required this.theme,
+    required this.data,
+  });
+
+  final ThemeData theme;
+  final _MetricTileData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
+
+    return Card(
+      elevation: 0,
+      color: surfaces?.high ?? theme.cardColor,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Row(
+          children: [
+            Icon(
+              data.icon,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.label,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data.value,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TagFilterSection extends StatelessWidget {
+  const _TagFilterSection({
+    required this.theme,
+    required this.controller,
+    required this.stats,
+    required this.selectedTag,
+  });
+
+  final ThemeData theme;
+  final FavoritesController controller;
+  final List<_TagStat> stats;
+  final String? selectedTag;
+
+  @override
+  Widget build(BuildContext context) {
+    final displayStats = stats.take(12).toList();
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Categorias salvas',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Selecione uma tag para filtrar rapidamente as receitas que compartilham a mesma categoria.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: displayStats
+                  .map(
+                    (stat) => ChoiceChip(
+                      label: Text('${stat.tag} (${stat.count})'),
+                      selected: selectedTag == stat.tag,
+                      onSelected: (_) => controller.toggleTagFilter(stat.tag),
+                    ),
+                  )
+                  .toList(),
+            ),
+            if (selectedTag != null) ...[
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: controller.clearTagFilter,
+                  icon: const Icon(Icons.clear),
+                  label: const Text('Limpar filtro'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyFilteredFavorites extends StatelessWidget {
+  const _EmptyFilteredFavorites({
+    required this.theme,
+    required this.selectedTag,
+    required this.onClearFilter,
+  });
+
+  final ThemeData theme;
+  final String? selectedTag;
+  final VoidCallback onClearFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(26, 28, 26, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Nenhuma receita encontrada',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              selectedTag == null
+                  ? 'Nenhuma receita corresponde ao filtro aplicado.'
+                  : 'Não encontramos receitas com a tag "$selectedTag". Experimente limpar o filtro ou adicionar a tag a outras receitas.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: onClearFilter,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Ver todas as receitas'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FavoriteAnalytics {
+  const _FavoriteAnalytics({
+    required this.totalFavorites,
+    required this.uniqueIngredients,
+    required this.uniqueTags,
+    required this.topDifficulty,
+    required this.lastFavorited,
+    required this.tagStats,
+  });
+
+  final int totalFavorites;
+  final int uniqueIngredients;
+  final int uniqueTags;
+  final String? topDifficulty;
+  final DateTime? lastFavorited;
+  final List<_TagStat> tagStats;
+
+  String? get formattedLastFavorited {
+    if (lastFavorited == null) {
+      return null;
+    }
+    final local = lastFavorited!.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    return '$day/$month/${local.year}';
+  }
+
+  int countForTag(String tag) {
+    for (final stat in tagStats) {
+      if (stat.tag == tag) {
+        return stat.count;
+      }
+    }
+    return 0;
+  }
+
+  factory _FavoriteAnalytics.fromFavorites(
+    List<FavoritedRecipeEntity> favorites,
+  ) {
+    final ingredients = <String>{};
+    final difficultyCounts = <String, int>{};
+    final tagCounts = <String, int>{};
+    DateTime? last;
+
+    for (final favorite in favorites) {
+      ingredients.addAll(
+        favorite.recipe.ingredients
+            .map((item) => item.trim().toLowerCase())
+            .where((item) => item.isNotEmpty),
+      );
+
+      final difficulty = favorite.recipe.difficulty.trim();
+      if (difficulty.isNotEmpty) {
+        difficultyCounts[difficulty] = (difficultyCounts[difficulty] ?? 0) + 1;
+      }
+
+      final favoritedAt = favorite.favoritedAt;
+      if (favoritedAt != null) {
+        if (last == null || favoritedAt.isAfter(last)) {
+          last = favoritedAt;
+        }
+      }
+
+      for (final tag in favorite.tags) {
+        final sanitized = tag.trim();
+        if (sanitized.isEmpty) {
+          continue;
+        }
+        tagCounts[sanitized] = (tagCounts[sanitized] ?? 0) + 1;
+      }
+    }
+
+    String? topDifficulty;
+    if (difficultyCounts.isNotEmpty) {
+      final sorted = difficultyCounts.entries.toList()
+        ..sort((a, b) {
+          final diff = b.value.compareTo(a.value);
+          if (diff != 0) {
+            return diff;
+          }
+          return a.key.toLowerCase().compareTo(b.key.toLowerCase());
+        });
+      topDifficulty = sorted.first.key;
+    }
+
+    final tagStats = tagCounts.entries
+        .map((entry) => _TagStat(entry.key, entry.value))
+        .toList()
+      ..sort((a, b) {
+        final diff = b.count.compareTo(a.count);
+        if (diff != 0) {
+          return diff;
+        }
+        return a.tag.toLowerCase().compareTo(b.tag.toLowerCase());
+      });
+
+    return _FavoriteAnalytics(
+      totalFavorites: favorites.length,
+      uniqueIngredients: ingredients.length,
+      uniqueTags: tagCounts.length,
+      topDifficulty: topDifficulty,
+      lastFavorited: last,
+      tagStats: tagStats,
+    );
+  }
+}
+
+class _TagStat {
+  const _TagStat(this.tag, this.count);
+
+  final String tag;
+  final int count;
+}
+
 
 class _EmptyFavorites extends StatelessWidget {
   const _EmptyFavorites({

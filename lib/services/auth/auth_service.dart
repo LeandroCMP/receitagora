@@ -15,4 +15,12 @@ abstract class AuthService {
   Future<UserModel> signInWithGoogle();
   Future<void> signOut();
   Future<void> updateDisplayName(String newName);
+  Future<UserModel> saveProfile({
+    required String displayName,
+    String? bio,
+    List<String> dietaryPreferences = const <String>[],
+    List<String> favoriteCuisines = const <String>[],
+    List<String> cookingGoals = const <String>[],
+    List<String> allergies = const <String>[],
+  });
 }
