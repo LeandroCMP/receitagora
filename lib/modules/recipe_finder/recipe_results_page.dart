@@ -248,25 +248,56 @@ class _ResultsSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
 
-    return Card(
+    final gradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        theme.colorScheme.primary.withOpacity(0.26),
+        (surfaces?.low ?? theme.colorScheme.primaryContainer)
+            .withOpacity(0.85),
+      ],
+    );
+
+    final foregroundColor = theme.colorScheme.onPrimaryContainer;
+    final shadowColor = theme.colorScheme.primary.withOpacity(0.16);
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withOpacity(0.45),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(30, 32, 30, 32),
+        padding: const EdgeInsets.fromLTRB(28, 30, 28, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  height: 52,
-                  width: 52,
+                  height: 60,
+                  width: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: theme.colorScheme.primaryContainer,
+                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    border: Border.all(
+                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.12),
+                    ),
                   ),
                   child: Icon(
-                    Icons.brunch_dining,
-                    color: theme.colorScheme.onPrimaryContainer,
-                    size: 28,
+                    Icons.auto_awesome_rounded,
+                    color: foregroundColor,
+                    size: 30,
                   ),
                 ),
                 const SizedBox(width: 18),
@@ -276,15 +307,17 @@ class _ResultsSummaryCard extends StatelessWidget {
                     children: [
                       Text(
                         '${args.recipes.length} sugestões preparadas',
-                        style: theme.textTheme.titleMedium?.copyWith(
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: foregroundColor,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
-                        'Ingredientes utilizados nesta busca:',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.65),
+                        'Receitas alinhadas aos ingredientes escolhidos para hoje.',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: foregroundColor.withOpacity(0.72),
+                          height: 1.42,
                         ),
                       ),
                     ],
@@ -292,44 +325,97 @@ class _ResultsSummaryCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
+            Divider(
+              height: 1,
+              color: foregroundColor.withOpacity(0.16),
+            ),
+            const SizedBox(height: 22),
             if (args.ingredients.isEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 decoration: BoxDecoration(
-                  color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-                      .withOpacity(0.35),
+                  color: theme.colorScheme.onPrimaryContainer.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Text(
-                  'Nenhum ingrediente informado.',
+                  'Nenhum ingrediente informado nesta busca.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.64),
+                    color: foregroundColor.withOpacity(0.78),
                   ),
                 ),
               )
             else
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: args.ingredients
-                    .map(
-                      (ingredient) => Chip(
-                        avatar: Icon(
-                          Icons.shopping_bag_outlined,
-                          size: 16,
-                          color: theme.colorScheme.primary,
-                        ),
-                        label: Text(ingredient),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                    )
-                    .toList(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ingredientes utilizados',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: foregroundColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: args.ingredients
+                        .map(
+                          (ingredient) => _IngredientPill(
+                            ingredient: ingredient,
+                            theme: theme,
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _IngredientPill extends StatelessWidget {
+  const _IngredientPill({required this.ingredient, required this.theme});
+
+  final String ingredient;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final foregroundColor = theme.colorScheme.onPrimaryContainer;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: foregroundColor.withOpacity(0.22),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.local_grocery_store_outlined,
+            size: 16,
+            color: foregroundColor,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            ingredient,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: foregroundColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
