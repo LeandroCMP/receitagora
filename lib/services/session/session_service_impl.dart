@@ -20,6 +20,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
   static const _userNameKey = 'session.user.name';
   static const _userEmailKey = 'session.user.email';
   static const _userAvatarKey = 'session.user.avatar';
+  static const _profileCompletedKey = 'session.user.profileCompleted';
   static const _guestCountKey = 'session.guest.count';
   static const _guestDateKey = 'session.guest.date';
   static const _shareCountKey = 'session.share.count';
@@ -49,6 +50,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   UserModel? get user => _user.value;
+
+  @override
+  bool get hasCompletedProfileSetup => _user.value?.profileCompleted ?? false;
 
   @override
   int get guestSearchCount => _guestSearchCount.value;
@@ -123,6 +127,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userEmailKey);
     await _preferences.remove(_userAvatarKey);
     await _preferences.remove(_userJsonKey);
+    await _preferences.remove(_profileCompletedKey);
     _ensureGuestQuotaFreshness();
     _ensureShareQuotaFreshness();
   }
@@ -148,6 +153,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userEmailKey);
     await _preferences.remove(_userAvatarKey);
     await _preferences.remove(_userJsonKey);
+    await _preferences.remove(_profileCompletedKey);
     await _preferences.remove(_guestCountKey);
     await _preferences.remove(_guestDateKey);
     await _preferences.remove(_shareCountKey);
@@ -180,6 +186,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.setString(_userIdKey, user.id);
     await _preferences.setString(_userNameKey, user.name);
     await _preferences.setString(_userEmailKey, user.email);
+    await _preferences.setBool(_profileCompletedKey, user.profileCompleted);
 
     if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty) {
       await _preferences.setString(_userAvatarKey, user.avatarUrl!);
@@ -251,12 +258,14 @@ class SessionServiceImpl extends GetxService implements SessionService {
         final name = _preferences.getString(_userNameKey);
         final email = _preferences.getString(_userEmailKey);
         final avatar = _preferences.getString(_userAvatarKey);
+        final completed = _preferences.getBool(_profileCompletedKey) ?? false;
         if (email != null && id != null) {
           _user.value = UserModel(
             id: id,
             name: (name == null || name.isEmpty) ? email : name,
             email: email,
             avatarUrl: avatar,
+            profileCompleted: completed,
           );
         }
       }

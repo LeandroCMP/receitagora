@@ -16,52 +16,74 @@ class UserProfilePage extends GetView<UserProfileController> {
     final background = theme.colorScheme.background;
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Perfil'),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.05),
-                surfaces?.lowest ?? background,
-              ),
-              background,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final layout = AppPageLayout.resolve(
-                constraints,
-                maxWidth: 640,
-                topPadding: 32,
-                bottomPadding: 32,
-              );
-
-              return SingleChildScrollView(
-                padding: layout.padding,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-                    child: _ProfileContent(
-                      theme: theme,
-                      controller: controller,
+    return Obx(() {
+      final onboarding = controller.isOnboarding.value;
+      final isSaving = controller.isSaving.value;
+      return WillPopScope(
+        onWillPop: () async => !onboarding,
+        child: Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: !onboarding,
+            leading: onboarding ? const SizedBox.shrink() : null,
+            title: Text(onboarding ? 'Complete seu perfil' : 'Perfil'),
+            actions: onboarding
+                ? [
+                    TextButton(
+                      onPressed:
+                          isSaving ? null : controller.completeOnboardingWithoutChanges,
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onPrimary,
+                      ),
+                      child: const Text('Continuar depois'),
                     ),
+                  ]
+                : null,
+          ),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.alphaBlend(
+                    theme.colorScheme.primary.withOpacity(0.05),
+                    surfaces?.lowest ?? background,
                   ),
-                ),
-              );
-            },
+                  background,
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final layout = AppPageLayout.resolve(
+                    constraints,
+                    maxWidth: 640,
+                    topPadding: 32,
+                    bottomPadding: 32,
+                  );
+
+                  return SingleChildScrollView(
+                    padding: layout.padding,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
+                        child: _ProfileContent(
+                          theme: theme,
+                          controller: controller,
+                          isOnboarding: onboarding,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -69,10 +91,12 @@ class _ProfileContent extends StatelessWidget {
   const _ProfileContent({
     required this.theme,
     required this.controller,
+    required this.isOnboarding,
   });
 
   final ThemeData theme;
   final UserProfileController controller;
+  final bool isOnboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -90,9 +114,17 @@ class _ProfileContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ProfileHeader(theme: theme, user: user),
+        if (isOnboarding) ...[
+          _OnboardingNotice(theme: theme),
+          const SizedBox(height: 24),
+        ],
+        _ProfileHeader(theme: theme, user: user, isOnboarding: isOnboarding),
         const SizedBox(height: 96),
-        _ProfileFormCard(theme: theme, controller: controller),
+        _ProfileFormCard(
+          theme: theme,
+          controller: controller,
+          isOnboarding: isOnboarding,
+        ),
         const SizedBox(height: 16),
         _AccountDetailsCard(theme: theme, user: user),
         const SizedBox(height: 24),
@@ -106,10 +138,12 @@ class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.theme,
     required this.user,
+    required this.isOnboarding,
   });
 
   final ThemeData theme;
   final UserModel user;
+  final bool isOnboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -139,7 +173,7 @@ class _ProfileHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Seu perfil',
+                  isOnboarding ? 'Personalize sua experiência' : 'Seu perfil',
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: colorScheme.onPrimary,
                     fontWeight: FontWeight.w600,
@@ -147,7 +181,9 @@ class _ProfileHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Revise seus dados, personalize seu nome e gerencie sua sessão.',
+                  isOnboarding
+                      ? 'Conte um pouco sobre você. Mesmo sem preencher tudo agora, você poderá ajustar depois.'
+                      : 'Revise seus dados, personalize seu nome e gerencie sua sessão.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onPrimary.withOpacity(0.85),
                   ),
@@ -249,10 +285,12 @@ class _ProfileFormCard extends StatelessWidget {
   const _ProfileFormCard({
     required this.theme,
     required this.controller,
+    required this.isOnboarding,
   });
 
   final ThemeData theme;
   final UserProfileController controller;
+  final bool isOnboarding;
 
   @override
   Widget build(BuildContext context) {
@@ -369,11 +407,55 @@ class _ProfileFormCard extends StatelessWidget {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save_outlined),
-                  label: Text(controller.isSaving.value ? 'Salvando...' : 'Salvar alterações'),
+                  label: Text(
+                    controller.isSaving.value
+                        ? 'Salvando...'
+                        : (isOnboarding ? 'Salvar e continuar' : 'Salvar alterações'),
+                  ),
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OnboardingNotice extends StatelessWidget {
+  const _OnboardingNotice({
+    required this.theme,
+  });
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      color: theme.colorScheme.primaryContainer.withOpacity(0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Antes de começar…',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Revise seu nome e, se quiser, adicione bio e preferências. Essas informações deixam as recomendações mais relevantes, e você pode alterá-las depois.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer.withOpacity(0.85),
+                height: 1.45,
+              ),
+            ),
+          ],
         ),
       ),
     );

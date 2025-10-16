@@ -72,6 +72,7 @@ class AuthServiceImpl implements AuthService {
         name: name == null || name.isEmpty ? email : name,
         email: email,
         avatarUrl: firebaseUser.photoURL,
+        profileCompleted: false,
       );
 
       await _sessionService.ensureInitialized();
@@ -182,6 +183,7 @@ class AuthServiceImpl implements AuthService {
         favoriteCuisines: favoriteCuisines,
         cookingGoals: cookingGoals,
         allergies: allergies,
+        profileCompleted: true,
       );
 
       if (currentUser.displayName != normalizedUser.name) {
@@ -202,6 +204,10 @@ class AuthServiceImpl implements AuthService {
             'favoriteCuisines': normalizedUser.favoriteCuisines,
             'cookingGoals': normalizedUser.cookingGoals,
             'allergies': normalizedUser.allergies,
+          },
+          'profile': {
+            'completed': true,
+            'completedAt': FieldValue.serverTimestamp(),
           },
         },
         SetOptions(merge: true),
@@ -266,6 +272,11 @@ class AuthServiceImpl implements AuthService {
   }) {
     final preferences =
         data['preferences'] is Map<String, dynamic> ? data['preferences'] as Map<String, dynamic> : null;
+    final profileData =
+        data['profile'] is Map<String, dynamic> ? data['profile'] as Map<String, dynamic> : null;
+    final profileCompleted = profileData != null
+        ? (profileData['completed'] as bool? ?? false)
+        : (data['profileCompleted'] as bool? ?? false);
 
     final mapped = <String, dynamic>{
       'id': fallback.id,
@@ -281,6 +292,7 @@ class AuthServiceImpl implements AuthService {
           preferences != null ? preferences['cookingGoals'] ?? fallback.cookingGoals : fallback.cookingGoals,
       'allergies':
           preferences != null ? preferences['allergies'] ?? fallback.allergies : fallback.allergies,
+      'profileCompleted': profileCompleted,
     };
 
     return UserModel.fromMap(mapped);

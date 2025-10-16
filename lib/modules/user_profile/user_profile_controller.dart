@@ -22,6 +22,7 @@ class UserProfileController extends GetxController {
 
   final isSaving = false.obs;
   final isSigningOut = false.obs;
+  final RxBool isOnboarding = false.obs;
 
   final RxList<String> dietaryPreferences = <String>[].obs;
   final RxList<String> favoriteCuisines = <String>[].obs;
@@ -65,6 +66,10 @@ class UserProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    final args = Get.arguments;
+    if (args is Map && args['onboarding'] == true) {
+      isOnboarding.value = true;
+    }
     final initialName = sessionService.user?.name ?? '';
     nameController = TextEditingController(text: initialName);
     bioController = TextEditingController(text: sessionService.user?.bio ?? '');
@@ -109,16 +114,7 @@ class UserProfileController extends GetxController {
         cookingGoals: cookingGoals.toList(),
         allergies: allergies.toList(),
       );
-      nameController.text = updatedUser.name;
-      dietaryPreferences.assignAll(updatedUser.dietaryPreferences);
-      favoriteCuisines.assignAll(updatedUser.favoriteCuisines);
-      cookingGoals.assignAll(updatedUser.cookingGoals);
-      allergies.assignAll(updatedUser.allergies);
-      bioController.text = updatedUser.bio ?? '';
-      AppSnackbar.success(
-        title: 'Perfil atualizado',
-        message: 'Suas preferências foram sincronizadas com sucesso.',
-      );
+      _handleProfileSaved(updatedUser);
     } on AuthFailure catch (error) {
       final message = error.message.isEmpty
           ? 'Não foi possível atualizar seu perfil agora. Tente novamente.'
@@ -132,6 +128,50 @@ class UserProfileController extends GetxController {
         title: 'Algo deu errado',
         message:
             'Ocorreu um erro inesperado ao atualizar seu perfil. Tente novamente.',
+      );
+    } finally {
+      isSaving.value = false;
+    }
+  }
+
+  Future<void> completeOnboardingWithoutChanges() async {
+    if (!isOnboarding.value || isSaving.value) {
+      return;
+    }
+
+    final currentUser = sessionService.user;
+    if (currentUser == null) {
+      return;
+    }
+
+    isSaving.value = true;
+
+    try {
+      final updatedUser = await authService.saveProfile(
+        displayName: currentUser.name,
+        bio: currentUser.bio,
+        dietaryPreferences: currentUser.dietaryPreferences,
+        favoriteCuisines: currentUser.favoriteCuisines,
+        cookingGoals: currentUser.cookingGoals,
+        allergies: currentUser.allergies,
+      );
+      _handleProfileSaved(updatedUser, showFeedback: false);
+      AppSnackbar.success(
+        title: 'Perfil revisado',
+        message: 'Você pode atualizar estas informações a qualquer momento.',
+      );
+    } on AuthFailure catch (error) {
+      final message = error.message.isEmpty
+          ? 'Não conseguimos confirmar suas informações agora. Tente novamente.'
+          : error.message;
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: 'Não conseguimos concluir esta etapa agora. Tente novamente em instantes.',
       );
     } finally {
       isSaving.value = false;
@@ -233,6 +273,30 @@ class UserProfileController extends GetxController {
       );
     } finally {
       isSigningOut.value = false;
+    }
+  }
+
+  void _handleProfileSaved(
+    UserModel updatedUser, {
+    bool showFeedback = true,
+  }) {
+    nameController.text = updatedUser.name;
+    dietaryPreferences.assignAll(updatedUser.dietaryPreferences);
+    favoriteCuisines.assignAll(updatedUser.favoriteCuisines);
+    cookingGoals.assignAll(updatedUser.cookingGoals);
+    allergies.assignAll(updatedUser.allergies);
+    bioController.text = updatedUser.bio ?? '';
+
+    if (showFeedback) {
+      AppSnackbar.success(
+        title: 'Perfil atualizado',
+        message: 'Suas preferências foram sincronizadas com sucesso.',
+      );
+    }
+
+    if (isOnboarding.value && updatedUser.profileCompleted) {
+      isOnboarding.value = false;
+      Get.offAllNamed(AppRoutes.recipeFinder);
     }
   }
 }

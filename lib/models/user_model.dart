@@ -14,6 +14,7 @@ class UserModel {
     List<String>? favoriteCuisines,
     List<String>? cookingGoals,
     List<String>? allergies,
+    this.profileCompleted = false,
   })  : avatarUrl = avatarUrl,
         bio = _normalizeOptionalString(bio),
         dietaryPreferences =
@@ -32,6 +33,7 @@ class UserModel {
   final List<String> favoriteCuisines;
   final List<String> cookingGoals;
   final List<String> allergies;
+  final bool profileCompleted;
 
   bool get hasBio => bio != null && bio!.trim().isNotEmpty;
 
@@ -50,6 +52,7 @@ class UserModel {
     List<String>? favoriteCuisines,
     List<String>? cookingGoals,
     List<String>? allergies,
+    bool? profileCompleted,
   }) {
     return UserModel(
       id: id,
@@ -61,6 +64,7 @@ class UserModel {
       favoriteCuisines: favoriteCuisines ?? this.favoriteCuisines,
       cookingGoals: cookingGoals ?? this.cookingGoals,
       allergies: allergies ?? this.allergies,
+      profileCompleted: profileCompleted ?? this.profileCompleted,
     );
   }
 
@@ -75,6 +79,7 @@ class UserModel {
       'favoriteCuisines': favoriteCuisines,
       'cookingGoals': cookingGoals,
       'allergies': allergies,
+      'profileCompleted': profileCompleted,
     };
   }
 
@@ -89,6 +94,7 @@ class UserModel {
       favoriteCuisines: _readStringList(map['favoriteCuisines']),
       cookingGoals: _readStringList(map['cookingGoals']),
       allergies: _readStringList(map['allergies']),
+      profileCompleted: map['profileCompleted'] as bool? ?? false,
     );
   }
 
@@ -109,6 +115,7 @@ class UserModel {
         Object.hashAll(favoriteCuisines),
         Object.hashAll(cookingGoals),
         Object.hashAll(allergies),
+        profileCompleted,
       ]);
 
   @override
@@ -125,7 +132,8 @@ class UserModel {
         _listEquals(other.dietaryPreferences, dietaryPreferences) &&
         _listEquals(other.favoriteCuisines, favoriteCuisines) &&
         _listEquals(other.cookingGoals, cookingGoals) &&
-        _listEquals(other.allergies, allergies);
+        _listEquals(other.allergies, allergies) &&
+        other.profileCompleted == profileCompleted;
   }
 
   @override

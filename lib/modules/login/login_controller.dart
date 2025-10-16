@@ -27,8 +27,15 @@ class LoginController extends GetxController {
 
     try {
       await sessionService.ensureInitialized();
-      await authService.signInWithGoogle();
-      await Get.offAllNamed(AppRoutes.recipeFinder);
+      final user = await authService.signInWithGoogle();
+      if (user.profileCompleted) {
+        await Get.offAllNamed(AppRoutes.recipeFinder);
+      } else {
+        await Get.offAllNamed(
+          AppRoutes.userProfile,
+          arguments: const <String, dynamic>{'onboarding': true},
+        );
+      }
     } on AuthFailure catch (error) {
       if (!error.isCancelled) {
         final message = error.message.isEmpty

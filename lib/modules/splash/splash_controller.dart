@@ -50,13 +50,22 @@ class SplashController extends GetxController {
       await sessionService.clearSession();
     }
 
-    final shouldOpenRecipes = firebaseAuth.currentUser != null &&
-        sessionService.isAuthenticated &&
-        sessionService.user != null;
+    final hasAuthenticatedUser =
+        firebaseAuth.currentUser != null && sessionService.isAuthenticated && sessionService.user != null;
+    final requiresProfileCompletion =
+        hasAuthenticatedUser && !sessionService.hasCompletedProfileSetup;
 
     await splashDelay;
 
-    if (shouldOpenRecipes) {
+    if (requiresProfileCompletion) {
+      Get.offAllNamed(
+        AppRoutes.userProfile,
+        arguments: const <String, dynamic>{'onboarding': true},
+      );
+      return;
+    }
+
+    if (hasAuthenticatedUser) {
       Get.offAllNamed(AppRoutes.recipeFinder);
       return;
     }

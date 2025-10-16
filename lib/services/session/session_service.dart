@@ -14,6 +14,7 @@ abstract class SessionService {
   bool get isGuest;
   bool get isAuthenticated;
   UserModel? get user;
+  bool get hasCompletedProfileSetup;
   int get guestSearchCount;
   int get guestSearchesRemaining;
   int get shareCount;
