@@ -4,15 +4,21 @@ import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:receitagora/models/user_model.dart';
+import 'package:receitagora/services/config/usage_config.dart';
+import 'package:receitagora/services/config/usage_config_service.dart';
 
 import 'session_service.dart';
 
 class SessionServiceImpl extends GetxService implements SessionService {
-  SessionServiceImpl({required SharedPreferences preferences})
-      : _preferences = preferences,
+  SessionServiceImpl({
+    required SharedPreferences preferences,
+    required UsageConfigService usageConfigService,
+  })  : _preferences = preferences,
+        _usageConfigService = usageConfigService,
         _readyCompleter = Completer<void>();
 
   final SharedPreferences _preferences;
+  final UsageConfigService _usageConfigService;
 
   static const _modeKey = 'session.mode';
   static const _userJsonKey = 'session.user.data';
@@ -32,6 +38,13 @@ class SessionServiceImpl extends GetxService implements SessionService {
   final Rxn<UserModel> _user = Rxn<UserModel>();
   final RxInt _guestSearchCount = 0.obs;
   final RxInt _shareCount = 0.obs;
+  final RxInt _guestDailyLimit =
+      SessionService.defaultGuestDailyLimit.obs;
+  final RxInt _guestRecipeLimit =
+      SessionService.defaultGuestRecipeLimit.obs;
+  final RxInt _shareDailyLimit =
+      SessionService.defaultShareDailyLimit.obs;
+  StreamSubscription<UsageConfig>? _configSubscription;
 
   @override
   Future<void> get ready => _readyCompleter.future;
@@ -55,11 +68,20 @@ class SessionServiceImpl extends GetxService implements SessionService {
   bool get hasCompletedProfileSetup => _user.value?.profileCompleted ?? false;
 
   @override
+  int get guestDailyLimit => _guestDailyLimit.value;
+
+  @override
+  int get guestRecipeLimit => _guestRecipeLimit.value;
+
+  @override
+  int get shareDailyLimit => _shareDailyLimit.value;
+
+  @override
   int get guestSearchCount => _guestSearchCount.value;
 
   @override
   int get guestSearchesRemaining {
-    final remaining = SessionService.guestDailyLimit - _guestSearchCount.value;
+    final remaining = _guestDailyLimit.value - _guestSearchCount.value;
     return remaining < 0 ? 0 : remaining;
   }
 
@@ -68,7 +90,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   int get sharesRemaining {
-    final remaining = SessionService.shareDailyLimit - _shareCount.value;
+    final remaining = _shareDailyLimit.value - _shareCount.value;
     return remaining < 0 ? 0 : remaining;
   }
 
@@ -83,6 +105,15 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   Stream<int> get shareCountStream => _shareCount.stream;
+
+  @override
+  Stream<int> get guestDailyLimitStream => _guestDailyLimit.stream;
+
+  @override
+  Stream<int> get guestRecipeLimitStream => _guestRecipeLimit.stream;
+
+  @override
+  Stream<int> get shareDailyLimitStream => _shareDailyLimit.stream;
 
   @override
   Future<SessionService> init() async {
@@ -108,6 +139,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
       await _clearLegacyFavoriteEntries();
       _ensureGuestQuotaFreshness();
       _ensureShareQuotaFreshness();
+      await _initializeUsageConfig();
 
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
@@ -202,7 +234,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     }
 
     _ensureGuestQuotaFreshness();
-    return _guestSearchCount.value < SessionService.guestDailyLimit;
+    return _guestSearchCount.value < _guestDailyLimit.value;
   }
 
   @override
@@ -224,7 +256,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
   @override
   bool canShareRecipe() {
     _ensureShareQuotaFreshness();
-    return _shareCount.value < SessionService.shareDailyLimit;
+    return _shareCount.value < _shareDailyLimit.value;
   }
 
   @override
@@ -238,6 +270,12 @@ class SessionServiceImpl extends GetxService implements SessionService {
       _shareDateKey,
       DateTime.now().toIso8601String(),
     );
+  }
+
+  @override
+  void onClose() {
+    _configSubscription?.cancel();
+    super.onClose();
   }
 
   Future<void> _hydrateFromPreferences() async {
@@ -347,5 +385,36 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   Future<void> _persistUser(UserModel user) async {
     await updateProfile(user);
+  }
+
+  Future<void> _initializeUsageConfig() async {
+    await _usageConfigService.ensureInitialized();
+    _applyUsageConfig(_usageConfigService.current);
+    _configSubscription ??=
+        _usageConfigService.stream.listen(_applyUsageConfig);
+  }
+
+  void _applyUsageConfig(UsageConfig config) {
+    if (_guestDailyLimit.value != config.guestDailyLimit) {
+      _guestDailyLimit.value = config.guestDailyLimit;
+      if (_guestSearchCount.value > config.guestDailyLimit) {
+        _guestSearchCount.value = config.guestDailyLimit;
+        unawaited(
+          _preferences.setInt(_guestCountKey, _guestSearchCount.value),
+        );
+      }
+    }
+    if (_guestRecipeLimit.value != config.guestRecipeLimit) {
+      _guestRecipeLimit.value = config.guestRecipeLimit;
+    }
+    if (_shareDailyLimit.value != config.shareDailyLimit) {
+      _shareDailyLimit.value = config.shareDailyLimit;
+      if (_shareCount.value > config.shareDailyLimit) {
+        _shareCount.value = config.shareDailyLimit;
+        unawaited(
+          _preferences.setInt(_shareCountKey, _shareCount.value),
+        );
+      }
+    }
   }
 }

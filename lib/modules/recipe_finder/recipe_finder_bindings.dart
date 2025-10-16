@@ -5,6 +5,7 @@ import 'package:receitagora/modules/recipe_finder/data/repositories/recipe_repos
 import 'package:receitagora/modules/recipe_finder/domain/repositories/recipe_repository.dart';
 import 'package:receitagora/modules/recipe_finder/domain/usecases/generate_recipes_usecase.dart';
 import 'package:receitagora/services/openai/openai_service.dart';
+import 'package:receitagora/services/recipe/recipe_history_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
 import 'recipe_finder_controller.dart';
@@ -25,6 +26,7 @@ class RecipeFinderBindings extends Bindings {
       () => RecipeFinderController(
         generateRecipesUseCase: Get.find<GenerateRecipesUseCase>(),
         sessionService: Get.find<SessionService>(),
+        recipeHistoryService: Get.find<RecipeHistoryService>(),
       ),
     );
   }

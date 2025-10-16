@@ -36,7 +36,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
 
     if (!_sessionService.canShareRecipe()) {
       throw ShareFailure(
-        'Limite diário de ${SessionService.shareDailyLimit} compartilhamentos atingido. Volte amanhã ou assine um plano para continuar compartilhando sem limites.',
+        'Limite diário de ${_sessionService.shareDailyLimit} compartilhamentos atingido. Volte amanhã ou assine um plano para continuar compartilhando sem limites.',
       );
     }
 

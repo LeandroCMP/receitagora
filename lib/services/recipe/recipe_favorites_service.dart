@@ -1,6 +1,8 @@
 import 'package:receitagora/modules/favorites/favorited_recipe_entity.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 
+import 'favorites_analytics.dart';
+
 class FavoritesFailure implements Exception {
   FavoritesFailure(this.message);
 
@@ -13,8 +15,10 @@ abstract class RecipeFavoritesService {
 
   Stream<Set<String>> get favoriteIdsStream;
   Stream<List<FavoritedRecipeEntity>> get favoritesStream;
+  Stream<FavoritesAnalytics> get analyticsStream;
   Set<String> get favoriteIds;
   List<FavoritedRecipeEntity> get favorites;
+  FavoritesAnalytics get analytics;
 
   String favoriteIdFor(RecipeEntity recipe);
   bool isFavoriteSync(RecipeEntity recipe);

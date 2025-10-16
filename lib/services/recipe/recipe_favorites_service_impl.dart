@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:receitagora/modules/favorites/favorited_recipe_entity.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 
+import 'favorites_analytics.dart';
 import 'recipe_favorites_service.dart';
 
 class RecipeFavoritesServiceImpl extends GetxService
@@ -25,10 +26,13 @@ class RecipeFavoritesServiceImpl extends GetxService
   final RxSet<String> _favoriteIds = <String>{}.obs;
   final RxList<FavoritedRecipeEntity> _favorites =
       <FavoritedRecipeEntity>[].obs;
+  final Rx<FavoritesAnalytics> _analytics =
+      FavoritesAnalytics.empty.obs;
 
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>?
       _favoritesSubscription;
+  FavoritesAnalytics _lastPersistedAnalytics = FavoritesAnalytics.empty;
 
   @override
   Stream<Set<String>> get favoriteIdsStream => _favoriteIds.stream;
@@ -38,11 +42,17 @@ class RecipeFavoritesServiceImpl extends GetxService
       _favorites.stream;
 
   @override
+  Stream<FavoritesAnalytics> get analyticsStream => _analytics.stream;
+
+  @override
   Set<String> get favoriteIds => UnmodifiableSetView(_favoriteIds);
 
   @override
   List<FavoritedRecipeEntity> get favorites =>
       UnmodifiableListView(_favorites);
+
+  @override
+  FavoritesAnalytics get analytics => _analytics.value;
 
   @override
   void onInit() {
@@ -189,6 +199,8 @@ class RecipeFavoritesServiceImpl extends GetxService
     _favoritesSubscription?.cancel();
     _favorites.clear();
     _favoriteIds.clear();
+    _analytics.value = FavoritesAnalytics.empty;
+    _lastPersistedAnalytics = FavoritesAnalytics.empty;
 
     if (user == null) {
       return;
@@ -204,6 +216,9 @@ class RecipeFavoritesServiceImpl extends GetxService
         _favoriteIds
           ..clear()
           ..addAll(mapped.map((item) => item.id));
+        final analytics = FavoritesAnalytics.fromFavorites(mapped);
+        _analytics.value = analytics;
+        _persistAnalytics(user.uid, analytics);
       },
       onError: (Object error, StackTrace stackTrace) {
         Get.log(
@@ -247,6 +262,44 @@ class RecipeFavoritesServiceImpl extends GetxService
     String userId,
   ) {
     return _firestore.collection('users').doc(userId).collection('favorites');
+  }
+
+  DocumentReference<Map<String, dynamic>> _userAnalyticsDocument(
+    String userId,
+  ) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('analytics')
+        .doc('favorites');
+  }
+
+  Future<void> _persistAnalytics(
+    String userId,
+    FavoritesAnalytics analytics,
+  ) async {
+    final currentFingerprint = jsonEncode(analytics.toSerializableMap());
+    final lastFingerprint = jsonEncode(_lastPersistedAnalytics.toSerializableMap());
+    if (currentFingerprint == lastFingerprint) {
+      return;
+    }
+
+    _lastPersistedAnalytics = analytics;
+
+    try {
+      await _userAnalyticsDocument(userId).set(
+        {
+          ...analytics.toSerializableMap(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } on FirebaseException catch (error, stackTrace) {
+      Get.log(
+        'Erro ao persistir analytics de favoritos: ${error.message}\n$stackTrace',
+        isError: true,
+      );
+    }
   }
 
   String _buildRecipeId(RecipeEntity recipe) {

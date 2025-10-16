@@ -7,6 +7,7 @@ import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/widgets/recipe_cover.dart';
+import 'package:receitagora/services/recipe/favorites_analytics.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
@@ -77,7 +78,11 @@ class FavoritesPage extends GetView<FavoritesController> {
                         return _EmptyFavorites(theme: theme, layout: layout);
                       }
 
-                      final analytics = _FavoriteAnalytics.fromFavorites(favorites);
+                      final analytics =
+                          FavoritesAnalytics.fromFavorites(favorites);
+                      final tagStats = analytics.sortedTagEntries
+                          .map((entry) => _TagStat(entry.key, entry.value))
+                          .toList();
 
                       return Obx(() {
                         final filteredFavorites =
@@ -106,12 +111,12 @@ class FavoritesPage extends GetView<FavoritesController> {
                                     theme: theme,
                                     analytics: analytics,
                                   ),
-                                  if (analytics.tagStats.isNotEmpty) ...[
+                                  if (tagStats.isNotEmpty) ...[
                                     const SizedBox(height: 16),
                                     _TagFilterSection(
                                       theme: theme,
                                       controller: controller,
-                                      stats: analytics.tagStats,
+                                      stats: tagStats,
                                       selectedTag: selectedTag,
                                     ),
                                   ],
@@ -160,7 +165,7 @@ class _FavoritesHeader extends StatelessWidget {
   });
 
   final ThemeData theme;
-  final _FavoriteAnalytics analytics;
+  final FavoritesAnalytics analytics;
   final String? activeTag;
 
   @override
@@ -793,7 +798,7 @@ class _FavoritesMetricsGrid extends StatelessWidget {
   });
 
   final ThemeData theme;
-  final _FavoriteAnalytics analytics;
+  final FavoritesAnalytics analytics;
 
   @override
   Widget build(BuildContext context) {
@@ -1052,113 +1057,6 @@ class _EmptyFilteredFavorites extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _FavoriteAnalytics {
-  const _FavoriteAnalytics({
-    required this.totalFavorites,
-    required this.uniqueIngredients,
-    required this.uniqueTags,
-    required this.topDifficulty,
-    required this.lastFavorited,
-    required this.tagStats,
-  });
-
-  final int totalFavorites;
-  final int uniqueIngredients;
-  final int uniqueTags;
-  final String? topDifficulty;
-  final DateTime? lastFavorited;
-  final List<_TagStat> tagStats;
-
-  String? get formattedLastFavorited {
-    if (lastFavorited == null) {
-      return null;
-    }
-    final local = lastFavorited!.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    return '$day/$month/${local.year}';
-  }
-
-  int countForTag(String tag) {
-    for (final stat in tagStats) {
-      if (stat.tag == tag) {
-        return stat.count;
-      }
-    }
-    return 0;
-  }
-
-  factory _FavoriteAnalytics.fromFavorites(
-    List<FavoritedRecipeEntity> favorites,
-  ) {
-    final ingredients = <String>{};
-    final difficultyCounts = <String, int>{};
-    final tagCounts = <String, int>{};
-    DateTime? last;
-
-    for (final favorite in favorites) {
-      ingredients.addAll(
-        favorite.recipe.ingredients
-            .map((item) => item.trim().toLowerCase())
-            .where((item) => item.isNotEmpty),
-      );
-
-      final difficulty = favorite.recipe.difficulty.trim();
-      if (difficulty.isNotEmpty) {
-        difficultyCounts[difficulty] = (difficultyCounts[difficulty] ?? 0) + 1;
-      }
-
-      final favoritedAt = favorite.favoritedAt;
-      if (favoritedAt != null) {
-        if (last == null || favoritedAt.isAfter(last)) {
-          last = favoritedAt;
-        }
-      }
-
-      for (final tag in favorite.tags) {
-        final sanitized = tag.trim();
-        if (sanitized.isEmpty) {
-          continue;
-        }
-        tagCounts[sanitized] = (tagCounts[sanitized] ?? 0) + 1;
-      }
-    }
-
-    String? topDifficulty;
-    if (difficultyCounts.isNotEmpty) {
-      final sorted = difficultyCounts.entries.toList()
-        ..sort((a, b) {
-          final diff = b.value.compareTo(a.value);
-          if (diff != 0) {
-            return diff;
-          }
-          return a.key.toLowerCase().compareTo(b.key.toLowerCase());
-        });
-      topDifficulty = sorted.first.key;
-    }
-
-    final tagStats = tagCounts.entries
-        .map((entry) => _TagStat(entry.key, entry.value))
-        .toList()
-      ..sort((a, b) {
-        final diff = b.count.compareTo(a.count);
-        if (diff != 0) {
-          return diff;
-        }
-        return a.tag.toLowerCase().compareTo(b.tag.toLowerCase());
-      });
-
-    return _FavoriteAnalytics(
-      totalFavorites: favorites.length,
-      uniqueIngredients: ingredients.length,
-      uniqueTags: tagCounts.length,
-      topDifficulty: topDifficulty,
-      lastFavorited: last,
-      tagStats: tagStats,
     );
   }
 }

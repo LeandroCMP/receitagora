@@ -320,7 +320,7 @@ class _DailyLimitNotice extends StatelessWidget {
 
       final remaining = controller.guestSearchesRemaining.value;
       final helper = remaining > 0
-          ? 'Modo visitante: restam $remaining de ${SessionService.guestDailyLimit} buscas hoje. Cada pesquisa retorna até ${SessionService.guestRecipeLimit} receitas.'
+          ? 'Modo visitante: restam $remaining de ${controller.guestDailyLimit.value} buscas hoje. Cada pesquisa retorna até ${controller.guestRecipeLimit.value} receitas.'
           : 'Você alcançou o limite diário no modo visitante. Volte amanhã ou faça login para liberar buscas ilimitadas.';
 
       return Card(

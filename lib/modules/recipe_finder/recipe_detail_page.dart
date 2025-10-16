@@ -179,21 +179,28 @@ class RecipeDetailPage extends StatelessWidget {
                 );
               } else {
                 shareButton = StreamBuilder<int>(
-                  stream: sessionService.shareCountStream,
-                  initialData: sessionService.shareCount,
-                  builder: (context, shareSnapshot) {
-                    final shareCount =
-                        shareSnapshot.data ?? sessionService.shareCount;
-                    final remaining =
-                        SessionService.shareDailyLimit - shareCount;
-                    final canShare = remaining > 0;
+                  stream: sessionService.shareDailyLimitStream,
+                  initialData: sessionService.shareDailyLimit,
+                  builder: (context, limitSnapshot) {
+                    final limit =
+                        limitSnapshot.data ?? sessionService.shareDailyLimit;
+                    return StreamBuilder<int>(
+                      stream: sessionService.shareCountStream,
+                      initialData: sessionService.shareCount,
+                      builder: (context, shareSnapshot) {
+                        final shareCount =
+                            shareSnapshot.data ?? sessionService.shareCount;
+                        final remaining = limit - shareCount;
+                        final canShare = remaining > 0;
 
-                    return IconButton(
-                      tooltip: canShare
-                          ? 'Compartilhar receita'
-                          : 'Limite diário de compartilhamentos atingido',
-                      icon: const Icon(Icons.ios_share_rounded),
-                      onPressed: canShare ? shareRecipe : null,
+                        return IconButton(
+                          tooltip: canShare
+                              ? 'Compartilhar receita'
+                              : 'Limite diário de compartilhamentos atingido',
+                          icon: const Icon(Icons.ios_share_rounded),
+                          onPressed: canShare ? shareRecipe : null,
+                        );
+                      },
                     );
                   },
                 );

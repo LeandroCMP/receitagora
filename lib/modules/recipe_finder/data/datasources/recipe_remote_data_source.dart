@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:receitagora/core/errors/app_exception.dart';
+import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/openai/openai_service.dart';
 
 import 'package:receitagora/modules/recipe_finder/data/models/recipe_model.dart';
@@ -10,8 +11,14 @@ class RecipeRemoteDataSource {
 
   final OpenAIService service;
 
-  Future<List<RecipeModel>> generateRecipes(List<String> ingredients) async {
-    final content = await service.generateRecipes(ingredients);
+  Future<List<RecipeModel>> generateRecipes({
+    required List<String> ingredients,
+    UserModel? user,
+  }) async {
+    final content = await service.generateRecipes(
+      ingredients,
+      user: user,
+    );
     final jsonContent = _extractJson(content);
 
     try {

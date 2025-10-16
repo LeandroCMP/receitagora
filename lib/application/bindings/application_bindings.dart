@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:receitagora/core/config/environment_config.dart';
 import 'package:receitagora/services/auth/auth_service.dart';
@@ -10,6 +11,8 @@ import 'package:receitagora/services/auth/auth_service_impl.dart';
 import 'package:receitagora/services/openai/openai_service.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service_impl.dart';
+import 'package:receitagora/services/recipe/recipe_history_service.dart';
+import 'package:receitagora/services/recipe/recipe_history_service_impl.dart';
 import 'package:receitagora/services/session/session_service.dart';
 import 'package:receitagora/services/share/recipe_share_service.dart';
 import 'package:receitagora/services/share/recipe_share_service_impl.dart';
@@ -26,12 +29,18 @@ class ApplicationBindings extends Bindings {
       ),
       fenix: true,
     );
-    Get.put<FirebaseAuth>(FirebaseAuth.instance, permanent: true);
-    Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);
-    Get.put<GoogleSignIn>(
-      GoogleSignIn.instance,
-      permanent: true,
-    );
+    if (!Get.isRegistered<FirebaseAuth>()) {
+      Get.put<FirebaseAuth>(FirebaseAuth.instance, permanent: true);
+    }
+    if (!Get.isRegistered<FirebaseFirestore>()) {
+      Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);
+    }
+    if (!Get.isRegistered<GoogleSignIn>()) {
+      Get.put<GoogleSignIn>(
+        GoogleSignIn.instance,
+        permanent: true,
+      );
+    }
     Get.lazyPut<AuthService>(
       () => AuthServiceImpl(
         firebaseAuth: Get.find<FirebaseAuth>(),
@@ -45,6 +54,12 @@ class ApplicationBindings extends Bindings {
       () => RecipeFavoritesServiceImpl(
         firestore: Get.find<FirebaseFirestore>(),
         firebaseAuth: Get.find<FirebaseAuth>(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut<RecipeHistoryService>(
+      () => RecipeHistoryServiceImpl(
+        preferences: Get.find<SharedPreferences>(),
       ),
       fenix: true,
     );

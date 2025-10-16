@@ -3,9 +3,9 @@ import 'package:receitagora/models/user_model.dart';
 enum UserMode { guest, authenticated }
 
 abstract class SessionService {
-  static const int guestDailyLimit = 2;
-  static const int guestRecipeLimit = 2;
-  static const int shareDailyLimit = 50;
+  static const int defaultGuestDailyLimit = 2;
+  static const int defaultGuestRecipeLimit = 2;
+  static const int defaultShareDailyLimit = 50;
 
   Future<void> get ready;
 
@@ -15,6 +15,9 @@ abstract class SessionService {
   bool get isAuthenticated;
   UserModel? get user;
   bool get hasCompletedProfileSetup;
+  int get guestDailyLimit;
+  int get guestRecipeLimit;
+  int get shareDailyLimit;
   int get guestSearchCount;
   int get guestSearchesRemaining;
   int get shareCount;
@@ -24,6 +27,9 @@ abstract class SessionService {
   Stream<UserModel?> get userStream;
   Stream<int> get guestSearchCountStream;
   Stream<int> get shareCountStream;
+  Stream<int> get guestDailyLimitStream;
+  Stream<int> get guestRecipeLimitStream;
+  Stream<int> get shareDailyLimitStream;
 
   Future<SessionService> init();
   Future<void> ensureInitialized();

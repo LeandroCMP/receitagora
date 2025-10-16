@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:receitagora/core/config/environment_config.dart';
 import 'package:receitagora/core/errors/app_exception.dart';
+import 'package:receitagora/models/user_model.dart';
 
 class OpenAIService {
   OpenAIService({required this.client, required this.config});
@@ -12,7 +13,10 @@ class OpenAIService {
   final http.Client client;
   final EnvironmentConfig config;
 
-  Future<String> generateRecipes(List<String> ingredients) async {
+  Future<String> generateRecipes(
+    List<String> ingredients, {
+    UserModel? user,
+  }) async {
     final sanitized = ingredients
         .map((ingredient) => ingredient.trim())
         .where((ingredient) => ingredient.isNotEmpty)
@@ -25,7 +29,10 @@ class OpenAIService {
     }
 
     try {
-      final content = await _requestRecipesFromOpenAI(sanitized);
+      final content = await _requestRecipesFromOpenAI(
+        sanitized,
+        user: user,
+      );
       if (content != null && content.trim().isNotEmpty) {
         return content;
       }
@@ -40,7 +47,10 @@ class OpenAIService {
     }
   }
 
-  Future<String?> _requestRecipesFromOpenAI(List<String> ingredients) async {
+  Future<String?> _requestRecipesFromOpenAI(
+    List<String> ingredients, {
+    UserModel? user,
+  }) async {
     final uri = Uri.parse('${config.openAIBaseUrl}/chat/completions');
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -61,7 +71,7 @@ class OpenAIService {
         },
         {
           'role': 'user',
-          'content': _buildPrompt(ingredients),
+          'content': _buildPrompt(ingredients, user),
         },
       ],
     });
@@ -235,10 +245,14 @@ class OpenAIService {
     return null;
   }
 
-  String _buildPrompt(List<String> ingredients) {
+  String _buildPrompt(List<String> ingredients, UserModel? user) {
     final ingredientList =
         ingredients.map((ingredient) => '- ${ingredient.trim()}').join('\n');
-    return '''Considere apenas os ingredientes abaixo para criar entre duas e três receitas. Ingredientes genéricos como sal, água, óleo e temperos básicos podem ser adicionados.
+    final profileContext = user == null
+        ? ''
+        : _composeUserContext(user);
+
+    return '''Considere apenas os ingredientes abaixo para criar entre duas e três receitas. Ingredientes genéricos como sal, água, óleo e temperos básicos podem ser adicionados.$profileContext
 
 Ingredientes disponíveis:
 $ingredientList
@@ -257,7 +271,45 @@ Retorne um JSON com o formato:
   ]
 }
 
-Inclua pelo menos uma receita fácil e uma receita de dificuldade média, mantendo o nível de execução acessível. Descreva cada preparo de forma mais elaborada, trazendo contexto e dicas rápidas, mas sem aumentar demais a complexidade. Indique o tempo total aproximado em minutos e certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
+Inclua pelo menos uma receita fácil e uma receita de dificuldade média, mantendo o nível de execução acessível. Descreva cada preparo de forma detalhada, com dicas práticas e contexto rápido, sem aumentar demais a complexidade. Indique o tempo total aproximado em minutos e certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
+  }
+
+  String _composeUserContext(UserModel user) {
+    final buffer = StringBuffer('\n\nPreferências do usuário:\n');
+    buffer.writeln('- Nome: ${user.name}');
+    if (user.hasBio) {
+      buffer.writeln('- Bio: ${user.bio}');
+    }
+    if (user.dietaryPreferences.isNotEmpty) {
+      buffer.writeln(
+          '- Preferências alimentares: ${_formatList(user.dietaryPreferences)}');
+    }
+    if (user.favoriteCuisines.isNotEmpty) {
+      buffer.writeln(
+          '- Cozinhas preferidas: ${_formatList(user.favoriteCuisines)}');
+    }
+    if (user.cookingGoals.isNotEmpty) {
+      buffer.writeln(
+          '- Objetivos na cozinha: ${_formatList(user.cookingGoals)}');
+    }
+    if (user.allergies.isNotEmpty) {
+      buffer.writeln(
+          '- Evite ingredientes alérgenos: ${_formatList(user.allergies)}');
+    }
+    buffer.writeln(
+        '- Priorize sugestões que respeitem essas preferências e tragam variações alinhadas ao perfil informado.');
+    return buffer.toString();
+  }
+
+  String _formatList(List<String> values) {
+    if (values.isEmpty) {
+      return '';
+    }
+    if (values.length == 1) {
+      return values.first;
+    }
+    final head = values.sublist(0, values.length - 1).join(', ');
+    return '$head e ${values.last}';
   }
 
   String? _readMessageContent(dynamic content) {
