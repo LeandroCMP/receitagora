@@ -6,7 +6,7 @@ import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
-import 'package:receitagora/modules/recipe_finder/widgets/recipe_card.dart';
+import 'package:receitagora/modules/recipe_finder/widgets/recipe_cover.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
@@ -320,6 +320,7 @@ class _FavoriteRecipeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final recipe = favorite.recipe;
     final equality = const ListEquality<String>();
+    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
 
     Future<void> editTags() async {
       final updatedTags = await Get.dialog<List<String>>(
@@ -342,25 +343,227 @@ class _FavoriteRecipeCard extends StatelessWidget {
       await controller.applyTags(favorite, updatedTags);
     }
 
-    return RecipeSummaryCard(
-      recipe: recipe,
-      position: index,
-      heroTag: 'favorite-${favorite.id}',
-      onTap: () => controller.openFavorite(favorite, index),
-      action: Tooltip(
-        message: 'Remover dos favoritos',
-        child: IconButton(
-          icon: Icon(
-            Icons.favorite,
-            color: theme.colorScheme.primary,
+    String previewText() {
+      final description = recipe.description.trim();
+      if (description.isNotEmpty) {
+        return description;
+      }
+
+      if (recipe.steps.isNotEmpty) {
+        return recipe.steps.first.trim();
+      }
+
+      return 'Toque para visualizar o passo a passo completo desta receita.';
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 620;
+        final padding = EdgeInsets.all(isCompact ? 22 : 28);
+        final gap = isCompact ? 18.0 : 24.0;
+
+        final cover = RecipeCover(
+          theme: theme,
+          recipe: recipe,
+          position: index,
+          heroTag: 'favorite-${favorite.id}',
+          size: isCompact ? 116 : 136,
+          showLabel: false,
+        );
+
+        final meta = Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            _InfoChip(
+              icon: Icons.auto_awesome,
+              label: recipe.difficulty,
+              color: theme.colorScheme.primary,
+            ),
+            _InfoChip(
+              icon: Icons.schedule_rounded,
+              label: recipe.duration,
+              color: theme.colorScheme.secondary,
+            ),
+            _InfoChip(
+              icon: Icons.restaurant_menu,
+              label:
+                  '${recipe.ingredients.length} ingrediente${recipe.ingredients.length == 1 ? '' : 's'}',
+              color: theme.colorScheme.tertiary,
+            ),
+          ],
+        );
+
+        final tagsSection = _FavoriteTagsFooter(
+          theme: theme,
+          tags: favorite.tags,
+          onEdit: editTags,
+        );
+
+        final removeButton = Tooltip(
+          message: 'Remover dos favoritos',
+          child: IconButton(
+            icon: Icon(
+              Icons.favorite,
+              color: theme.colorScheme.primary,
+            ),
+            onPressed: () => controller.confirmRemoval(favorite),
           ),
-          onPressed: () => controller.confirmRemoval(favorite),
-        ),
+        );
+
+        final header = Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Favorito ${index + 1}'.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    recipe.name,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            removeButton,
+          ],
+        );
+
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            header,
+            const SizedBox(height: 16),
+            meta,
+            const SizedBox(height: 18),
+            Text(
+              previewText(),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.74),
+                height: 1.55,
+              ),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Toque para abrir ingredientes e modo de preparo completo.',
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
+            const SizedBox(height: 18),
+            tagsSection,
+          ],
+        );
+
+        final child = isCompact
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  content,
+                  SizedBox(height: gap),
+                  Align(
+                    alignment: Alignment.center,
+                    child: cover,
+                  ),
+                ],
+              )
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: content),
+                  SizedBox(width: gap),
+                  cover,
+                ],
+              );
+
+        return Card(
+          margin: EdgeInsets.only(bottom: isCompact ? 20 : 28),
+          elevation: 0,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(28),
+            onTap: () => controller.openFavorite(favorite, index),
+            child: Container(
+              padding: padding,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.colorScheme.surface,
+                    (surfaces?.highest ?? theme.colorScheme.background),
+                  ],
+                ),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withOpacity(0.35),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.05),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: child,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: color.withOpacity(0.12),
       ),
-      footer: _FavoriteTagsFooter(
-        theme: theme,
-        tags: favorite.tags,
-        onEdit: editTags,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -384,42 +587,56 @@ class _FavoriteTagsFooter extends StatelessWidget {
       height: 1.5,
     );
 
+    final chips = tags
+        .map(
+          (tag) => InputChip(
+            label: Text(tag),
+            avatar: const Icon(Icons.tag, size: 16),
+            onPressed: onEdit,
+            backgroundColor:
+                theme.colorScheme.secondaryContainer.withOpacity(0.4),
+            labelStyle: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSecondaryContainer,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        )
+        .toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (tags.isEmpty)
           Text(
-            'Nenhuma tag definida ainda. Use o botão abaixo para organizar suas categorias favoritas.',
+            'Organize este favorito com categorias rápidas para encontrá-lo em segundos.',
             style: infoStyle,
           )
         else
           Wrap(
             spacing: 8,
-            runSpacing: 8,
-            children: tags
-                .map(
-                  (tag) => Chip(
-                    label: Text(tag),
-                    backgroundColor:
-                        theme.colorScheme.secondaryContainer.withOpacity(0.3),
-                  ),
-                )
-                .toList(),
+            runSpacing: 10,
+            children: [
+              ...chips,
+              ActionChip(
+                avatar: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Gerenciar tags'),
+                onPressed: onEdit,
+              ),
+            ],
           ),
+        if (tags.isEmpty) ...[
+          const SizedBox(height: 12),
+          ActionChip(
+            avatar: const Icon(Icons.add, size: 18),
+            label: const Text('Adicionar tags'),
+            onPressed: onEdit,
+          ),
+        ],
         const SizedBox(height: 12),
         Text(
           'Você pode cadastrar até ${RecipeFavoritesService.maxTagsPerRecipe} tags por receita.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
-            label: Text(tags.isEmpty ? 'Adicionar tags' : 'Editar tags'),
           ),
         ),
       ],
