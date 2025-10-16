@@ -79,25 +79,29 @@ class AppSnackbar {
 
     switch (style) {
       case AppSnackbarStyle.success:
-        background = colorScheme.primaryContainer.withOpacity(0.92);
+        background = colorScheme.primaryContainer
+            .withAlpha((0.92 * 255).round());
         foreground = colorScheme.onPrimaryContainer;
         break;
       case AppSnackbarStyle.warning:
-        background = colorScheme.tertiaryContainer.withOpacity(0.94);
+        background = colorScheme.tertiaryContainer
+            .withAlpha((0.94 * 255).round());
         foreground = colorScheme.onTertiaryContainer;
         break;
       case AppSnackbarStyle.error:
-        background = colorScheme.errorContainer.withOpacity(0.95);
+        background =
+            colorScheme.errorContainer.withAlpha((0.95 * 255).round());
         foreground = colorScheme.onErrorContainer;
         break;
       case AppSnackbarStyle.info:
       default:
-        background = (surfaces?.high ?? colorScheme.surfaceVariant).withOpacity(0.92);
+        background = (surfaces?.high ?? colorScheme.surfaceVariant)
+            .withAlpha((0.92 * 255).round());
         foreground = colorScheme.onSurface;
         break;
     }
 
-    if (Get.isSnackbarOpen ?? false) {
+    if (Get.isSnackbarOpen) {
       Get.closeCurrentSnackbar();
     }
 

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -164,8 +164,10 @@ class RecipeFavoritesServiceImpl extends GetxService
           ..addAll(mapped.map((item) => item.id));
       },
       onError: (Object error, StackTrace stackTrace) {
-        Get.log('Erro ao escutar favoritos do usuário: $error',
-            isError: true, stackTrace: stackTrace);
+        Get.log(
+          'Erro ao escutar favoritos do usuário: $error\n$stackTrace',
+          isError: true,
+        );
       },
     );
   }
