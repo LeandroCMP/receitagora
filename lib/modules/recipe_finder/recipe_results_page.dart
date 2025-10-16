@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
+import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
@@ -45,8 +46,6 @@ class RecipeResultsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final background = theme.colorScheme.background;
-    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
     final args = _resolveArgs();
     final sessionService = Get.find<SessionService>();
     final favoritesService = Get.find<RecipeFavoritesService>();
@@ -55,7 +54,8 @@ class RecipeResultsPage extends StatelessWidget {
       if (!sessionService.isAuthenticated) {
         AppSnackbar.info(
           title: 'Faça login',
-          message: 'Entre com sua conta para salvar e organizar suas receitas favoritas.',
+          message:
+              'Entre com sua conta para salvar e organizar suas receitas preferidas.',
         );
         return;
       }
@@ -65,10 +65,10 @@ class RecipeResultsPage extends StatelessWidget {
       try {
         await favoritesService.toggleFavorite(recipe);
         AppSnackbar.info(
-          title: alreadyFavorite ? 'Favorito removido' : 'Adicionado aos favoritos',
+          title: alreadyFavorite ? 'Favorito removido' : 'Favorito salvo',
           message: alreadyFavorite
-              ? 'Esta receita foi removida da sua lista de favoritos.'
-              : 'Você encontra esta receita na tela de favoritos.',
+              ? 'Esta receita saiu da sua coleção.'
+              : 'Você encontra a receita em "Favoritos".',
         );
       } on FavoritesFailure catch (error) {
         AppSnackbar.error(
@@ -78,15 +78,27 @@ class RecipeResultsPage extends StatelessWidget {
       } catch (_) {
         AppSnackbar.error(
           title: 'Algo deu errado',
-          message: 'Não foi possível atualizar seus favoritos agora. Tente novamente.',
+          message:
+              'Não foi possível atualizar seus favoritos agora. Tente novamente.',
         );
       }
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resultados'),
-        automaticallyImplyLeading: true,
+        titleSpacing: 16,
+        title: Row(
+          children: [
+            Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            Text(
+              'Sugestões para hoje',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
         actions: [
           Obx(() {
             if (!sessionService.isAuthenticated) {
@@ -94,61 +106,49 @@ class RecipeResultsPage extends StatelessWidget {
             }
             return IconButton(
               tooltip: 'Ver favoritos',
-              icon: const Icon(Icons.favorite),
+              icon: const Icon(Icons.favorite_rounded),
               onPressed: () => Get.toNamed(AppRoutes.favorites),
             );
           }),
-          TextButton(
-            onPressed: () => Get.offAllNamed(AppRoutes.recipeFinder),
-            child: const Text('Nova busca'),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: OutlinedButton(
+              onPressed: () => Get.offAllNamed(AppRoutes.recipeFinder),
+              child: const Text('Nova busca'),
+            ),
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.05),
-                surfaces?.lowest ?? background,
-              ),
-              background,
-            ],
-          ),
-        ),
+      body: AppPageBackground(
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final layout = AppPageLayout.resolve(
                 constraints,
                 maxWidth: 780,
-                topPadding: 36,
+                topPadding: 32,
               );
 
               return SingleChildScrollView(
                 padding: layout.padding,
+                physics: const BouncingScrollPhysics(),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: layout.maxContentWidth,
-                    ),
+                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _ResultsHeader(theme: theme, args: args),
+                        _ResultsSummaryCard(theme: theme, args: args),
+                        if (args.message != null) ...[
+                          const SizedBox(height: 20),
+                          _InfoBanner(message: args.message!),
+                        ],
                         const SizedBox(height: 28),
-                        if (args.message != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: _InfoBanner(message: args.message!),
-                          ),
                         if (args.recipes.isEmpty)
                           EmptyRecipesView(
                             message: args.message ??
-                                'Não encontramos receitas com esses ingredientes. Tente ajustar a combinação.',
+                                'Não encontramos receitas com esses ingredientes. Ajuste a combinação e tente novamente.',
                           )
                         else
                           StreamBuilder<UserMode?>(
@@ -162,8 +162,8 @@ class RecipeResultsPage extends StatelessWidget {
                                 stream: favoritesService.favoriteIdsStream,
                                 initialData: favoritesService.favoriteIds,
                                 builder: (context, snapshot) {
-                                  final favoriteIds = snapshot.data ??
-                                      favoritesService.favoriteIds;
+                                  final favoriteIds =
+                                      snapshot.data ?? favoritesService.favoriteIds;
 
                                   return Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -198,21 +198,18 @@ class RecipeResultsPage extends StatelessWidget {
                                                     : 'Salvar nos favoritos',
                                             icon: Icon(
                                               isFavorite
-                                                  ? Icons.favorite
-                                                  : Icons.favorite_border,
-                                              color: !isAuthenticated
-                                                  ? theme.disabledColor
-                                                  : isFavorite
-                                                      ? theme
-                                                          .colorScheme.primary
-                                                      : theme.colorScheme
-                                                          .onSurfaceVariant,
+                                                  ? Icons.favorite_rounded
+                                                  : Icons.favorite_outline,
+                                              color: isFavorite
+                                                  ? theme.colorScheme.primary
+                                                  : theme.colorScheme.onSurface
+                                                      .withOpacity(0.5),
                                             ),
-                                            onPressed: isAuthenticated
-                                                ? () =>
-                                                    toggleFavorite(recipe)
-                                                : null,
+                                            onPressed: () => toggleFavorite(recipe),
                                           ),
+                                          footer: isAuthenticated
+                                              ? null
+                                              : _GuestFooter(theme: theme),
                                         );
                                       },
                                     ),
@@ -234,8 +231,8 @@ class RecipeResultsPage extends StatelessWidget {
   }
 }
 
-class _ResultsHeader extends StatelessWidget {
-  const _ResultsHeader({required this.theme, required this.args});
+class _ResultsSummaryCard extends StatelessWidget {
+  const _ResultsSummaryCard({required this.theme, required this.args});
 
   final ThemeData theme;
   final RecipeResultsArgs args;
@@ -243,51 +240,87 @@ class _ResultsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
-    final chips = args.ingredients
-        .map(
-          (ingredient) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            margin: const EdgeInsets.only(right: 8, bottom: 8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-                    .withOpacity(0.35),
-              ),
-            ),
-            child: Text(
-              ingredient,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-          ),
-        )
-        .toList();
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 28, 26, 26),
+        padding: const EdgeInsets.fromLTRB(30, 32, 30, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Aqui está o que encontramos',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            Row(
+              children: [
+                Container(
+                  height: 52,
+                  width: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primaryContainer,
+                  ),
+                  child: Icon(
+                    Icons.brunch_dining,
+                    color: theme.colorScheme.onPrimaryContainer,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${args.recipes.length} sugestões preparadas',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Ingredientes utilizados nesta busca:',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.65),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Receitas pensadas a partir dos ingredientes selecionados:',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.68),
-                height: 1.45,
+            const SizedBox(height: 20),
+            if (args.ingredients.isEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                decoration: BoxDecoration(
+                  color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+                      .withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Text(
+                  'Nenhum ingrediente informado.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.64),
+                  ),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: args.ingredients
+                    .map(
+                      (ingredient) => Chip(
+                        avatar: Icon(
+                          Icons.shopping_bag_outlined,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        label: Text(ingredient),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
-            ),
-            const SizedBox(height: 18),
-            Wrap(children: chips),
           ],
         ),
       ),
@@ -305,32 +338,45 @@ class _InfoBanner extends StatelessWidget {
     final theme = Theme.of(context);
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-            .withOpacity(0.35),
+        color: (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-              .withOpacity(0.45),
-        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, color: theme.colorScheme.onPrimaryContainer),
+          Icon(Icons.info_outline, color: theme.colorScheme.primary),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.74),
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
                 height: 1.45,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GuestFooter extends StatelessWidget {
+  const _GuestFooter({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        'Crie uma conta para favoritar e acompanhar suas receitas preferidas.',
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurface.withOpacity(0.62),
+        ),
       ),
     );
   }

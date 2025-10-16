@@ -172,6 +172,7 @@ class RecipeSummaryCard extends StatelessWidget {
 
         return Card(
           margin: EdgeInsets.only(bottom: isCompact ? 20 : 28),
+          elevation: 0,
           child: InkWell(
             borderRadius: BorderRadius.circular(28),
             onTap: onTap,
@@ -179,11 +180,24 @@ class RecipeSummaryCard extends StatelessWidget {
               padding: padding,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                color: surfaces?.high ?? theme.colorScheme.surface,
-                border: Border.all(
-                  color:
-                      (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    theme.colorScheme.surface,
+                    (surfaces?.highest ?? theme.colorScheme.background),
+                  ],
                 ),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withOpacity(0.35),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.05),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
               ),
               child: child,
             ),
@@ -213,23 +227,24 @@ class _MetaPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.28),
+        color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
+            .withOpacity(0.4),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-              .withOpacity(0.35),
+          color: theme.colorScheme.outlineVariant.withOpacity(0.3),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: theme.colorScheme.onPrimaryContainer),
+          Icon(icon, size: 16, color: color),
           const SizedBox(width: 8),
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withOpacity(0.78),
               letterSpacing: 0.2,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

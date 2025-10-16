@@ -1,9 +1,8 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/ui/theme_extensions.dart';
+import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 
 import 'login_controller.dart';
@@ -14,40 +13,22 @@ class LoginPage extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final background = theme.colorScheme.background;
-    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.08),
-                surfaces?.lowest ?? background,
-              ),
-              background,
-              Color.alphaBlend(
-                theme.colorScheme.secondary.withOpacity(0.06),
-                surfaces?.low ?? background,
-              ),
-            ],
-          ),
-        ),
+      body: AppPageBackground(
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final layout = AppPageLayout.resolve(
                 constraints,
-                maxWidth: 640,
-                topPadding: 44,
-                bottomPadding: 44,
+                maxWidth: 680,
+                topPadding: 36,
+                bottomPadding: 48,
               );
 
               return SingleChildScrollView(
                 padding: layout.padding,
+                physics: const BouncingScrollPhysics(),
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
@@ -55,11 +36,11 @@ class LoginPage extends GetView<LoginController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _LoginHeader(theme: theme),
-                        const SizedBox(height: 36),
-                        _GuestCard(controller: controller),
-                        const SizedBox(height: 24),
-                        _GoogleSignInCard(controller: controller),
+                        const _BrandHeader(),
+                        const SizedBox(height: 32),
+                        _LoginOptions(controller: controller),
+                        const SizedBox(height: 32),
+                        _PrivacyNote(theme: theme),
                       ],
                     ),
                   ),
@@ -73,313 +54,365 @@ class LoginPage extends GetView<LoginController> {
   }
 }
 
-class _LoginHeader extends StatelessWidget {
-  const _LoginHeader({required this.theme});
-
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final isCompact = width < 520;
-
-        final avatar = Container(
-          height: 72,
-          width: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.primaryContainer.withOpacity(0.85),
-                theme.colorScheme.primary.withOpacity(0.35),
-              ],
-            ),
-          ),
-          child: Icon(
-            Icons.restaurant_menu,
-            color: theme.colorScheme.onPrimaryContainer,
-            size: 32,
-          ),
-        );
-
-        final text = Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Receitagora',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Encontre combinações deliciosas com os ingredientes que você já tem em casa.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                height: 1.45,
-              ),
-            ),
-          ],
-        );
-
-        if (isCompact) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              avatar,
-              const SizedBox(height: 20),
-              text,
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(child: text),
-            const SizedBox(width: 24),
-            avatar,
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _GuestCard extends StatelessWidget {
-  const _GuestCard({required this.controller});
-
-  final LoginController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 32, 26, 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Entrar como visitante',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Acesse rapidamente o Receitagora com até três buscas por dia e visualize duas sugestões por pesquisa.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Obx(
-              () => FilledButton(
-                onPressed:
-                    controller.isGuestLoading.value ? null : controller.continueAsGuest,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (controller.isGuestLoading.value) ...[
-                        SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ]
-                      else ...[
-                        const Icon(Icons.rocket_launch_rounded),
-                        const SizedBox(width: 12),
-                      ],
-                      const Text('Começar agora'),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GoogleSignInCard extends StatelessWidget {
-  const _GoogleSignInCard({required this.controller});
-
-  final LoginController controller;
+class _BrandHeader extends StatelessWidget {
+  const _BrandHeader();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 28, 26, 26),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Entrar com Google',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeOutCubic,
+      tween: Tween(begin: 0, end: 1),
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 24),
+            child: child,
+          ),
+        );
+      },
+      child: Card(
+        elevation: 0,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.primaryContainer,
+                (surfaces?.highest ?? Colors.white),
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Conecte-se com sua conta Google para liberar buscas ilimitadas e salvar combinações favoritas.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
-                height: 1.45,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Obx(
-              () {
-                final loading = controller.isGoogleLoading.value;
-                return FilledButton(
-                  onPressed: loading ? null : controller.signInWithGoogle,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 520;
+
+              final title = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Receita Agora',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (loading) ...[
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.onPrimary),
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        const Text('Entrando...'),
-                      ] else ...[
-                        Container(
-                          height: 26,
-                          width: 26,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: (surfaces?.surface ?? theme.colorScheme.onPrimary)
-                                .withOpacity(0.9),
-                          ),
-                          padding: const EdgeInsets.all(5),
-                          child: const _GoogleMark(size: 16),
-                        ),
-                        const SizedBox(width: 14),
-                        const Text('Entrar com Google'),
-                      ],
-                    ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'Transforme ingredientes em pratos memoráveis em poucos toques. '
+                    'Descubra combinações pensadas para o seu momento e organize suas favoritas.',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.75),
+                      height: 1.5,
+                    ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Botão temporário para desconectar o login social durante os testes:',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Obx(
-              () {
-                final loading = controller.isGoogleSignOutLoading.value;
-                return OutlinedButton.icon(
-                  onPressed: loading ? null : controller.signOutFromGoogle,
-                  icon: loading
-                      ? SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              theme.colorScheme.primary,
+                ],
+              );
+
+              final illustration = SizedBox(
+                height: isCompact ? 160 : 190,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned(
+                      top: isCompact ? 36 : 24,
+                      child: Container(
+                        height: isCompact ? 120 : 140,
+                        width: isCompact ? 120 : 140,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              theme.colorScheme.primary.withOpacity(0.9),
+                              theme.colorScheme.primary.withOpacity(0.4),
+                            ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(0.28),
+                              blurRadius: 32,
+                              offset: const Offset(0, 18),
                             ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.bakery_dining_rounded,
+                          color: theme.colorScheme.onPrimary,
+                          size: isCompact ? 52 : 60,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 10,
+                      right: 26,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface.withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withOpacity(0.12),
+                              blurRadius: 20,
+                              offset: const Offset(0, 12),
+                            ),
+                          ],
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 10,
                           ),
-                        )
-                      : const Icon(Icons.logout_rounded),
-                  label: Text(loading ? 'Saindo...' : 'Logout temporário'),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.auto_awesome_outlined,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Sugestões personalizadas',
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
+              if (isCompact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    title,
+                    const SizedBox(height: 28),
+                    illustration,
+                  ],
                 );
-              },
-            ),
-          ],
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: title),
+                  const SizedBox(width: 32),
+                  illustration,
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
   }
 }
 
-class _GoogleMark extends StatelessWidget {
-  const _GoogleMark({required this.size});
+class _LoginOptions extends StatelessWidget {
+  const _LoginOptions({required this.controller});
 
-  final double size;
+  final LoginController controller;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _GoogleMarkPainter(),
+    final theme = Theme.of(context);
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 650),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, (1 - value) * 16),
+            child: child,
+          ),
+        );
+      },
+      child: Column(
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(30, 32, 30, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.emoji_people_rounded,
+                        color: theme.colorScheme.tertiary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Explorar como visitante',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Experimente duas buscas por dia com sugestões curadas e veja como a experiência funciona antes de criar sua conta.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Obx(
+                    () => FilledButton(
+                      onPressed: controller.isGuestLoading.value
+                          ? null
+                          : controller.continueAsGuest,
+                      child: SizedBox(
+                        height: 52,
+                        child: Center(
+                          child: controller.isGuestLoading.value
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      theme.colorScheme.onPrimary,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  'Usar modo visitante',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(30, 32, 30, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.favorite_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Entre com sua conta',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Sincronize favoritos, histórico e preferências em todos os dispositivos. Você poderá ajustar seu perfil logo após o login.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Obx(
+                    () => FilledButton.icon(
+                      onPressed: controller.isGoogleLoading.value
+                          ? null
+                          : controller.signInWithGoogle,
+                      icon: controller.isGoogleLoading.value
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  theme.colorScheme.onPrimary,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              Icons.login_rounded,
+                              color: theme.colorScheme.onPrimary,
+                            ),
+                      label: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Text(
+                          controller.isGoogleLoading.value
+                              ? 'Conectando...'
+                              : 'Continuar com o Google',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Obx(
+                    () => AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: controller.googleErrorMessage.value == null
+                          ? const SizedBox.shrink()
+                          : Text(
+                              controller.googleErrorMessage.value!,
+                              key: ValueKey(controller.googleErrorMessage.value),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.error,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _GoogleMarkPainter extends CustomPainter {
+class _PrivacyNote extends StatelessWidget {
+  const _PrivacyNote({required this.theme});
+
+  final ThemeData theme;
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final strokeWidth = size.width * 0.22;
-    final rect = Offset.zero & size;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    // Blue arc and horizontal stroke
-    paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(rect.deflate(strokeWidth * 0.45), -40 * (math.pi / 180),
-        230 * (math.pi / 180), false, paint);
-    canvas.drawLine(Offset(size.width * 0.48, size.height * 0.52),
-        Offset(size.width * 0.88, size.height * 0.52), paint);
-
-    // Red segment
-    paint.color = const Color(0xFFEA4335);
-    canvas.drawLine(Offset(size.width * 0.82, size.height * 0.52),
-        Offset(size.width * 0.82, size.height * 0.78), paint);
-
-    // Yellow segment
-    paint.color = const Color(0xFFFABB05);
-    canvas.drawArc(rect.deflate(strokeWidth * 0.45), 200 * (math.pi / 180),
-        110 * (math.pi / 180), false, paint);
-
-    // Green segment
-    paint.color = const Color(0xFF34A853);
-    canvas.drawArc(rect.deflate(strokeWidth * 0.45), 110 * (math.pi / 180),
-        90 * (math.pi / 180), false, paint);
+  Widget build(BuildContext context) {
+    return Text(
+      'Ao continuar, você concorda em compartilhar seu nome e e-mail apenas para manter seu perfil e seus favoritos sincronizados. Podemos enviar atualizações sobre novidades e dicas sazonais.',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurface.withOpacity(0.6),
+        height: 1.5,
+      ),
+      textAlign: TextAlign.center,
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

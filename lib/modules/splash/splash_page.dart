@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:receitagora/application/ui/theme_extensions.dart';
+import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 
 import 'splash_controller.dart';
 
@@ -11,80 +11,81 @@ class SplashPage extends GetView<SplashController> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
-
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.08),
-                surfaces?.lowest ?? theme.colorScheme.background,
-              ),
-              theme.colorScheme.background,
-            ],
-          ),
-        ),
+      body: AppPageBackground(
+        showSecondaryHighlight: false,
         child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 92,
-                width: 92,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primaryContainer.withOpacity(0.85),
-                      theme.colorScheme.primary,
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeOutCubic,
+            tween: Tween(begin: 0, end: 1),
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.scale(
+                  scale: 0.95 + (value * 0.05),
+                  child: child,
+                ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 104,
+                  width: 104,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primaryContainer,
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withOpacity(0.22),
+                        blurRadius: 34,
+                        offset: const Offset(0, 20),
+                      ),
                     ],
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.2),
-                      blurRadius: 32,
-                      offset: const Offset(0, 20),
-                    ),
-                  ],
+                  child: Icon(
+                    Icons.restaurant_menu,
+                    color: theme.colorScheme.onPrimary,
+                    size: 46,
+                  ),
                 ),
-                child: Icon(
-                  Icons.restaurant_menu,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  size: 40,
+                const SizedBox(height: 26),
+                Text(
+                  'Receita Agora',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Receitagora',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
+                const SizedBox(height: 12),
+                Text(
+                  'Sabores afetivos, criatividade e praticidade em cada sugestão.',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onBackground.withOpacity(0.68),
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Sabores feitos para o seu momento.',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.68),
-                  height: 1.4,
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: 80,
+                  child: LinearProgressIndicator(
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 26),
-              SizedBox(
-                width: 60,
-                child: LinearProgressIndicator(
-                  backgroundColor: theme.colorScheme.onSurface.withOpacity(0.2),
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -72,8 +72,9 @@ Google já aparece na interface e será habilitado em uma versão futura.
 
 ### Resultado das receitas
 
-- Cada busca solicita ao ChatGPT que retorne, além do nome e descrição, o nível
-  de dificuldade (`fácil`, `médio` ou `difícil`) e o tempo aproximado de preparo.
+- Cada busca consulta o modelo de geração configurado para retornar, além do
+  nome e descrição, o nível de dificuldade (`fácil`, `médio` ou `difícil`) e o
+  tempo aproximado de preparo.
 - As informações são exibidas nos cartões resumidos e na página detalhada, para
   que você escolha rapidamente a receita que combina com o tempo e o esforço
   disponível no momento.

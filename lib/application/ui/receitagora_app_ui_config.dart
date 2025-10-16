@@ -3,45 +3,45 @@ import 'package:flutter/material.dart';
 import 'theme_extensions.dart';
 
 class ReceitagoraAppUiConfig {
-  static const _surfaceContainerLowest = Color(0xFF0F0D13);
-  static const _surfaceContainerLow = Color(0xFF1D1B20);
-  static const _surfaceContainer = Color(0xFF211F26);
-  static const _surfaceContainerHigh = Color(0xFF2B2930);
-  static const _surfaceContainerHighest = Color(0xFF36343B);
+  static const _surfaceContainerLowest = Color(0xFFFFF3E7);
+  static const _surfaceContainerLow = Color(0xFFFFE7D8);
+  static const _surfaceContainer = Color(0xFFFFFFFF);
+  static const _surfaceContainerHigh = Color(0xFFFFF6EE);
+  static const _surfaceContainerHighest = Color(0xFFFFFBF6);
 
   static ThemeData buildTheme(TextTheme baseTextTheme) {
     const colorScheme = ColorScheme(
-      brightness: Brightness.dark,
-      primary: Color(0xFFD0BCFF),
-      onPrimary: Color(0xFF381E72),
-      primaryContainer: Color(0xFF4F378B),
-      onPrimaryContainer: Color(0xFFEADDFF),
-      secondary: Color(0xFFCCC2DC),
-      onSecondary: Color(0xFF332D41),
-      secondaryContainer: Color(0xFF4A4458),
-      onSecondaryContainer: Color(0xFFE8DEF8),
-      tertiary: Color(0xFFEFB8C8),
-      onTertiary: Color(0xFF492532),
-      tertiaryContainer: Color(0xFF633B48),
-      onTertiaryContainer: Color(0xFFFFD8E4),
-      error: Color(0xFFF2B8B5),
-      onError: Color(0xFF601410),
-      errorContainer: Color(0xFF8C1D18),
-      onErrorContainer: Color(0xFFF9DEDC),
-      background: Color(0xFF141218),
-      onBackground: Color(0xFFE6E0E9),
-      surface: Color(0xFF141218),
-      onSurface: Color(0xFFE6E0E9),
-      surfaceVariant: Color(0xFF49454F),
-      onSurfaceVariant: Color(0xFFCAC4D0),
-      outline: Color(0xFF938F99),
-      outlineVariant: Color(0xFF49454F),
+      brightness: Brightness.light,
+      primary: Color(0xFFEC6B3E),
+      onPrimary: Color(0xFFFFFFFF),
+      primaryContainer: Color(0xFFFFD7C2),
+      onPrimaryContainer: Color(0xFF4B1C00),
+      secondary: Color(0xFF8E5A3C),
+      onSecondary: Color(0xFFFFFFFF),
+      secondaryContainer: Color(0xFFFFE5D5),
+      onSecondaryContainer: Color(0xFF3A1A05),
+      tertiary: Color(0xFF4F6F52),
+      onTertiary: Color(0xFFFFFFFF),
+      tertiaryContainer: Color(0xFFD3E7D5),
+      onTertiaryContainer: Color(0xFF102117),
+      error: Color(0xFFBA1A1A),
+      onError: Color(0xFFFFFFFF),
+      errorContainer: Color(0xFFFFDAD6),
+      onErrorContainer: Color(0xFF410002),
+      background: Color(0xFFFFFBF5),
+      onBackground: Color(0xFF241915),
+      surface: Color(0xFFFFFFFF),
+      onSurface: Color(0xFF241915),
+      surfaceVariant: Color(0xFFF0DED3),
+      onSurfaceVariant: Color(0xFF5B4C43),
+      outline: Color(0xFFBDA89A),
+      outlineVariant: Color(0xFFDCC6BA),
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
-      inverseSurface: Color(0xFFE6E0E9),
-      onInverseSurface: Color(0xFF322F35),
-      inversePrimary: Color(0xFFA896E6),
-      surfaceTint: Color(0xFFD0BCFF),
+      inverseSurface: Color(0xFF3F312C),
+      onInverseSurface: Color(0xFFFDEDE2),
+      inversePrimary: Color(0xFFFFB591),
+      surfaceTint: Color(0xFFEC6B3E),
     );
 
     const surfaces = ReceitagoraSurfaceColors(
@@ -55,7 +55,7 @@ class ReceitagoraAppUiConfig {
     final textTheme = baseTextTheme.apply(
       bodyColor: colorScheme.onSurface,
       displayColor: colorScheme.onSurface,
-      fontFamily: 'Roboto',
+      fontFamily: 'Poppins',
     );
 
     return ThemeData(
@@ -65,26 +65,27 @@ class ReceitagoraAppUiConfig {
       canvasColor: colorScheme.background,
       visualDensity: VisualDensity.standard,
       textTheme: textTheme,
-      fontFamily: 'Roboto',
+      fontFamily: 'Poppins',
       extensions: const <ThemeExtension<dynamic>>[surfaces],
       appBarTheme: AppBarTheme(
-        backgroundColor: surfaces.low,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         foregroundColor: colorScheme.onSurface,
         centerTitle: false,
         elevation: 0,
         titleTextStyle: textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
+          letterSpacing: -0.2,
         ),
       ),
       cardTheme: CardTheme(
         color: surfaces.high,
         surfaceTintColor: colorScheme.surfaceTint,
-        elevation: 1,
+        elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(28),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.35)),
+          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.4)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -114,13 +115,14 @@ class ReceitagoraAppUiConfig {
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
+            side: BorderSide(color: colorScheme.outline.withOpacity(0.4)),
           ),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          backgroundColor: surfaces.highest,
+          backgroundColor: surfaces.low,
           foregroundColor: colorScheme.onSurface,
           elevation: 0,
           shadowColor: Colors.transparent,
@@ -156,8 +158,8 @@ class ReceitagoraAppUiConfig {
       chipTheme: ChipThemeData(
         backgroundColor: surfaces.high,
         disabledColor: surfaces.surface.withOpacity(0.75),
-        selectedColor: colorScheme.primaryContainer.withOpacity(0.35),
-        secondarySelectedColor: colorScheme.primaryContainer.withOpacity(0.4),
+        selectedColor: colorScheme.primaryContainer.withOpacity(0.6),
+        secondarySelectedColor: colorScheme.primaryContainer.withOpacity(0.55),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         labelStyle: textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w500,
@@ -168,15 +170,17 @@ class ReceitagoraAppUiConfig {
         ),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: surfaces.high,
-        contentTextStyle: textTheme.bodyMedium,
+        backgroundColor: colorScheme.onSurface,
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: colorScheme.surface,
+        ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant.withOpacity(0.6),
+        color: colorScheme.outlineVariant.withOpacity(0.7),
         thickness: 1,
         space: 28,
       ),
@@ -186,7 +190,7 @@ class ReceitagoraAppUiConfig {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(28),
         ),
-        titleTextStyle: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+        titleTextStyle: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
         contentTextStyle: textTheme.bodyMedium,
       ),
       listTileTheme: ListTileThemeData(
@@ -196,8 +200,8 @@ class ReceitagoraAppUiConfig {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surfaces.low,
-        indicatorColor: colorScheme.primaryContainer.withOpacity(0.4),
+        backgroundColor: surfaces.high,
+        indicatorColor: colorScheme.primaryContainer.withOpacity(0.5),
         labelTextStyle: MaterialStateProperty.resolveWith(
           (states) => textTheme.labelMedium?.copyWith(
             color: states.contains(MaterialState.selected)
@@ -223,12 +227,12 @@ class ReceitagoraAppUiConfig {
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: surfaces.high,
+          color: colorScheme.onSurface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.45)),
         ),
         textStyle: textTheme.labelSmall?.copyWith(
-          color: colorScheme.onSurface,
+          color: colorScheme.surface,
         ),
       ),
     );
