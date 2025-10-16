@@ -245,15 +245,6 @@ class _WelcomeSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: const [
-                        _HeroMeta(icon: Icons.schedule_rounded, label: 'Até 45 min'),
-                        _HeroMeta(icon: Icons.group_rounded, label: 'Serve 2-4 pessoas'),
-                        _HeroMeta(icon: Icons.eco_rounded, label: 'Ingredientes frescos'),
-                      ],
-                    ),
                   ],
                 );
 
@@ -398,42 +389,38 @@ class _IngredientComposer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: surfaces?.surface ?? theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(
-                  color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-                      .withOpacity(0.4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller.ingredientTextController,
+                    focusNode: controller.ingredientFocusNode,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: controller.addIngredient,
+                    decoration: InputDecoration(
+                      hintText: 'Ex.: tomate, frango, manjericão...',
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 18,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: controller.ingredientTextController,
-                      focusNode: controller.ingredientFocusNode,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: controller.addIngredient,
-                      decoration: const InputDecoration(
-                        hintText: 'Ex.: tomate, frango, manjericão...',
-                        border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-                      ),
-                    ),
+                const SizedBox(width: 12),
+                FloatingActionButton.small(
+                  heroTag: null,
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  onPressed: () => controller.addIngredient(
+                    controller.ingredientTextController.text,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: IconButton.filledTonal(
-                      onPressed: () => controller.addIngredient(
-                        controller.ingredientTextController.text,
-                      ),
-                      icon: const Icon(Icons.add_rounded),
-                    ),
-                  ),
-                ],
-              ),
+                  child: const Icon(Icons.add_rounded),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             Obx(() {
@@ -573,91 +560,13 @@ class _HeroIllustration extends StatelessWidget {
       child: SizedBox(
         height: 150,
         width: 150,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(
-              Icons.restaurant_menu_rounded,
-              color: surfaces?.highest ?? theme.colorScheme.onPrimary,
-              size: 56,
-            ),
-            Positioned(
-              bottom: 18,
-              right: 24,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.colorScheme.primary.withOpacity(0.18),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.local_fire_department_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Pronto em instantes',
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _HeroMeta extends StatelessWidget {
-  const _HeroMeta({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.onPrimary.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: theme.colorScheme.onPrimaryContainer),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w600,
-            ),
+        child: Center(
+          child: Icon(
+            Icons.restaurant_menu_rounded,
+            color: surfaces?.highest ?? theme.colorScheme.onPrimary,
+            size: 56,
           ),
-        ],
+        ),
       ),
     );
   }

@@ -162,11 +162,11 @@ class _BrandHeader extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      bottom: 10,
+                      bottom: 12,
                       right: 26,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withOpacity(0.9),
+                          color: theme.colorScheme.surface.withOpacity(0.92),
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
@@ -178,24 +178,15 @@ class _BrandHeader extends StatelessWidget {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
+                            horizontal: 20,
+                            vertical: 12,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.auto_awesome_outlined,
-                                color: theme.colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Sugestões personalizadas',
-                                style: theme.textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Sugestões personalizadas',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),

@@ -121,6 +121,7 @@ class _ProfileContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const SizedBox(height: 16),
         if (isOnboarding) ...[
           _OnboardingNotice(theme: theme),
           const SizedBox(height: 24),
@@ -165,38 +166,39 @@ class _ProfileHeader extends StatelessWidget {
     );
 
     return Stack(
+      alignment: Alignment.topCenter,
       clipBehavior: Clip.none,
       children: [
         Container(
-          height: 180,
+          width: double.infinity,
           decoration: BoxDecoration(
             gradient: gradient,
             borderRadius: BorderRadius.circular(28),
           ),
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
-          child: Align(
-            alignment: Alignment.topLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isOnboarding ? 'Personalize sua experiência' : 'Seu perfil',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colorScheme.onPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 84),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                isOnboarding ? 'Personalize sua experiência' : 'Seu perfil',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onPrimary,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  isOnboarding
-                      ? 'Conte um pouco sobre você. Mesmo sem preencher tudo agora, você poderá ajustar depois.'
-                      : 'Revise seus dados, personalize seu nome e gerencie sua sessão.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onPrimary.withOpacity(0.85),
-                  ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                isOnboarding
+                    ? 'Conte um pouco sobre você. Mesmo sem preencher tudo agora, você poderá ajustar depois.'
+                    : 'Revise seus dados, personalize seu nome e gerencie sua sessão.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimary.withOpacity(0.85),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
         Positioned(
