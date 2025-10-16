@@ -17,6 +17,7 @@ class LoginController extends GetxController {
   final isGuestLoading = false.obs;
   final isGoogleLoading = false.obs;
   final isGoogleSignOutLoading = false.obs;
+  final googleErrorMessage = RxnString();
 
   Future<void> signInWithGoogle() async {
     if (isGoogleLoading.value) {
@@ -24,10 +25,12 @@ class LoginController extends GetxController {
     }
 
     isGoogleLoading.value = true;
+    googleErrorMessage.value = null;
 
     try {
       await sessionService.ensureInitialized();
       final user = await authService.signInWithGoogle();
+      googleErrorMessage.value = null;
       if (user.profileCompleted) {
         await Get.offAllNamed(AppRoutes.recipeFinder);
       } else {
@@ -41,6 +44,7 @@ class LoginController extends GetxController {
         final message = error.message.isEmpty
             ? 'Não foi possível completar o login com Google. Tente novamente.'
             : error.message;
+        googleErrorMessage.value = message;
         AppSnackbar.error(
           title: 'Não foi possível entrar',
           message: message,
@@ -51,6 +55,8 @@ class LoginController extends GetxController {
         title: 'Erro inesperado',
         message: 'Não conseguimos concluir o login com Google. Tente novamente em instantes.',
       );
+      googleErrorMessage.value =
+          'Não conseguimos concluir o login com Google. Tente novamente em instantes.';
     } finally {
       isGoogleLoading.value = false;
     }
