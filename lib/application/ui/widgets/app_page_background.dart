@@ -26,9 +26,9 @@ class AppPageBackground extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: RadialGradient(
           center: highlightAlignment,
-          radius: 1.1,
+          radius: 1.05,
           colors: [
-            theme.colorScheme.primaryContainer.withOpacity(0.55),
+            theme.colorScheme.primary.withOpacity(0.22),
             surfaces?.lowest ?? theme.colorScheme.background,
           ],
           stops: const [0.0, 1.0],
@@ -40,8 +40,9 @@ class AppPageBackground extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              surfaces?.highest ?? theme.colorScheme.background,
-              surfaces?.low ?? theme.colorScheme.surface,
+              (surfaces?.highest ?? theme.colorScheme.background)
+                  .withOpacity(0.96),
+              surfaces?.surface ?? theme.colorScheme.surface,
             ],
           ),
         ),
@@ -59,7 +60,7 @@ class AppPageBackground extends StatelessWidget {
                       center: const Alignment(0, 0),
                       radius: 0.9,
                       colors: [
-                        theme.colorScheme.secondaryContainer.withOpacity(0.35),
+                        theme.colorScheme.secondary.withOpacity(0.18),
                         Colors.transparent,
                       ],
                     ),

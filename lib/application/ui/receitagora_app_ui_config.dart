@@ -3,45 +3,45 @@ import 'package:flutter/material.dart';
 import 'theme_extensions.dart';
 
 class ReceitagoraAppUiConfig {
-  static const _surfaceContainerLowest = Color(0xFFFFF3E7);
-  static const _surfaceContainerLow = Color(0xFFFFE7D8);
-  static const _surfaceContainer = Color(0xFFFFFFFF);
-  static const _surfaceContainerHigh = Color(0xFFFFF6EE);
-  static const _surfaceContainerHighest = Color(0xFFFFFBF6);
+  static const _surfaceContainerLowest = Color(0xFFFFE2C6);
+  static const _surfaceContainerLow = Color(0xFFFFD7B5);
+  static const _surfaceContainer = Color(0xFFFFF8F2);
+  static const _surfaceContainerHigh = Color(0xFFFFF0E2);
+  static const _surfaceContainerHighest = Color(0xFFFFFAF5);
 
   static ThemeData buildTheme(TextTheme baseTextTheme) {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
-      primary: Color(0xFFEC6B3E),
+      primary: Color(0xFFF2682A),
       onPrimary: Color(0xFFFFFFFF),
-      primaryContainer: Color(0xFFFFD7C2),
-      onPrimaryContainer: Color(0xFF4B1C00),
-      secondary: Color(0xFF8E5A3C),
+      primaryContainer: Color(0xFFFFB388),
+      onPrimaryContainer: Color(0xFF401200),
+      secondary: Color(0xFF1E8A6F),
       onSecondary: Color(0xFFFFFFFF),
-      secondaryContainer: Color(0xFFFFE5D5),
-      onSecondaryContainer: Color(0xFF3A1A05),
-      tertiary: Color(0xFF4F6F52),
+      secondaryContainer: Color(0xFFA6F0D9),
+      onSecondaryContainer: Color(0xFF002118),
+      tertiary: Color(0xFFD54B62),
       onTertiary: Color(0xFFFFFFFF),
-      tertiaryContainer: Color(0xFFD3E7D5),
-      onTertiaryContainer: Color(0xFF102117),
+      tertiaryContainer: Color(0xFFFFB3C4),
+      onTertiaryContainer: Color(0xFF400012),
       error: Color(0xFFBA1A1A),
       onError: Color(0xFFFFFFFF),
       errorContainer: Color(0xFFFFDAD6),
       onErrorContainer: Color(0xFF410002),
-      background: Color(0xFFFFFBF5),
-      onBackground: Color(0xFF241915),
-      surface: Color(0xFFFFFFFF),
-      onSurface: Color(0xFF241915),
-      surfaceVariant: Color(0xFFF0DED3),
-      onSurfaceVariant: Color(0xFF5B4C43),
-      outline: Color(0xFFBDA89A),
-      outlineVariant: Color(0xFFDCC6BA),
+      background: Color(0xFFFFF5ED),
+      onBackground: Color(0xFF2E1D15),
+      surface: Color(0xFFFFF8F2),
+      onSurface: Color(0xFF2E1D15),
+      surfaceVariant: Color(0xFFF3D6C5),
+      onSurfaceVariant: Color(0xFF624437),
+      outline: Color(0xFFB58A74),
+      outlineVariant: Color(0xFFDABBA8),
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
-      inverseSurface: Color(0xFF3F312C),
-      onInverseSurface: Color(0xFFFDEDE2),
-      inversePrimary: Color(0xFFFFB591),
-      surfaceTint: Color(0xFFEC6B3E),
+      inverseSurface: Color(0xFF3B2820),
+      onInverseSurface: Color(0xFFFCE9DB),
+      inversePrimary: Color(0xFFFFB48F),
+      surfaceTint: Color(0xFFF2682A),
     );
 
     const surfaces = ReceitagoraSurfaceColors(
