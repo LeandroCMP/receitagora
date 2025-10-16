@@ -167,61 +167,131 @@ class _FavoritesHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
 
-    return Card(
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primaryContainer.withOpacity(0.85),
+            theme.colorScheme.secondaryContainer.withOpacity(0.55),
+          ],
+        ),
+        border: Border.all(
+          color:
+              (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(26, 28, 26, 24),
+        padding: const EdgeInsets.fromLTRB(28, 30, 28, 26),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Suas receitas favoritas',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              analytics.totalFavorites == 1
-                  ? 'Você tem 1 receita salva para revisitar quando quiser.'
-                  : 'Você tem ${analytics.totalFavorites} receitas salvas. Toque em uma delas para ver os detalhes.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                height: 1.5,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  height: 48,
+                  width: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primary.withOpacity(0.18),
+                  ),
+                  child: Icon(
+                    Icons.bookmarks_outlined,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Sua vitrine pessoal',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          letterSpacing: 0.2,
+                          color:
+                              theme.colorScheme.onPrimaryContainer.withOpacity(0.9),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        analytics.totalFavorites == 1
+                            ? '1 receita guardada para revisitar quando quiser.'
+                            : '${analytics.totalFavorites} receitas prontas para inspirar o próximo prato.',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
             if (activeTag != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Filtro aplicado: "$activeTag" (${analytics.countForTag(activeTag!)} receita${analytics.countForTag(activeTag!) == 1 ? '' : 's'}).',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Chip(
+                    avatar: const Icon(Icons.filter_alt_outlined, size: 18),
+                    label: Text(
+                      'Filtro ativo: $activeTag',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    backgroundColor:
+                        theme.colorScheme.surface.withOpacity(0.18),
+                  ),
+                  Chip(
+                    label: Text(
+                      '${analytics.countForTag(activeTag!)} receita${analytics.countForTag(activeTag!) == 1 ? '' : 's'} na categoria',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer.withOpacity(0.9),
+                      ),
+                    ),
+                    backgroundColor:
+                        theme.colorScheme.surface.withOpacity(0.14),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withOpacity(0.28),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-                      .withOpacity(0.35),
-                ),
+                color: theme.colorScheme.surface.withOpacity(0.72),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
                     Icons.info_outline,
-                    size: 16,
-                    color: theme.colorScheme.onPrimaryContainer,
+                    color: theme.colorScheme.onSurface,
+                    size: 20,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Remova com cuidado: a receita some da lista imediatamente.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.75),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Remova com cuidado: ao confirmar, a receita sai da lista instantaneamente.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.78),
+                        height: 1.45,
+                      ),
                     ),
                   ),
                 ],
@@ -587,18 +657,40 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
 
-    return Card(
-      elevation: 0,
-      color: surfaces?.high ?? theme.cardColor,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        color: (surfaces?.high ?? theme.colorScheme.surface).withOpacity(0.92),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.12),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withOpacity(0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
         child: Row(
           children: [
-            Icon(
-              data.icon,
-              color: theme.colorScheme.primary,
+            Container(
+              height: 44,
+              width: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: theme.colorScheme.primary.withOpacity(0.12),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                data.icon,
+                color: theme.colorScheme.primary,
+                size: 22,
+              ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 18),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -606,10 +698,11 @@ class _MetricTile extends StatelessWidget {
                   Text(
                     data.label,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withOpacity(0.72),
+                      letterSpacing: 0.1,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     data.value,
                     style: theme.textTheme.titleMedium?.copyWith(
