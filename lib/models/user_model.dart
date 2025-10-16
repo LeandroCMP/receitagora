@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 @immutable
 class UserModel {
-  const UserModel({
+  UserModel({
     required this.id,
     required this.name,
     required this.email,
