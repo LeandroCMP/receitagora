@@ -26,22 +26,28 @@ class LoginPage extends GetView<LoginController> {
                 bottomPadding: 48,
               );
 
-              return SingleChildScrollView(
-                padding: layout.padding,
-                physics: const BouncingScrollPhysics(),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const _BrandHeader(),
-                        const SizedBox(height: 32),
-                        _LoginOptions(controller: controller),
-                        const SizedBox(height: 32),
-                        _PrivacyNote(theme: theme),
-                      ],
+              final mediaQuery = MediaQuery.of(context);
+
+              return MediaQuery(
+                data: mediaQuery.copyWith(textScaler: layout.textScaler),
+                child: SingleChildScrollView(
+                  padding: layout.padding,
+                  physics: const BouncingScrollPhysics(),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxWidth: layout.maxContentWidth),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _BrandHeader(),
+                          const SizedBox(height: 32),
+                          _LoginOptions(controller: controller),
+                          const SizedBox(height: 32),
+                          _PrivacyNote(theme: theme),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -77,6 +83,7 @@ class _BrandHeader extends StatelessWidget {
       },
       child: Card(
         elevation: 0,
+        clipBehavior: Clip.antiAlias,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(32),
@@ -85,7 +92,7 @@ class _BrandHeader extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 theme.colorScheme.primaryContainer,
-                (surfaces?.highest ?? Colors.white),
+                (surfaces?.surface ?? theme.colorScheme.surface),
               ],
             ),
           ),
@@ -93,6 +100,8 @@ class _BrandHeader extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxWidth < 520;
+              final double titleSize = isCompact ? 28 : 32;
+              final double bodySize = isCompact ? 15 : 16;
 
               final title = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,8 +109,9 @@ class _BrandHeader extends StatelessWidget {
                   Text(
                     'Receita Agora',
                     style: theme.textTheme.headlineSmall?.copyWith(
+                      fontSize: titleSize,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
+                      letterSpacing: -0.6,
                       color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
@@ -109,9 +119,10 @@ class _BrandHeader extends StatelessWidget {
                   Text(
                     'Transforme ingredientes em pratos memoráveis em poucos toques. '
                     'Descubra combinações pensadas para o seu momento e organize suas favoritas.',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.75),
-                      height: 1.5,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontSize: bodySize,
+                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.78),
+                      height: 1.55,
                     ),
                   ),
                 ],
@@ -131,14 +142,14 @@ class _BrandHeader extends StatelessWidget {
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              theme.colorScheme.primary.withOpacity(0.9),
-                              theme.colorScheme.primary.withOpacity(0.4),
+                              theme.colorScheme.primary,
+                              theme.colorScheme.primary.withOpacity(0.45),
                             ],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: theme.colorScheme.primary.withOpacity(0.28),
-                              blurRadius: 32,
+                              color: theme.colorScheme.primary.withOpacity(0.24),
+                              blurRadius: 28,
                               offset: const Offset(0, 18),
                             ),
                           ],

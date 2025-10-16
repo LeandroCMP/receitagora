@@ -70,7 +70,7 @@ class RecipeSummaryCard extends StatelessWidget {
             _MetaPill(
               icon: Icons.schedule_rounded,
               label: recipe.duration,
-              color: theme.colorScheme.secondary,
+              color: theme.colorScheme.tertiary,
             ),
             _MetaPill(
               icon: Icons.restaurant_menu,

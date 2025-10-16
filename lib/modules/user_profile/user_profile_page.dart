@@ -63,16 +63,23 @@ class UserProfilePage extends GetView<UserProfileController> {
                     bottomPadding: 32,
                   );
 
-                  return SingleChildScrollView(
-                    padding: layout.padding,
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-                        child: _ProfileContent(
-                          theme: theme,
-                          controller: controller,
-                          isOnboarding: onboarding,
+                  final mediaQuery = MediaQuery.of(context);
+
+                  return MediaQuery(
+                    data: mediaQuery.copyWith(textScaler: layout.textScaler),
+                    child: SingleChildScrollView(
+                      padding: layout.padding,
+                      physics: const BouncingScrollPhysics(),
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(maxWidth: layout.maxContentWidth),
+                          child: _ProfileContent(
+                            theme: theme,
+                            controller: controller,
+                            isOnboarding: onboarding,
+                          ),
                         ),
                       ),
                     ),
@@ -202,25 +209,31 @@ class _ProfileHeader extends StatelessWidget {
             color: theme.cardColor,
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Avatar(theme: theme, user: user),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
+              child: LayoutBuilder(
+                builder: (context, cardConstraints) {
+                  final isCompact = cardConstraints.maxWidth < 420;
+                  final double nameSize = isCompact ? 20 : 24;
+                  final double emailSize = isCompact ? 13.5 : 14.5;
+                  final double bioSize = isCompact ? 13.5 : 14.5;
+                  final double chipSpacing = isCompact ? 6 : 8;
+
+                  Widget details() {
+                    return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           user.name.isEmpty ? user.email : user.name,
                           style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
+                            fontSize: nameSize,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.1,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           user.email,
                           style: theme.textTheme.bodyMedium?.copyWith(
+                            fontSize: emailSize,
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
                           ),
                         ),
@@ -229,15 +242,16 @@ class _ProfileHeader extends StatelessWidget {
                           Text(
                             user.bio!,
                             style: theme.textTheme.bodyMedium?.copyWith(
+                              fontSize: bioSize,
                               color: theme.colorScheme.onSurface.withOpacity(0.72),
-                              height: 1.45,
+                              height: 1.5,
                             ),
                           ),
                         ],
                         const SizedBox(height: 12),
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                          spacing: chipSpacing,
+                          runSpacing: chipSpacing,
                           children: [
                             _InfoChip(icon: Icons.verified_user_outlined, label: 'Login social ativo'),
                             if (user.avatarUrl != null && user.avatarUrl!.isNotEmpty)
@@ -269,9 +283,29 @@ class _ProfileHeader extends StatelessWidget {
                           ],
                         ),
                       ],
-                    ),
-                  ),
-                ],
+                    );
+                  }
+
+                  if (isCompact) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(child: _Avatar(theme: theme, user: user)),
+                        const SizedBox(height: 20),
+                        details(),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Avatar(theme: theme, user: user),
+                      const SizedBox(width: 20),
+                      Expanded(child: details()),
+                    ],
+                  );
+                },
               ),
             ),
           ),

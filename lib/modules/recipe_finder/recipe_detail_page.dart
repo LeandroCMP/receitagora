@@ -284,30 +284,36 @@ class RecipeDetailPage extends StatelessWidget {
                 topPadding: 36,
               );
 
-              return Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: layout.padding,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-                    child: CustomScrollView(
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: _OverviewSection(args: args),
-                        ),
-                        if (args.recipe.ingredients.isNotEmpty) ...[
-                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              final mediaQuery = MediaQuery.of(context);
+
+              return MediaQuery(
+                data: mediaQuery.copyWith(textScaler: layout.textScaler),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Padding(
+                    padding: layout.padding,
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxWidth: layout.maxContentWidth),
+                      child: CustomScrollView(
+                        slivers: [
                           SliverToBoxAdapter(
-                            child: _IngredientsSection(recipe: args.recipe),
+                            child: _OverviewSection(args: args),
                           ),
+                          if (args.recipe.ingredients.isNotEmpty) ...[
+                            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                            SliverToBoxAdapter(
+                              child: _IngredientsSection(recipe: args.recipe),
+                            ),
+                          ],
+                          if (args.recipe.steps.isNotEmpty) ...[
+                            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                            SliverToBoxAdapter(
+                              child: _StepsSection(recipe: args.recipe),
+                            ),
+                          ],
                         ],
-                        if (args.recipe.steps.isNotEmpty) ...[
-                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                          SliverToBoxAdapter(
-                            child: _StepsSection(recipe: args.recipe),
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -349,6 +355,8 @@ class _OverviewSection extends StatelessWidget {
               size: isCompact ? 140 : 170,
             );
 
+            final double titleSize = isCompact ? 26 : 30;
+
             final content = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -375,6 +383,7 @@ class _OverviewSection extends StatelessWidget {
                 Text(
                   recipe.name,
                   style: theme.textTheme.headlineSmall?.copyWith(
+                    fontSize: titleSize,
                     fontWeight: FontWeight.w700,
                     height: 1.2,
                   ),

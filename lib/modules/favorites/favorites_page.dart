@@ -58,84 +58,92 @@ class FavoritesPage extends GetView<FavoritesController> {
                 bottomPadding: 24,
               );
 
-              return Obx(() {
-                if (!sessionService.isAuthenticated) {
-                  return _GuestNotice(theme: theme, controller: controller);
-                }
+              final mediaQuery = MediaQuery.of(context);
 
-                return StreamBuilder<List<FavoritedRecipeEntity>>(
-                  stream: favoritesService.favoritesStream,
-                  initialData: favoritesService.favorites,
-                  builder: (context, snapshot) {
-                    final favorites = snapshot.data ?? const <FavoritedRecipeEntity>[];
-                    if (favorites.isEmpty) {
-                      return _EmptyFavorites(theme: theme, layout: layout);
-                    }
+              return MediaQuery(
+                data: mediaQuery.copyWith(textScaler: layout.textScaler),
+                child: Obx(() {
+                  if (!sessionService.isAuthenticated) {
+                    return _GuestNotice(theme: theme, controller: controller);
+                  }
 
-                    final analytics = _FavoriteAnalytics.fromFavorites(favorites);
+                  return StreamBuilder<List<FavoritedRecipeEntity>>(
+                    stream: favoritesService.favoritesStream,
+                    initialData: favoritesService.favorites,
+                    builder: (context, snapshot) {
+                      final favorites =
+                          snapshot.data ?? const <FavoritedRecipeEntity>[];
+                      if (favorites.isEmpty) {
+                        return _EmptyFavorites(theme: theme, layout: layout);
+                      }
 
-                    return Obx(() {
-                      final filteredFavorites =
-                          controller.applyTagFilter(favorites);
-                      final selectedTag = controller.selectedTag.value;
+                      final analytics = _FavoriteAnalytics.fromFavorites(favorites);
 
-                      return SingleChildScrollView(
-                        padding: layout.padding,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: ConstrainedBox(
-                            constraints:
-                                BoxConstraints(maxWidth: layout.maxContentWidth),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _FavoritesHeader(
-                                  theme: theme,
-                                  analytics: analytics,
-                                  activeTag: selectedTag,
-                                ),
-                                const SizedBox(height: 16),
-                                _FavoritesMetricsGrid(
-                                  theme: theme,
-                                  analytics: analytics,
-                                ),
-                                if (analytics.tagStats.isNotEmpty) ...[
+                      return Obx(() {
+                        final filteredFavorites =
+                            controller.applyTagFilter(favorites);
+                        final selectedTag = controller.selectedTag.value;
+
+                        return SingleChildScrollView(
+                          padding: layout.padding,
+                          physics: const BouncingScrollPhysics(),
+                          child: Align(
+                            alignment: Alignment.topCenter,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: layout.maxContentWidth,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _FavoritesHeader(
+                                    theme: theme,
+                                    analytics: analytics,
+                                    activeTag: selectedTag,
+                                  ),
                                   const SizedBox(height: 16),
-                                  _TagFilterSection(
+                                  _FavoritesMetricsGrid(
                                     theme: theme,
-                                    controller: controller,
-                                    stats: analytics.tagStats,
-                                    selectedTag: selectedTag,
+                                    analytics: analytics,
                                   ),
+                                  if (analytics.tagStats.isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    _TagFilterSection(
+                                      theme: theme,
+                                      controller: controller,
+                                      stats: analytics.tagStats,
+                                      selectedTag: selectedTag,
+                                    ),
+                                  ],
+                                  const SizedBox(height: 24),
+                                  if (filteredFavorites.isEmpty)
+                                    _EmptyFilteredFavorites(
+                                      theme: theme,
+                                      selectedTag: selectedTag,
+                                      onClearFilter: controller.clearTagFilter,
+                                    )
+                                  else
+                                    ...List.generate(
+                                      filteredFavorites.length,
+                                      (index) {
+                                        final favorite = filteredFavorites[index];
+                                        return _FavoriteRecipeCard(
+                                          controller: controller,
+                                          favorite: favorite,
+                                          index: index,
+                                        );
+                                      },
+                                    ),
                                 ],
-                                const SizedBox(height: 24),
-                                if (filteredFavorites.isEmpty)
-                                  _EmptyFilteredFavorites(
-                                    theme: theme,
-                                    selectedTag: selectedTag,
-                                    onClearFilter: controller.clearTagFilter,
-                                  )
-                                else
-                                  ...List.generate(
-                                    filteredFavorites.length,
-                                    (index) {
-                                      final favorite = filteredFavorites[index];
-                                      return _FavoriteRecipeCard(
-                                        controller: controller,
-                                        favorite: favorite,
-                                        index: index,
-                                      );
-                                    },
-                                  ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    });
-                  },
-                );
-              });
+                        );
+                      });
+                    },
+                  );
+                }),
+              );
             },
           ),
         ),

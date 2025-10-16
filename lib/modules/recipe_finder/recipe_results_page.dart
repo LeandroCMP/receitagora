@@ -129,96 +129,103 @@ class RecipeResultsPage extends StatelessWidget {
                 topPadding: 32,
               );
 
-              return SingleChildScrollView(
-                padding: layout.padding,
-                physics: const BouncingScrollPhysics(),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _ResultsSummaryCard(theme: theme, args: args),
-                        if (args.message != null) ...[
-                          const SizedBox(height: 20),
-                          _InfoBanner(message: args.message!),
-                        ],
-                        const SizedBox(height: 28),
-                        if (args.recipes.isEmpty)
-                          EmptyRecipesView(
-                            message: args.message ??
-                                'Não encontramos receitas com esses ingredientes. Ajuste a combinação e tente novamente.',
-                          )
-                        else
-                          StreamBuilder<UserMode?>(
-                            stream: sessionService.modeStream,
-                            initialData: sessionService.mode,
-                            builder: (context, modeSnapshot) {
-                              final isAuthenticated =
-                                  modeSnapshot.data == UserMode.authenticated;
+              final mediaQuery = MediaQuery.of(context);
 
-                              return StreamBuilder<Set<String>>(
-                                stream: favoritesService.favoriteIdsStream,
-                                initialData: favoritesService.favoriteIds,
-                                builder: (context, snapshot) {
-                                  final favoriteIds =
-                                      snapshot.data ?? favoritesService.favoriteIds;
+              return MediaQuery(
+                data: mediaQuery.copyWith(textScaler: layout.textScaler),
+                child: SingleChildScrollView(
+                  padding: layout.padding,
+                  physics: const BouncingScrollPhysics(),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxWidth: layout.maxContentWidth),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _ResultsSummaryCard(theme: theme, args: args),
+                          if (args.message != null) ...[
+                            const SizedBox(height: 20),
+                            _InfoBanner(message: args.message!),
+                          ],
+                          const SizedBox(height: 28),
+                          if (args.recipes.isEmpty)
+                            EmptyRecipesView(
+                              message: args.message ??
+                                  'Não encontramos receitas com esses ingredientes. Ajuste a combinação e tente novamente.',
+                            )
+                          else
+                            StreamBuilder<UserMode?>(
+                              stream: sessionService.modeStream,
+                              initialData: sessionService.mode,
+                              builder: (context, modeSnapshot) {
+                                final isAuthenticated =
+                                    modeSnapshot.data == UserMode.authenticated;
 
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: List.generate(
-                                      args.recipes.length,
-                                      (index) {
-                                        final recipe = args.recipes[index];
-                                        final heroTag =
-                                            'recipe-${recipe.name.hashCode}-$index';
-                                        final isFavorite = favoriteIds.contains(
-                                          favoritesService.favoriteIdFor(recipe),
-                                        );
+                                return StreamBuilder<Set<String>>(
+                                  stream: favoritesService.favoriteIdsStream,
+                                  initialData: favoritesService.favoriteIds,
+                                  builder: (context, snapshot) {
+                                    final favoriteIds = snapshot.data ??
+                                        favoritesService.favoriteIds;
 
-                                        return RecipeSummaryCard(
-                                          recipe: recipe,
-                                          position: index,
-                                          heroTag: heroTag,
-                                          onTap: () {
-                                            Get.to(
-                                              () => RecipeDetailPage(
-                                                recipe: recipe,
-                                                heroTag: heroTag,
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: List.generate(
+                                        args.recipes.length,
+                                        (index) {
+                                          final recipe = args.recipes[index];
+                                          final heroTag =
+                                              'recipe-${recipe.name.hashCode}-$index';
+                                          final isFavorite = favoriteIds.contains(
+                                            favoritesService.favoriteIdFor(recipe),
+                                          );
+
+                                          return RecipeSummaryCard(
+                                            recipe: recipe,
+                                            position: index,
+                                            heroTag: heroTag,
+                                            onTap: () {
+                                              Get.to(
+                                                () => RecipeDetailPage(
+                                                  recipe: recipe,
+                                                  heroTag: heroTag,
+                                                ),
+                                                transition: Transition.cupertino,
+                                              );
+                                            },
+                                            action: IconButton(
+                                              tooltip: !isAuthenticated
+                                                  ? 'Disponível após login'
+                                                  : isFavorite
+                                                      ? 'Remover dos favoritos'
+                                                      : 'Salvar nos favoritos',
+                                              icon: Icon(
+                                                isFavorite
+                                                    ? Icons.favorite_rounded
+                                                    : Icons.favorite_outline,
+                                                color: isAuthenticated && isFavorite
+                                                    ? theme.colorScheme.primary
+                                                    : theme.colorScheme.onSurface
+                                                        .withOpacity(
+                                                            isAuthenticated ? 0.6 : 0.35),
                                               ),
-                                              transition: Transition.cupertino,
-                                            );
-                                          },
-                                          action: IconButton(
-                                            tooltip: !isAuthenticated
-                                                ? 'Disponível após login'
-                                                : isFavorite
-                                                    ? 'Remover dos favoritos'
-                                                    : 'Salvar nos favoritos',
-                                            icon: Icon(
-                                              isFavorite
-                                                  ? Icons.favorite_rounded
-                                                  : Icons.favorite_outline,
-                                              color: isFavorite
-                                                  ? theme.colorScheme.primary
-                                                  : theme.colorScheme.onSurface
-                                                      .withOpacity(0.5),
+                                              onPressed: () => toggleFavorite(recipe),
                                             ),
-                                            onPressed: () => toggleFavorite(recipe),
-                                          ),
-                                          footer: isAuthenticated
-                                              ? null
-                                              : _GuestFooter(theme: theme),
-                                        );
-                                      },
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                      ],
+                                            footer: isAuthenticated
+                                                ? null
+                                                : _GuestFooter(theme: theme),
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

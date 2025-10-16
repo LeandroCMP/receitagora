@@ -107,26 +107,32 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
                 topPadding: 32,
               );
 
-              return SingleChildScrollView(
-                padding: layout.padding,
-                physics: const BouncingScrollPhysics(),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _WelcomeSection(controller: controller),
-                        const SizedBox(height: 28),
-                        _DailyLimitNotice(controller: controller),
-                        const SizedBox(height: 28),
-                        _IngredientComposer(controller: controller),
-                        const SizedBox(height: 32),
-                        _GenerateButton(controller: controller),
-                        const SizedBox(height: 20),
-                        _HelperFooter(theme: theme),
-                      ],
+              final mediaQuery = MediaQuery.of(context);
+
+              return MediaQuery(
+                data: mediaQuery.copyWith(textScaler: layout.textScaler),
+                child: SingleChildScrollView(
+                  padding: layout.padding,
+                  physics: const BouncingScrollPhysics(),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxWidth: layout.maxContentWidth),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _WelcomeSection(controller: controller),
+                          const SizedBox(height: 28),
+                          _DailyLimitNotice(controller: controller),
+                          const SizedBox(height: 28),
+                          _IngredientComposer(controller: controller),
+                          const SizedBox(height: 32),
+                          _GenerateButton(controller: controller),
+                          const SizedBox(height: 20),
+                          _HelperFooter(theme: theme),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -223,6 +229,7 @@ class _WelcomeSection extends StatelessWidget {
                     Text(
                       'Olá, $greeting!',
                       style: theme.textTheme.headlineSmall?.copyWith(
+                        fontSize: isCompact ? 26 : 30,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.4,
                         color: theme.colorScheme.onPrimaryContainer,
@@ -232,6 +239,7 @@ class _WelcomeSection extends StatelessWidget {
                     Text(
                       'Conte o que está à sua disposição e receba receitas equilibradas em sabor, tempo e rendimento.',
                       style: theme.textTheme.bodyMedium?.copyWith(
+                        fontSize: isCompact ? 14 : 15,
                         color: theme.colorScheme.onPrimaryContainer.withOpacity(0.75),
                         height: 1.5,
                       ),

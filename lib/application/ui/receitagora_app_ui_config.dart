@@ -3,45 +3,45 @@ import 'package:flutter/material.dart';
 import 'theme_extensions.dart';
 
 class ReceitagoraAppUiConfig {
-  static const _surfaceContainerLowest = Color(0xFFFFE2C6);
-  static const _surfaceContainerLow = Color(0xFFFFD7B5);
-  static const _surfaceContainer = Color(0xFFFFF8F2);
-  static const _surfaceContainerHigh = Color(0xFFFFF0E2);
-  static const _surfaceContainerHighest = Color(0xFFFFFAF5);
+  static const _surfaceContainerLowest = Color(0xFFFFE9D6);
+  static const _surfaceContainerLow = Color(0xFFFFDFC6);
+  static const _surfaceContainer = Color(0xFFFFF6ED);
+  static const _surfaceContainerHigh = Color(0xFFFFEBD9);
+  static const _surfaceContainerHighest = Color(0xFFFFFBF8);
 
   static ThemeData buildTheme(TextTheme baseTextTheme) {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
-      primary: Color(0xFFF2682A),
+      primary: Color(0xFFEE6722),
       onPrimary: Color(0xFFFFFFFF),
-      primaryContainer: Color(0xFFFFB388),
-      onPrimaryContainer: Color(0xFF401200),
-      secondary: Color(0xFF1E8A6F),
+      primaryContainer: Color(0xFFFFD5C2),
+      onPrimaryContainer: Color(0xFF3A1300),
+      secondary: Color(0xFFB94F2C),
       onSecondary: Color(0xFFFFFFFF),
-      secondaryContainer: Color(0xFFA6F0D9),
-      onSecondaryContainer: Color(0xFF002118),
-      tertiary: Color(0xFFD54B62),
+      secondaryContainer: Color(0xFFFFDAD1),
+      onSecondaryContainer: Color(0xFF3A0B04),
+      tertiary: Color(0xFF6A994E),
       onTertiary: Color(0xFFFFFFFF),
-      tertiaryContainer: Color(0xFFFFB3C4),
-      onTertiaryContainer: Color(0xFF400012),
+      tertiaryContainer: Color(0xFFD5F2BB),
+      onTertiaryContainer: Color(0xFF102006),
       error: Color(0xFFBA1A1A),
       onError: Color(0xFFFFFFFF),
       errorContainer: Color(0xFFFFDAD6),
       onErrorContainer: Color(0xFF410002),
-      background: Color(0xFFFFF5ED),
-      onBackground: Color(0xFF2E1D15),
-      surface: Color(0xFFFFF8F2),
-      onSurface: Color(0xFF2E1D15),
-      surfaceVariant: Color(0xFFF3D6C5),
-      onSurfaceVariant: Color(0xFF624437),
-      outline: Color(0xFFB58A74),
-      outlineVariant: Color(0xFFDABBA8),
+      background: Color(0xFFFFF4EB),
+      onBackground: Color(0xFF301F17),
+      surface: Color(0xFFFFF6ED),
+      onSurface: Color(0xFF301F17),
+      surfaceVariant: Color(0xFFF0D4C4),
+      onSurfaceVariant: Color(0xFF5F4438),
+      outline: Color(0xFFAF8B78),
+      outlineVariant: Color(0xFFD8BCAB),
       shadow: Color(0xFF000000),
       scrim: Color(0xFF000000),
-      inverseSurface: Color(0xFF3B2820),
-      onInverseSurface: Color(0xFFFCE9DB),
-      inversePrimary: Color(0xFFFFB48F),
-      surfaceTint: Color(0xFFF2682A),
+      inverseSurface: Color(0xFF3F2B22),
+      onInverseSurface: Color(0xFFFBE8DC),
+      inversePrimary: Color(0xFFFFB68E),
+      surfaceTint: Color(0xFFEE6722),
     );
 
     const surfaces = ReceitagoraSurfaceColors(
@@ -52,10 +52,47 @@ class ReceitagoraAppUiConfig {
       highest: _surfaceContainerHighest,
     );
 
-    final textTheme = baseTextTheme.apply(
+    final base = baseTextTheme.apply(
       bodyColor: colorScheme.onSurface,
       displayColor: colorScheme.onSurface,
       fontFamily: 'Poppins',
+    );
+
+    final textTheme = base.copyWith(
+      displaySmall: base.displaySmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        height: 1.12,
+        letterSpacing: -0.5,
+      ),
+      headlineSmall: base.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w700,
+        height: 1.18,
+        letterSpacing: -0.3,
+      ),
+      titleLarge: base.titleLarge?.copyWith(
+        fontWeight: FontWeight.w700,
+        height: 1.22,
+      ),
+      titleMedium: base.titleMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.15,
+      ),
+      bodyLarge: base.bodyLarge?.copyWith(
+        height: 1.52,
+        letterSpacing: 0.1,
+      ),
+      bodyMedium: base.bodyMedium?.copyWith(
+        height: 1.5,
+        letterSpacing: 0.1,
+      ),
+      labelLarge: base.labelLarge?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.2,
+      ),
+      labelMedium: base.labelMedium?.copyWith(
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.3,
+      ),
     );
 
     return ThemeData(
