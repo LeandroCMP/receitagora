@@ -87,6 +87,8 @@ Google já aparece na interface e será habilitado em uma versão futura.
 - `lib/modules/recipe_finder`: módulo principal com camadas de domínio,
   dados e apresentação seguindo Clean Architecture.
 - `lib/app`: inicialização do GetX, rotas e tema visual.
+- `docs/ads_setup.md`: guia passo a passo para habilitar propagandas com
+  AdMob mantendo a arquitetura do projeto alinhada com o padrão atual.
 
 ## Suporte
 
