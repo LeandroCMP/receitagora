@@ -143,7 +143,7 @@ class ReceitagoraAppUiConfig {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size(0, 52),
           foregroundColor: colorScheme.onSurface,
           side: BorderSide(color: colorScheme.outline.withOpacity(0.5)),
           textStyle: textTheme.titleMedium?.copyWith(
