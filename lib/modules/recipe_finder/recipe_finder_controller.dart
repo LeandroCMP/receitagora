@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
+import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/core/errors/app_exception.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
@@ -68,11 +69,9 @@ class RecipeFinderController extends GetxController {
       const message = 'Adicione ao menos um ingrediente.';
       errorMessage.value = message;
       recipes.clear();
-      Get.snackbar(
-        'Nada para buscar',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+      AppSnackbar.warning(
+        title: 'Nada para buscar',
+        message: message,
       );
       return;
     }
@@ -82,11 +81,10 @@ class RecipeFinderController extends GetxController {
           'Você atingiu o limite diário de buscas no modo visitante. O login social estará disponível em breve para liberar buscas ilimitadas.';
       errorMessage.value = message;
       recipes.clear();
-      Get.snackbar(
-        'Limite diário atingido',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+      AppSnackbar.info(
+        title: 'Limite diário atingido',
+        message: message,
+        duration: const Duration(seconds: 5),
       );
       return;
     }
@@ -109,6 +107,10 @@ class RecipeFinderController extends GetxController {
       if (adjustedResults.isEmpty) {
         helperMessage = 'Não encontramos receitas com esses ingredientes.';
         errorMessage.value = helperMessage;
+        AppSnackbar.info(
+          title: 'Nenhuma combinação encontrada',
+          message: helperMessage,
+        );
       }
 
       Get.toNamed(
@@ -128,11 +130,9 @@ class RecipeFinderController extends GetxController {
             'Não foi possível gerar receitas agora. Tente novamente.';
       }
       errorMessage.value = message;
-      Get.snackbar(
-        'Não foi possível gerar receitas',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+      AppSnackbar.error(
+        title: 'Não foi possível gerar receitas',
+        message: message,
       );
     } finally {
       isLoading.value = false;

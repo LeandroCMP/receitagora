@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
+import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/auth/auth_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
@@ -55,19 +56,23 @@ class UserProfileController extends GetxController {
 
     try {
       await authService.updateDisplayName(newName);
-      Get.snackbar(
-        'Perfil atualizado',
-        'Seu nome foi atualizado com sucesso.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+      AppSnackbar.success(
+        title: 'Perfil atualizado',
+        message: 'Seu nome foi atualizado com sucesso.',
       );
     } on AuthFailure catch (error) {
       final message = error.message.isEmpty
           ? 'Não foi possível atualizar seu nome agora. Tente novamente.'
           : error.message;
-      _showError(message);
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: message,
+      );
     } catch (_) {
-      _showError('Ocorreu um erro inesperado ao atualizar seu nome. Tente novamente.');
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: 'Ocorreu um erro inesperado ao atualizar seu nome. Tente novamente.',
+      );
     } finally {
       isSaving.value = false;
     }
@@ -87,24 +92,17 @@ class UserProfileController extends GetxController {
       final message = error.message.isEmpty
           ? 'Não foi possível encerrar a sessão agora. Tente novamente.'
           : error.message;
-      _showError(message);
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: message,
+      );
     } catch (_) {
-      _showError('Não conseguimos encerrar sua sessão. Tente novamente em instantes.');
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: 'Não conseguimos encerrar sua sessão. Tente novamente em instantes.',
+      );
     } finally {
       isSigningOut.value = false;
     }
-  }
-
-  void _showError(String message) {
-    Get.snackbar(
-      'Algo deu errado',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Get.theme.colorScheme.errorContainer.withOpacity(0.95),
-      colorText: Get.theme.colorScheme.onErrorContainer,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 16,
-      duration: const Duration(seconds: 4),
-    );
   }
 }

@@ -137,6 +137,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userNameKey);
     await _preferences.remove(_userEmailKey);
     await _preferences.remove(_userAvatarKey);
+    await _preferences.remove(_guestCountKey);
+    await _preferences.remove(_guestDateKey);
+    _guestSearchCount.value = 0;
   }
 
   @override
@@ -151,12 +154,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
       return;
     }
 
-    final updated = UserModel(
-      id: current.id,
-      name: sanitized,
-      email: current.email,
-      avatarUrl: current.avatarUrl,
-    );
+    final updated = current.copyWith(name: sanitized);
 
     _user.value = updated;
     await _preferences.setString(_userNameKey, sanitized);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
+import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/recipe_detail_page.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
@@ -53,49 +54,37 @@ class FavoritesController extends GetxController {
     );
 
     if (confirmed != true) {
-      Get.snackbar(
-        'Remoção cancelada',
-        'A receita continuará disponível nos seus favoritos.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        duration: const Duration(seconds: 3),
+      AppSnackbar.info(
+        title: 'Remoção cancelada',
+        message: 'A receita continuará disponível nos seus favoritos.',
       );
       return;
     }
 
     try {
       await favoritesService.removeFavoriteById(favorite.id);
-      Get.snackbar(
-        'Favorito removido',
-        'Esta receita saiu da sua lista. Você pode adicioná-la novamente quando desejar.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+      AppSnackbar.info(
+        title: 'Favorito removido',
+        message: 'Esta receita saiu da sua lista. Você pode adicioná-la novamente quando desejar.',
       );
     } on FavoritesFailure catch (error) {
-      _showError(error.message);
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: error.message,
+      );
     } catch (_) {
-      _showError('Não foi possível atualizar seus favoritos agora. Tente novamente.');
+      AppSnackbar.error(
+        title: 'Algo deu errado',
+        message: 'Não foi possível atualizar seus favoritos agora. Tente novamente.',
+      );
     }
   }
 
   void openFavoritesOnLoginRequirement() {
     Get.offAllNamed(AppRoutes.login);
-    Get.snackbar(
-      'Faça login',
-      'Entre com sua conta para acessar suas receitas favoritas.',
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-    );
-  }
-
-  void _showError(String message) {
-    Get.snackbar(
-      'Algo deu errado',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      backgroundColor: Get.theme.colorScheme.errorContainer.withOpacity(0.95),
-      colorText: Get.theme.colorScheme.onErrorContainer,
+    AppSnackbar.info(
+      title: 'Faça login',
+      message: 'Entre com sua conta para acessar suas receitas favoritas.',
     );
   }
 }

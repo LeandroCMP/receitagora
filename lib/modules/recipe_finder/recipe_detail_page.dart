@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
+import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
@@ -71,24 +72,11 @@ class RecipeDetailPage extends StatelessWidget {
     final favoritesService = Get.find<RecipeFavoritesService>();
     final shareService = Get.find<RecipeShareService>();
 
-    void showFavoriteError(String message) {
-      Get.snackbar(
-        'Algo deu errado',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
-        colorText: theme.colorScheme.onErrorContainer,
-      );
-    }
-
     Future<void> toggleFavorite() async {
       if (!sessionService.isAuthenticated) {
-        Get.snackbar(
-          'Faça login',
-          'Entre com sua conta para salvar receitas favoritas.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
+        AppSnackbar.info(
+          title: 'Faça login',
+          message: 'Entre com sua conta para salvar receitas favoritas.',
         );
         return;
       }
@@ -98,18 +86,22 @@ class RecipeDetailPage extends StatelessWidget {
 
       try {
         await favoritesService.toggleFavorite(recipe);
-        Get.snackbar(
-          alreadyFavorite ? 'Favorito removido' : 'Adicionado aos favoritos',
-          alreadyFavorite
+        AppSnackbar.info(
+          title: alreadyFavorite ? 'Favorito removido' : 'Adicionado aos favoritos',
+          message: alreadyFavorite
               ? 'Esta receita foi removida da sua lista.'
               : 'Ela agora aparece na tela de favoritos.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
         );
       } on FavoritesFailure catch (error) {
-        showFavoriteError(error.message);
+        AppSnackbar.error(
+          title: 'Algo deu errado',
+          message: error.message,
+        );
       } catch (_) {
-        showFavoriteError('Não foi possível atualizar seus favoritos agora.');
+        AppSnackbar.error(
+          title: 'Algo deu errado',
+          message: 'Não foi possível atualizar seus favoritos agora.',
+        );
       }
     }
 
@@ -130,35 +122,28 @@ class RecipeDetailPage extends StatelessWidget {
         }
       }
 
-      void showShareError(String message) {
-        Get.snackbar(
-          'Não foi possível compartilhar',
-          message,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
-          colorText: theme.colorScheme.onErrorContainer,
-        );
-      }
-
       try {
         await shareService.shareRecipe(args.recipe);
       } on ShareFailure catch (error) {
         closeOverlay();
-        showShareError(error.message);
+        AppSnackbar.error(
+          title: 'Não foi possível compartilhar',
+          message: error.message,
+        );
         return;
       } catch (_) {
         closeOverlay();
-        showShareError('Tente novamente em instantes.');
+        AppSnackbar.error(
+          title: 'Não foi possível compartilhar',
+          message: 'Tente novamente em instantes.',
+        );
         return;
       }
 
       closeOverlay();
-      Get.snackbar(
-        'Pronto para compartilhar',
-        'Escolha o aplicativo desejado para enviar esta receita deliciosa.',
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
+      AppSnackbar.success(
+        title: 'Pronto para compartilhar',
+        message: 'Escolha o aplicativo desejado para enviar esta receita deliciosa.',
       );
     }
 

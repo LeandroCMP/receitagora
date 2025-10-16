@@ -22,16 +22,11 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
   Future<void> shareRecipe(RecipeEntity recipe) async {
     try {
       final bytes = await _composeImage(recipe);
-      var sanitizedName = recipe.name
+      final sanitizedName = recipe.name
           .toLowerCase()
           .replaceAll(RegExp('[^a-z0-9]+'), '-')
-          .replaceAll(RegExp('-{2,}'), '-');
-      while (sanitizedName.startsWith('-')) {
-        sanitizedName = sanitizedName.substring(1);
-      }
-      while (sanitizedName.endsWith('-')) {
-        sanitizedName = sanitizedName.substring(0, sanitizedName.length - 1);
-      }
+          .replaceAll(RegExp('-{2,}'), '-')
+          .replaceAll(RegExp('^-+|-+\$'), '');
       final fileName =
           'receitagora-${sanitizedName.isEmpty ? 'receita' : sanitizedName}.png';
       final file = XFile.fromData(

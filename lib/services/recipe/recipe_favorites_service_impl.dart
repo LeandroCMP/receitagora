@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -37,10 +38,11 @@ class RecipeFavoritesServiceImpl extends GetxService
       _favorites.stream;
 
   @override
-  Set<String> get favoriteIds => _favoriteIds;
+  Set<String> get favoriteIds => UnmodifiableSetView(_favoriteIds);
 
   @override
-  List<FavoritedRecipeEntity> get favorites => _favorites;
+  List<FavoritedRecipeEntity> get favorites =>
+      UnmodifiableListView(_favorites);
 
   @override
   void onInit() {
@@ -160,6 +162,10 @@ class RecipeFavoritesServiceImpl extends GetxService
         _favoriteIds
           ..clear()
           ..addAll(mapped.map((item) => item.id));
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        Get.log('Erro ao escutar favoritos do usuário: $error',
+            isError: true, stackTrace: stackTrace);
       },
     );
   }

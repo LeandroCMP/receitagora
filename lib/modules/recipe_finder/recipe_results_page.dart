@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
+import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
@@ -50,24 +51,11 @@ class RecipeResultsPage extends StatelessWidget {
     final sessionService = Get.find<SessionService>();
     final favoritesService = Get.find<RecipeFavoritesService>();
 
-    void showFavoriteError(String message) {
-      Get.snackbar(
-        'Algo deu errado',
-        message,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        backgroundColor: theme.colorScheme.errorContainer.withOpacity(0.95),
-        colorText: theme.colorScheme.onErrorContainer,
-      );
-    }
-
     Future<void> toggleFavorite(RecipeEntity recipe) async {
       if (!sessionService.isAuthenticated) {
-        Get.snackbar(
-          'Faça login',
-          'Entre com sua conta para salvar e organizar suas receitas favoritas.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
+        AppSnackbar.info(
+          title: 'Faça login',
+          message: 'Entre com sua conta para salvar e organizar suas receitas favoritas.',
         );
         return;
       }
@@ -76,19 +64,21 @@ class RecipeResultsPage extends StatelessWidget {
 
       try {
         await favoritesService.toggleFavorite(recipe);
-        Get.snackbar(
-          alreadyFavorite ? 'Favorito removido' : 'Adicionado aos favoritos',
-          alreadyFavorite
+        AppSnackbar.info(
+          title: alreadyFavorite ? 'Favorito removido' : 'Adicionado aos favoritos',
+          message: alreadyFavorite
               ? 'Esta receita foi removida da sua lista de favoritos.'
               : 'Você encontra esta receita na tela de favoritos.',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
         );
       } on FavoritesFailure catch (error) {
-        showFavoriteError(error.message);
+        AppSnackbar.error(
+          title: 'Algo deu errado',
+          message: error.message,
+        );
       } catch (_) {
-        showFavoriteError(
-          'Não foi possível atualizar seus favoritos agora. Tente novamente.',
+        AppSnackbar.error(
+          title: 'Algo deu errado',
+          message: 'Não foi possível atualizar seus favoritos agora. Tente novamente.',
         );
       }
     }
