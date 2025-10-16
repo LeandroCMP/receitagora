@@ -200,32 +200,27 @@ class _WelcomeSection extends StatelessWidget {
                 final textColumn = Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.brunch_dining_rounded,
-                            color: theme.colorScheme.onSecondaryContainer,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          color: theme.colorScheme.secondaryContainer.withOpacity(0.78),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          child: Text(
                             'Seleção sob medida',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSecondaryContainer,
+                            style: theme.textTheme.labelLarge?.copyWith(
                               fontWeight: FontWeight.w700,
+                              color: theme.colorScheme.onSecondaryContainer,
+                              letterSpacing: -0.2,
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 20),
                     Text(
                       'Olá, $greeting!',
                       style: theme.textTheme.headlineSmall?.copyWith(
@@ -237,14 +232,32 @@ class _WelcomeSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Conte o que está à sua disposição e receba receitas equilibradas em sabor, tempo e rendimento.',
+                      'Conte o que está à sua disposição e receba combinações pensadas para o seu momento — rápidas de preparar, equilibradas e fáceis de salvar.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontSize: isCompact ? 14 : 15,
-                        color: theme.colorScheme.onPrimaryContainer.withOpacity(0.75),
-                        height: 1.5,
+                        color: theme.colorScheme.onPrimaryContainer.withOpacity(0.78),
+                        height: 1.55,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 22),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: const [
+                        _HeroFeature(
+                          icon: Icons.auto_awesome_rounded,
+                          label: 'Sugestões inteligentes',
+                        ),
+                        _HeroFeature(
+                          icon: Icons.favorite_border_rounded,
+                          label: 'Favoritos sincronizados',
+                        ),
+                        _HeroFeature(
+                          icon: Icons.ios_share_rounded,
+                          label: 'Compartilhe com estilo',
+                        ),
+                      ],
+                    ),
                   ],
                 );
 
@@ -543,9 +556,9 @@ class _HelperFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      'Os resultados são apresentados em cartões ricos com preparo completo, sugestões de porção e possibilidade de salvar ou compartilhar quando estiver autenticado.',
+      'Pronto para explorar? Gere receitas, organize favoritos e compartilhe artes exclusivas quando estiver autenticado.',
       style: theme.textTheme.bodySmall?.copyWith(
-        color: theme.colorScheme.onSurface.withOpacity(0.62),
+        color: theme.colorScheme.onSurface.withOpacity(0.66),
         height: 1.5,
       ),
     );
@@ -560,35 +573,124 @@ class _HeroIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            theme.colorScheme.primary.withOpacity(0.85),
-            theme.colorScheme.primary.withOpacity(0.55),
-          ],
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.18),
-            blurRadius: 38,
-            spreadRadius: 6,
-            offset: const Offset(0, 18),
+    return SizedBox(
+      height: 180,
+      width: 180,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    theme.colorScheme.primary.withOpacity(0.82),
+                    theme.colorScheme.primary.withOpacity(0.45),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.15),
+                    blurRadius: 34,
+                    offset: const Offset(0, 18),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 32,
+            left: 26,
+            child: Transform.rotate(
+              angle: -0.4,
+              child: Container(
+                height: 58,
+                width: 58,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  color: theme.colorScheme.onPrimary.withOpacity(0.12),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 26,
+            right: 24,
+            child: Transform.rotate(
+              angle: 0.32,
+              child: Container(
+                height: 44,
+                width: 44,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  color: theme.colorScheme.onPrimary.withOpacity(0.1),
+                ),
+              ),
+            ),
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color:
+                  (surfaces?.highest ?? theme.colorScheme.onPrimary).withOpacity(0.88),
+            ),
+            child: SizedBox(
+              height: 80,
+              width: 80,
+              child: Center(
+                child: Icon(
+                  Icons.restaurant_menu_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 40,
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      child: SizedBox(
-        height: 150,
-        width: 150,
-        child: Center(
-          child: Icon(
-            Icons.restaurant_menu_rounded,
-            color: surfaces?.highest ?? theme.colorScheme.onPrimary,
-            size: 56,
-          ),
+    );
+  }
+}
+
+class _HeroFeature extends StatelessWidget {
+  const _HeroFeature({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: (surfaces?.highest ?? theme.colorScheme.surface).withOpacity(0.76),
+        border: Border.all(
+          color: theme.colorScheme.primary.withOpacity(0.18),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface.withOpacity(0.86),
+              ),
+            ),
+          ],
         ),
       ),
     );
