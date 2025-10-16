@@ -19,7 +19,7 @@ const _textColor = Color(0xFF37474F);
 
 class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
   @override
-  Future<void> shareRecipe(RecipeEntity recipe) async {
+  Future<ShareOutcome> shareRecipe(RecipeEntity recipe) async {
     try {
       final bytes = await _composeImage(recipe);
       final sanitizedName = recipe.name
@@ -35,11 +35,21 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
         name: fileName,
       );
 
-      await Share.shareXFiles(
+      final result = await Share.shareXFiles(
         [file],
         text:
             'Descobri "${recipe.name}" no ReceitaAgora. Experimente você também! 🍽️',
       );
+      switch (result.status) {
+        case ShareResultStatus.success:
+          return ShareOutcome.shared;
+        case ShareResultStatus.dismissed:
+          return ShareOutcome.dismissed;
+        case ShareResultStatus.unavailable:
+          throw ShareFailure(
+            'O compartilhamento não está disponível neste dispositivo no momento.',
+          );
+      }
     } catch (error) {
       if (error is ShareFailure) {
         rethrow;

@@ -6,6 +6,11 @@ class ShareFailure implements Exception {
   final String message;
 }
 
+enum ShareOutcome {
+  shared,
+  dismissed,
+}
+
 abstract class RecipeShareService {
-  Future<void> shareRecipe(RecipeEntity recipe);
+  Future<ShareOutcome> shareRecipe(RecipeEntity recipe);
 }

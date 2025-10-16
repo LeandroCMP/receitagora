@@ -122,8 +122,9 @@ class RecipeDetailPage extends StatelessWidget {
         }
       }
 
+      ShareOutcome outcome;
       try {
-        await shareService.shareRecipe(args.recipe);
+        outcome = await shareService.shareRecipe(args.recipe);
       } on ShareFailure catch (error) {
         closeOverlay();
         AppSnackbar.error(
@@ -141,10 +142,21 @@ class RecipeDetailPage extends StatelessWidget {
       }
 
       closeOverlay();
-      AppSnackbar.success(
-        title: 'Pronto para compartilhar',
-        message: 'Escolha o aplicativo desejado para enviar esta receita deliciosa.',
-      );
+      switch (outcome) {
+        case ShareOutcome.shared:
+          AppSnackbar.success(
+            title: 'Pronto para compartilhar',
+            message:
+                'Escolha o aplicativo desejado para enviar esta receita deliciosa.',
+          );
+          break;
+        case ShareOutcome.dismissed:
+          AppSnackbar.info(
+            title: 'Compartilhamento cancelado',
+            message: 'Nenhum aplicativo foi selecionado neste momento.',
+          );
+          break;
+      }
     }
 
     return Scaffold(
