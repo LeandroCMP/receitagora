@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
+import 'package:receitagora/services/session/session_service.dart';
 
 import 'recipe_share_service.dart';
 
@@ -18,8 +19,27 @@ const _titleColor = Color(0xFF1B5E20);
 const _textColor = Color(0xFF37474F);
 
 class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
+  RecipeShareServiceImpl({required SessionService sessionService})
+      : _sessionService = sessionService;
+
+  final SessionService _sessionService;
+
   @override
   Future<ShareOutcome> shareRecipe(RecipeEntity recipe) async {
+    await _sessionService.ensureInitialized();
+
+    if (!_sessionService.isAuthenticated) {
+      throw ShareFailure(
+        'Entre com sua conta para compartilhar receitas com seus amigos.',
+      );
+    }
+
+    if (!_sessionService.canShareRecipe()) {
+      throw ShareFailure(
+        'Limite diário de ${SessionService.shareDailyLimit} compartilhamentos atingido. Volte amanhã ou assine um plano para continuar compartilhando sem limites.',
+      );
+    }
+
     try {
       final bytes = await _composeImage(recipe);
       final sanitizedName = recipe.name
@@ -42,6 +62,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
       );
       switch (result.status) {
         case ShareResultStatus.success:
+          await _sessionService.registerShare();
           return ShareOutcome.shared;
         case ShareResultStatus.dismissed:
           return ShareOutcome.dismissed;

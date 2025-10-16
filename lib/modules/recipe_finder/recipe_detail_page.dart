@@ -170,13 +170,34 @@ class RecipeDetailPage extends StatelessWidget {
               final isAuthenticated =
                   snapshot.data == UserMode.authenticated;
 
-              final shareButton = IconButton(
-                tooltip: isAuthenticated
-                    ? 'Compartilhar receita'
-                    : 'Disponível após login',
-                icon: const Icon(Icons.ios_share_rounded),
-                onPressed: isAuthenticated ? shareRecipe : null,
-              );
+              late final Widget shareButton;
+              if (!isAuthenticated) {
+                shareButton = IconButton(
+                  tooltip: 'Disponível após login',
+                  icon: const Icon(Icons.ios_share_rounded),
+                  onPressed: null,
+                );
+              } else {
+                shareButton = StreamBuilder<int>(
+                  stream: sessionService.shareCountStream,
+                  initialData: sessionService.shareCount,
+                  builder: (context, shareSnapshot) {
+                    final shareCount =
+                        shareSnapshot.data ?? sessionService.shareCount;
+                    final remaining =
+                        SessionService.shareDailyLimit - shareCount;
+                    final canShare = remaining > 0;
+
+                    return IconButton(
+                      tooltip: canShare
+                          ? 'Compartilhar receita'
+                          : 'Limite diário de compartilhamentos atingido',
+                      icon: const Icon(Icons.ios_share_rounded),
+                      onPressed: canShare ? shareRecipe : null,
+                    );
+                  },
+                );
+              }
 
               Widget favoriteButton;
               if (!isAuthenticated) {
@@ -198,11 +219,16 @@ class RecipeDetailPage extends StatelessWidget {
                     final isFavorite = favoriteIds.contains(
                       favoritesService.favoriteIdFor(args.recipe),
                     );
+                    final hasCapacity = isFavorite ||
+                        favoriteIds.length <
+                            RecipeFavoritesService.maxFavorites;
 
                     return IconButton(
                       tooltip: isFavorite
                           ? 'Remover dos favoritos'
-                          : 'Salvar nos favoritos',
+                          : hasCapacity
+                              ? 'Salvar nos favoritos'
+                              : 'Limite de favoritos atingido',
                       icon: Icon(
                         isFavorite
                             ? Icons.favorite
@@ -210,7 +236,15 @@ class RecipeDetailPage extends StatelessWidget {
                         color:
                             isFavorite ? theme.colorScheme.primary : null,
                       ),
-                      onPressed: toggleFavorite,
+                      onPressed: hasCapacity
+                          ? toggleFavorite
+                          : () {
+                              AppSnackbar.info(
+                                title: 'Limite de favoritos',
+                                message:
+                                    'Salve até ${RecipeFavoritesService.maxFavorites} receitas. Em breve teremos planos para expandir este limite.',
+                              );
+                            },
                     );
                   },
                 );

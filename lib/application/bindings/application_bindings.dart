@@ -49,7 +49,9 @@ class ApplicationBindings extends Bindings {
       fenix: true,
     );
     Get.lazyPut<RecipeShareService>(
-      () => RecipeShareServiceImpl(),
+      () => RecipeShareServiceImpl(
+        sessionService: Get.find<SessionService>(),
+      ),
       fenix: true,
     );
   }

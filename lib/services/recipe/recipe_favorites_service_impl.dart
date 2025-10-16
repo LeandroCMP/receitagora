@@ -72,6 +72,12 @@ class RecipeFavoritesServiceImpl extends GetxService
   Future<void> addFavorite(RecipeEntity recipe) async {
     final user = _requireAuthenticatedUser();
 
+    if (_favoriteIds.length >= RecipeFavoritesService.maxFavorites) {
+      throw FavoritesFailure(
+        'Você atingiu o limite de ${RecipeFavoritesService.maxFavorites} receitas favoritas. Remova uma delas para adicionar novas.',
+      );
+    }
+
     final document =
         _userFavoritesCollection(user.uid).doc(favoriteIdFor(recipe));
 
@@ -154,7 +160,8 @@ class RecipeFavoritesServiceImpl extends GetxService
     }
 
     final collection = _userFavoritesCollection(user.uid)
-        .orderBy('favoritedAt', descending: true);
+        .orderBy('favoritedAt', descending: true)
+        .limit(RecipeFavoritesService.maxFavorites);
     _favoritesSubscription = collection.snapshots().listen(
       (snapshot) {
         final mapped = snapshot.docs.map(_mapDocument).toList();

@@ -8,6 +8,8 @@ class FavoritesFailure implements Exception {
 }
 
 abstract class RecipeFavoritesService {
+  static const int maxFavorites = 10;
+
   Stream<Set<String>> get favoriteIdsStream;
   Stream<List<FavoritedRecipeEntity>> get favoritesStream;
   Set<String> get favoriteIds;

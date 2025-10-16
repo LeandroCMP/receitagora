@@ -21,12 +21,15 @@ class SessionServiceImpl extends GetxService implements SessionService {
   static const _userAvatarKey = 'session.user.avatar';
   static const _guestCountKey = 'session.guest.count';
   static const _guestDateKey = 'session.guest.date';
+  static const _shareCountKey = 'session.share.count';
+  static const _shareDateKey = 'session.share.date';
 
   final Completer<void> _readyCompleter;
   bool _isInitializing = false;
   final Rxn<UserMode> _mode = Rxn<UserMode>();
   final Rxn<UserModel> _user = Rxn<UserModel>();
   final RxInt _guestSearchCount = 0.obs;
+  final RxInt _shareCount = 0.obs;
 
   @override
   Future<void> get ready => _readyCompleter.future;
@@ -56,6 +59,15 @@ class SessionServiceImpl extends GetxService implements SessionService {
   }
 
   @override
+  int get shareCount => _shareCount.value;
+
+  @override
+  int get sharesRemaining {
+    final remaining = SessionService.shareDailyLimit - _shareCount.value;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  @override
   Stream<UserMode?> get modeStream => _mode.stream;
 
   @override
@@ -63,6 +75,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   Stream<int> get guestSearchCountStream => _guestSearchCount.stream;
+
+  @override
+  Stream<int> get shareCountStream => _shareCount.stream;
 
   @override
   Future<SessionService> init() async {
@@ -87,6 +102,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
       await _hydrateFromPreferences();
       await _clearLegacyFavoriteEntries();
       _ensureGuestQuotaFreshness();
+      _ensureShareQuotaFreshness();
 
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
@@ -106,6 +122,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userEmailKey);
     await _preferences.remove(_userAvatarKey);
     _ensureGuestQuotaFreshness();
+    _ensureShareQuotaFreshness();
   }
 
   @override
@@ -126,6 +143,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     _guestSearchCount.value = 0;
     await _preferences.remove(_guestCountKey);
     await _preferences.remove(_guestDateKey);
+    _ensureShareQuotaFreshness();
   }
 
   @override
@@ -139,7 +157,10 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userAvatarKey);
     await _preferences.remove(_guestCountKey);
     await _preferences.remove(_guestDateKey);
+    await _preferences.remove(_shareCountKey);
+    await _preferences.remove(_shareDateKey);
     _guestSearchCount.value = 0;
+    _shareCount.value = 0;
   }
 
   @override
@@ -186,6 +207,25 @@ class SessionServiceImpl extends GetxService implements SessionService {
     );
   }
 
+  @override
+  bool canShareRecipe() {
+    _ensureShareQuotaFreshness();
+    return _shareCount.value < SessionService.shareDailyLimit;
+  }
+
+  @override
+  Future<void> registerShare() async {
+    await ensureInitialized();
+    _ensureShareQuotaFreshness();
+    final updated = _shareCount.value + 1;
+    _shareCount.value = updated;
+    await _preferences.setInt(_shareCountKey, updated);
+    await _preferences.setString(
+      _shareDateKey,
+      DateTime.now().toIso8601String(),
+    );
+  }
+
   Future<void> _hydrateFromPreferences() async {
     _mode.value = _parseMode(_preferences.getString(_modeKey));
 
@@ -205,6 +245,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     }
 
     _guestSearchCount.value = _preferences.getInt(_guestCountKey) ?? 0;
+    _shareCount.value = _preferences.getInt(_shareCountKey) ?? 0;
   }
 
   void _ensureGuestQuotaFreshness() {
@@ -219,14 +260,34 @@ class SessionServiceImpl extends GetxService implements SessionService {
     }
 
     final storedDate = DateTime.tryParse(storedDateString);
-    if (storedDate == null ||
-        storedDate.year != now.year ||
-        storedDate.month != now.month ||
-        storedDate.day != now.day) {
+    if (storedDate == null || !_isSameDay(storedDate, now)) {
       _guestSearchCount.value = 0;
       _preferences.setString(_guestDateKey, now.toIso8601String());
       _preferences.setInt(_guestCountKey, 0);
     }
+  }
+
+  void _ensureShareQuotaFreshness() {
+    final storedDateString = _preferences.getString(_shareDateKey);
+    final now = DateTime.now();
+
+    if (storedDateString == null) {
+      _shareCount.value = 0;
+      _preferences.setString(_shareDateKey, now.toIso8601String());
+      _preferences.setInt(_shareCountKey, 0);
+      return;
+    }
+
+    final storedDate = DateTime.tryParse(storedDateString);
+    if (storedDate == null || !_isSameDay(storedDate, now)) {
+      _shareCount.value = 0;
+      _preferences.setString(_shareDateKey, now.toIso8601String());
+      _preferences.setInt(_shareCountKey, 0);
+    }
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   Future<void> _clearLegacyFavoriteEntries() async {
