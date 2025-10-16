@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:meta/meta.dart';
+import 'package:flutter/foundation.dart';
 
 @immutable
 class UserModel {
@@ -10,16 +10,18 @@ class UserModel {
     required this.email,
     String? avatarUrl,
     String? bio,
-    List<String> dietaryPreferences = const <String>[],
-    List<String> favoriteCuisines = const <String>[],
-    List<String> cookingGoals = const <String>[],
-    List<String> allergies = const <String>[],
+    List<String>? dietaryPreferences,
+    List<String>? favoriteCuisines,
+    List<String>? cookingGoals,
+    List<String>? allergies,
   })  : avatarUrl = avatarUrl,
         bio = _normalizeOptionalString(bio),
-        dietaryPreferences = _normalizeList(dietaryPreferences),
-        favoriteCuisines = _normalizeList(favoriteCuisines),
-        cookingGoals = _normalizeList(cookingGoals),
-        allergies = _normalizeList(allergies);
+        dietaryPreferences =
+            _normalizeList(dietaryPreferences ?? const <String>[]),
+        favoriteCuisines =
+            _normalizeList(favoriteCuisines ?? const <String>[]),
+        cookingGoals = _normalizeList(cookingGoals ?? const <String>[]),
+        allergies = _normalizeList(allergies ?? const <String>[]);
 
   final String id;
   final String name;
