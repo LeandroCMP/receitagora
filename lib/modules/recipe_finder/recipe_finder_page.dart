@@ -273,27 +273,7 @@ class _WelcomeSection extends StatelessWidget {
                   ],
                 );
 
-                final illustration = _HeroIllustration(theme: theme);
-
-                if (isCompact) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      textColumn,
-                      const SizedBox(height: 28),
-                      illustration,
-                    ],
-                  );
-                }
-
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Expanded(child: textColumn),
-                    const SizedBox(width: 32),
-                    illustration,
-                  ],
-                );
+                return textColumn;
               },
             ),
           ),
@@ -572,94 +552,6 @@ class _HelperFooter extends StatelessWidget {
       style: theme.textTheme.bodySmall?.copyWith(
         color: theme.colorScheme.onSurface.withOpacity(0.66),
         height: 1.5,
-      ),
-    );
-  }
-}
-
-class _HeroIllustration extends StatelessWidget {
-  const _HeroIllustration({required this.theme});
-
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
-    return SizedBox(
-      height: 180,
-      width: 180,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    theme.colorScheme.primary.withOpacity(0.82),
-                    theme.colorScheme.primary.withOpacity(0.45),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.15),
-                    blurRadius: 34,
-                    offset: const Offset(0, 18),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: 32,
-            left: 26,
-            child: Transform.rotate(
-              angle: -0.4,
-              child: Container(
-                height: 58,
-                width: 58,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  color: theme.colorScheme.onPrimary.withOpacity(0.12),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 26,
-            right: 24,
-            child: Transform.rotate(
-              angle: 0.32,
-              child: Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  color: theme.colorScheme.onPrimary.withOpacity(0.1),
-                ),
-              ),
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color:
-                  (surfaces?.highest ?? theme.colorScheme.onPrimary).withOpacity(0.88),
-            ),
-            child: SizedBox(
-              height: 80,
-              width: 80,
-              child: Center(
-                child: Icon(
-                  Icons.restaurant_menu_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 40,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
