@@ -45,9 +45,12 @@ class StripeBillingService implements BillingService {
     if (plans is List) {
       return plans
           .map((dynamic item) {
+            if (item is Map<String, dynamic>) {
+              return BillingPlan.fromMap(item);
+            }
             if (item is Map) {
               return BillingPlan.fromMap(
-                Map<String, dynamic>.from(item as Map),
+                item.cast<String, dynamic>(),
               );
             }
             return null;
@@ -175,8 +178,6 @@ class StripeBillingService implements BillingService {
     }
     _publishableKey = key;
     Stripe.publishableKey = key;
-    await Stripe.instance.applySettings(
-      const StripeSettings(merchantDisplayName: 'Receita Agora'),
-    );
+    await Stripe.instance.applySettings();
   }
 }
