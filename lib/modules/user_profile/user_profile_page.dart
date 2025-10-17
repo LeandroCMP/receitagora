@@ -827,6 +827,10 @@ class _PremiumSubscriptionCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final expiresLabel = _buildExpirationLabel(plan);
     final autoRenews = plan?.autoRenews ?? false;
+    final statusLabel = plan?.statusLabel;
+    final statusValue = plan?.status;
+    final showStatus = statusLabel != null || statusValue != null;
+    final statusText = statusLabel ?? statusValue ?? '';
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
@@ -860,13 +864,14 @@ class _PremiumSubscriptionCard extends StatelessWidget {
               value: controller.premiumPriceDisplay,
             ),
             const Divider(height: 1),
-            if (plan?.status != null)
+            if (showStatus) ...[
               _InfoTile(
                 icon: Icons.verified_outlined,
                 label: 'Status',
-                value: plan!.statusLabel ?? plan.status!,
+                value: statusText,
               ),
-            const Divider(height: 1),
+              const Divider(height: 1),
+            ],
             _InfoTile(
               icon: autoRenews ? Icons.autorenew : Icons.event,
               label: autoRenews ? 'Renovação' : 'Expiração',
