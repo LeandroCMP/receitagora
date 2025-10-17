@@ -1,3 +1,4 @@
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 
 enum UserMode { guest, authenticated }
@@ -7,6 +8,8 @@ abstract class SessionService {
   static const int defaultGuestRecipeLimit = 2;
   static const int defaultAuthenticatedMonthlyLimit = 30;
   static const int defaultShareMonthlyLimit = 10;
+  static const int defaultPremiumMonthlyLimit = 999;
+  static const int defaultPremiumShareMonthlyLimit = 999;
 
   Future<void> get ready;
 
@@ -16,10 +19,14 @@ abstract class SessionService {
   bool get isAuthenticated;
   UserModel? get user;
   bool get hasCompletedProfileSetup;
+  SubscriptionPlan get plan;
+  bool get isPremium;
   int get guestMonthlyLimit;
   int get guestRecipeLimit;
   int get authenticatedMonthlyLimit;
   int get shareMonthlyLimit;
+  int get premiumMonthlyLimit;
+  int get premiumShareMonthlyLimit;
   int get guestRecipeCount;
   int get guestRecipesRemaining;
   int get authenticatedRecipeCount;
@@ -29,6 +36,7 @@ abstract class SessionService {
 
   Stream<UserMode?> get modeStream;
   Stream<UserModel?> get userStream;
+  Stream<SubscriptionPlan> get planStream;
   Stream<int> get guestRecipeCountStream;
   Stream<int> get shareCountStream;
   Stream<int> get guestMonthlyLimitStream;
@@ -36,6 +44,8 @@ abstract class SessionService {
   Stream<int> get authenticatedRecipeCountStream;
   Stream<int> get authenticatedMonthlyLimitStream;
   Stream<int> get shareMonthlyLimitStream;
+  Stream<int> get premiumMonthlyLimitStream;
+  Stream<int> get premiumShareMonthlyLimitStream;
 
   Future<SessionService> init();
   Future<void> ensureInitialized();
@@ -44,6 +54,7 @@ abstract class SessionService {
   Future<void> clearSession();
   Future<void> updateDisplayName(String displayName);
   Future<void> updateProfile(UserModel user);
+  Future<void> refreshPlan();
   bool canGenerateGuestRecipes({int forCount = 1});
   bool canGenerateAuthenticatedRecipes({int forCount = 1});
   Future<void> registerGuestRecipes(int generatedCount);

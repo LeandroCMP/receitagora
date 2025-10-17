@@ -33,6 +33,10 @@ class RecipeFinderController extends GetxController {
   final guestRecipesRemaining = SessionService.defaultGuestMonthlyLimit.obs;
   final guestMonthlyLimit = SessionService.defaultGuestMonthlyLimit.obs;
   final guestRecipeLimit = SessionService.defaultGuestRecipeLimit.obs;
+  final authenticatedMonthlyLimit =
+      SessionService.defaultAuthenticatedMonthlyLimit.obs;
+  final shareMonthlyLimit = SessionService.defaultShareMonthlyLimit.obs;
+  final isPremiumPlan = false.obs;
   final currentUser = Rxn<UserModel>();
 
   final TextEditingController ingredientTextController = TextEditingController();
@@ -43,6 +47,9 @@ class RecipeFinderController extends GetxController {
   StreamSubscription<UserModel?>? _userSubscription;
   StreamSubscription<int>? _guestMonthlyLimitSubscription;
   StreamSubscription<int>? _guestRecipeLimitSubscription;
+  StreamSubscription<int>? _authenticatedMonthlyLimitSubscription;
+  StreamSubscription<int>? _shareMonthlyLimitSubscription;
+  StreamSubscription? _planSubscription;
 
   @override
   void onInit() {
@@ -56,6 +63,9 @@ class RecipeFinderController extends GetxController {
     });
     guestMonthlyLimit.value = sessionService.guestMonthlyLimit;
     guestRecipeLimit.value = sessionService.guestRecipeLimit;
+    authenticatedMonthlyLimit.value = sessionService.authenticatedMonthlyLimit;
+    shareMonthlyLimit.value = sessionService.shareMonthlyLimit;
+    isPremiumPlan.value = sessionService.isPremium;
     _guestMonthlyLimitSubscription =
         sessionService.guestMonthlyLimitStream.listen((value) {
       guestMonthlyLimit.value = value;
@@ -64,6 +74,17 @@ class RecipeFinderController extends GetxController {
     _guestRecipeLimitSubscription =
         sessionService.guestRecipeLimitStream.listen((value) {
       guestRecipeLimit.value = value;
+    });
+    _authenticatedMonthlyLimitSubscription =
+        sessionService.authenticatedMonthlyLimitStream.listen((value) {
+      authenticatedMonthlyLimit.value = value;
+    });
+    _shareMonthlyLimitSubscription =
+        sessionService.shareMonthlyLimitStream.listen((value) {
+      shareMonthlyLimit.value = value;
+    });
+    _planSubscription = sessionService.planStream.listen((_) {
+      isPremiumPlan.value = sessionService.isPremium;
     });
   }
 
@@ -118,7 +139,7 @@ class RecipeFinderController extends GetxController {
         !sessionService.canGenerateAuthenticatedRecipes()) {
       final limit = sessionService.authenticatedMonthlyLimit;
       final message =
-          'Você atingiu o limite mensal de $limit receitas do plano gratuito. Em breve teremos planos para expandir esse limite.';
+          'Você atingiu o limite mensal de $limit receitas do plano gratuito. Assine o ReceitaAgora Premium para desbloquear receitas ilimitadas e históricos ampliados.';
       errorMessage.value = message;
       recipes.clear();
       AppSnackbar.info(
@@ -126,6 +147,7 @@ class RecipeFinderController extends GetxController {
         message: message,
         duration: const Duration(seconds: 5),
       );
+      Get.toNamed(AppRoutes.paywall);
       return;
     }
 
@@ -247,12 +269,16 @@ class RecipeFinderController extends GetxController {
     _userSubscription?.cancel();
     _guestMonthlyLimitSubscription?.cancel();
     _guestRecipeLimitSubscription?.cancel();
+    _authenticatedMonthlyLimitSubscription?.cancel();
+    _shareMonthlyLimitSubscription?.cancel();
+    _planSubscription?.cancel();
     super.onClose();
   }
 
   void _syncSessionState() {
     isGuest.value = sessionService.isGuest;
     currentUser.value = sessionService.user;
+    isPremiumPlan.value = sessionService.isPremium;
     _syncGuestQuota();
   }
 

@@ -38,7 +38,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
 
     if (!_sessionService.canShareRecipe()) {
       throw ShareFailure(
-        'Limite mensal de ${_sessionService.shareMonthlyLimit} compartilhamentos atingido. Aguarde o próximo mês ou confira nossos planos para ampliar este limite.',
+        'Limite mensal de ${_sessionService.shareMonthlyLimit} compartilhamentos atingido. Assine o ReceitaAgora Premium para compartilhar sem limites.',
       );
     }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_loading.dart';
@@ -118,6 +119,9 @@ class RecipeDetailPage extends StatelessWidget {
           title: 'Não foi possível compartilhar',
           message: error.message,
         );
+        if (!sessionService.isPremium) {
+          Get.toNamed(AppRoutes.paywall);
+        }
         return;
       } catch (_) {
         AppLoading.hide();

@@ -6,4 +6,5 @@ abstract class AppRoutes {
   static const recipeDetail = '/recipes/detail';
   static const userProfile = '/profile';
   static const favorites = '/favorites';
+  static const paywall = '/paywall';
 }

@@ -1,0 +1,24 @@
+{
+  "name": "receitagora-functions",
+  "version": "1.0.0",
+  "description": "Cloud Functions for ReceitaAgora in-app purchases",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "axios": "^1.6.8",
+    "firebase-admin": "^11.10.1",
+    "firebase-functions": "^4.4.1",
+    "googleapis": "^121.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": "18"
+  }
+}

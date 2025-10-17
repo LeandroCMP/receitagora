@@ -295,21 +295,45 @@ class _DailyLimitNotice extends StatelessWidget {
 
     return Obx(() {
       if (!controller.isGuest.value) {
+        final isPremium = controller.isPremiumPlan.value;
+        final limit = controller.authenticatedMonthlyLimit.value;
+        final shareLimit = controller.shareMonthlyLimit.value;
+
+        final description = isPremium
+            ? 'Plano Premium ativo: gere quantas receitas quiser, compartilhe sem limites e aproveite histórico ampliado.'
+            : 'Plano gratuito: até $limit receitas por mês e $shareLimit compartilhamentos. Atualize para o Premium e desbloqueie tudo.';
+
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.lightbulb_outline, color: theme.colorScheme.tertiary),
+                Icon(
+                  isPremium ? Icons.workspace_premium : Icons.trending_up_rounded,
+                  color: theme.colorScheme.tertiary,
+                ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    'Adicione ingredientes, revise suas preferências no perfil e explore as combinações pensadas para hoje.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.72),
-                      height: 1.5,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        description,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.72),
+                          height: 1.5,
+                        ),
+                      ),
+                      if (!isPremium) ...[
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed: () => Get.toNamed(AppRoutes.paywall),
+                          icon: const Icon(Icons.lock_open_rounded),
+                          label: const Text('Assinar Premium'),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],

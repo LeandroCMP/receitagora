@@ -7,18 +7,24 @@ class UsageConfig {
     required this.guestRecipeLimit,
     required this.authenticatedMonthlyLimit,
     required this.shareMonthlyLimit,
+    required this.premiumMonthlyLimit,
+    required this.premiumShareMonthlyLimit,
   });
 
   final int guestMonthlyLimit;
   final int guestRecipeLimit;
   final int authenticatedMonthlyLimit;
   final int shareMonthlyLimit;
+  final int premiumMonthlyLimit;
+  final int premiumShareMonthlyLimit;
 
   static const UsageConfig defaults = UsageConfig(
     guestMonthlyLimit: 10,
     guestRecipeLimit: 2,
     authenticatedMonthlyLimit: 30,
     shareMonthlyLimit: 10,
+    premiumMonthlyLimit: 999,
+    premiumShareMonthlyLimit: 999,
   );
 
   UsageConfig copyWith({
@@ -26,6 +32,8 @@ class UsageConfig {
     int? guestRecipeLimit,
     int? authenticatedMonthlyLimit,
     int? shareMonthlyLimit,
+    int? premiumMonthlyLimit,
+    int? premiumShareMonthlyLimit,
   }) {
     return UsageConfig(
       guestMonthlyLimit: guestMonthlyLimit ?? this.guestMonthlyLimit,
@@ -33,6 +41,9 @@ class UsageConfig {
       authenticatedMonthlyLimit:
           authenticatedMonthlyLimit ?? this.authenticatedMonthlyLimit,
       shareMonthlyLimit: shareMonthlyLimit ?? this.shareMonthlyLimit,
+      premiumMonthlyLimit: premiumMonthlyLimit ?? this.premiumMonthlyLimit,
+      premiumShareMonthlyLimit:
+          premiumShareMonthlyLimit ?? this.premiumShareMonthlyLimit,
     );
   }
 
@@ -59,6 +70,13 @@ class UsageConfig {
       ).clamp(0, 999),
       shareMonthlyLimit:
           _readLimit('shareMonthlyLimit', fallback.shareMonthlyLimit).clamp(0, 999),
+      premiumMonthlyLimit:
+          _readLimit('premiumMonthlyLimit', fallback.premiumMonthlyLimit)
+              .clamp(0, 5000),
+      premiumShareMonthlyLimit: _readLimit(
+        'premiumShareMonthlyLimit',
+        fallback.premiumShareMonthlyLimit,
+      ).clamp(0, 5000),
     );
   }
 
@@ -68,6 +86,8 @@ class UsageConfig {
       'guestRecipeLimit': guestRecipeLimit,
       'authenticatedMonthlyLimit': authenticatedMonthlyLimit,
       'shareMonthlyLimit': shareMonthlyLimit,
+      'premiumMonthlyLimit': premiumMonthlyLimit,
+      'premiumShareMonthlyLimit': premiumShareMonthlyLimit,
     };
   }
 
@@ -89,5 +109,7 @@ class UsageConfig {
         guestRecipeLimit,
         authenticatedMonthlyLimit,
         shareMonthlyLimit,
+        premiumMonthlyLimit,
+        premiumShareMonthlyLimit,
       );
 }

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
+import 'package:receitagora/services/billing/plan_service.dart';
 import 'package:receitagora/services/config/usage_config.dart';
 import 'package:receitagora/services/config/usage_config_service.dart';
 
@@ -13,12 +15,15 @@ class SessionServiceImpl extends GetxService implements SessionService {
   SessionServiceImpl({
     required SharedPreferences preferences,
     required UsageConfigService usageConfigService,
+    required PlanService planService,
   })  : _preferences = preferences,
         _usageConfigService = usageConfigService,
+        _planService = planService,
         _readyCompleter = Completer<void>();
 
   final SharedPreferences _preferences;
   final UsageConfigService _usageConfigService;
+  final PlanService _planService;
 
   static const _modeKey = 'session.mode';
   static const _userJsonKey = 'session.user.data';
@@ -41,6 +46,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
   bool _isInitializing = false;
   final Rxn<UserMode> _mode = Rxn<UserMode>();
   final Rxn<UserModel> _user = Rxn<UserModel>();
+  final Rx<SubscriptionPlan> _plan = SubscriptionPlan.visitor().obs;
   final RxInt _guestRecipeCount = 0.obs;
   final RxInt _authenticatedRecipeCount = 0.obs;
   final RxInt _shareCount = 0.obs;
@@ -52,7 +58,13 @@ class SessionServiceImpl extends GetxService implements SessionService {
       SessionService.defaultAuthenticatedMonthlyLimit.obs;
   final RxInt _shareMonthlyLimit =
       SessionService.defaultShareMonthlyLimit.obs;
+  final RxInt _premiumMonthlyLimit =
+      SessionService.defaultPremiumMonthlyLimit.obs;
+  final RxInt _premiumShareMonthlyLimit =
+      SessionService.defaultPremiumShareMonthlyLimit.obs;
+  UsageConfig _currentUsageConfig = UsageConfig.defaults;
   StreamSubscription<UsageConfig>? _configSubscription;
+  StreamSubscription<SubscriptionPlan>? _planSubscription;
 
   @override
   Future<void> get ready => _readyCompleter.future;
@@ -76,6 +88,12 @@ class SessionServiceImpl extends GetxService implements SessionService {
   bool get hasCompletedProfileSetup => _user.value?.profileCompleted ?? false;
 
   @override
+  SubscriptionPlan get plan => _plan.value;
+
+  @override
+  bool get isPremium => _plan.value.isPremium;
+
+  @override
   int get guestMonthlyLimit => _guestMonthlyLimit.value;
 
   @override
@@ -86,6 +104,12 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   int get shareMonthlyLimit => _shareMonthlyLimit.value;
+
+  @override
+  int get premiumMonthlyLimit => _premiumMonthlyLimit.value;
+
+  @override
+  int get premiumShareMonthlyLimit => _premiumShareMonthlyLimit.value;
 
   @override
   int get guestRecipeCount => _guestRecipeCount.value;
@@ -122,6 +146,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
   Stream<UserModel?> get userStream => _user.stream;
 
   @override
+  Stream<SubscriptionPlan> get planStream => _plan.stream;
+
+  @override
   Stream<int> get guestRecipeCountStream => _guestRecipeCount.stream;
 
   @override
@@ -143,6 +170,13 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   Stream<int> get shareMonthlyLimitStream => _shareMonthlyLimit.stream;
+
+  @override
+  Stream<int> get premiumMonthlyLimitStream => _premiumMonthlyLimit.stream;
+
+  @override
+  Stream<int> get premiumShareMonthlyLimitStream =>
+      _premiumShareMonthlyLimit.stream;
 
   @override
   Future<SessionService> init() async {
@@ -183,6 +217,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
   Future<void> continueAsGuest() async {
     _mode.value = UserMode.guest;
     _user.value = null;
+    _updatePlan(SubscriptionPlan.visitor());
+    await _planSubscription?.cancel();
+    _planSubscription = null;
     await _preferences.setString(_modeKey, UserMode.guest.name);
     await _preferences.remove(_userIdKey);
     await _preferences.remove(_userNameKey);
@@ -208,12 +245,14 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_guestRecipePeriodKey);
     _ensureAuthenticatedRecipeQuotaFreshness();
     _ensureShareQuotaFreshness();
+    _subscribeToPlan(user.id);
   }
 
   @override
   Future<void> clearSession() async {
     _mode.value = null;
     _user.value = null;
+    _updatePlan(SubscriptionPlan.visitor());
     await _preferences.remove(_modeKey);
     await _preferences.remove(_userIdKey);
     await _preferences.remove(_userNameKey);
@@ -230,6 +269,8 @@ class SessionServiceImpl extends GetxService implements SessionService {
     _guestRecipeCount.value = 0;
     _authenticatedRecipeCount.value = 0;
     _shareCount.value = 0;
+    await _planSubscription?.cancel();
+    _planSubscription = null;
   }
 
   @override
@@ -282,6 +323,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
     }
 
     _ensureAuthenticatedRecipeQuotaFreshness();
+    if (isPremium) {
+      return true;
+    }
     return authenticatedRecipesRemaining >= forCount;
   }
 
@@ -322,6 +366,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
   @override
   bool canShareRecipe() {
     _ensureShareQuotaFreshness();
+    if (isPremium) {
+      return true;
+    }
     return _shareCount.value < _shareMonthlyLimit.value;
   }
 
@@ -339,8 +386,19 @@ class SessionServiceImpl extends GetxService implements SessionService {
   }
 
   @override
+  Future<void> refreshPlan() async {
+    final currentUser = _user.value;
+    if (currentUser == null) {
+      return;
+    }
+    final fetchedPlan = await _planService.fetchPlan(currentUser.id);
+    _updatePlan(fetchedPlan);
+  }
+
+  @override
   void onClose() {
     _configSubscription?.cancel();
+    _planSubscription?.cancel();
     super.onClose();
   }
 
@@ -392,6 +450,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
     _authenticatedRecipeCount.value =
         _preferences.getInt(_authRecipeCountKey) ?? 0;
     _shareCount.value = _preferences.getInt(_shareCountKey) ?? 0;
+    if (isAuthenticated && _user.value != null) {
+      _subscribeToPlan(_user.value!.id);
+    }
   }
 
   void _ensureGuestRecipeQuotaFreshness() {
@@ -488,6 +549,8 @@ class SessionServiceImpl extends GetxService implements SessionService {
   }
 
   void _applyUsageConfig(UsageConfig config) {
+    _currentUsageConfig = config;
+
     if (_guestMonthlyLimit.value != config.guestMonthlyLimit) {
       _guestMonthlyLimit.value = config.guestMonthlyLimit;
       if (_guestRecipeCount.value > config.guestMonthlyLimit) {
@@ -500,10 +563,53 @@ class SessionServiceImpl extends GetxService implements SessionService {
     if (_guestRecipeLimit.value != config.guestRecipeLimit) {
       _guestRecipeLimit.value = config.guestRecipeLimit;
     }
-    if (_authenticatedMonthlyLimit.value != config.authenticatedMonthlyLimit) {
-      _authenticatedMonthlyLimit.value = config.authenticatedMonthlyLimit;
-      if (_authenticatedRecipeCount.value > config.authenticatedMonthlyLimit) {
-        _authenticatedRecipeCount.value = config.authenticatedMonthlyLimit;
+
+    if (_premiumMonthlyLimit.value != config.premiumMonthlyLimit) {
+      _premiumMonthlyLimit.value = config.premiumMonthlyLimit;
+    }
+    if (_premiumShareMonthlyLimit.value != config.premiumShareMonthlyLimit) {
+      _premiumShareMonthlyLimit.value = config.premiumShareMonthlyLimit;
+    }
+
+    _syncLimitsForPlan();
+  }
+
+  void _subscribeToPlan(String userId) {
+    _planSubscription?.cancel();
+    _planSubscription = _planService.watchPlan(userId).listen(_updatePlan);
+    unawaited(refreshPlan());
+  }
+
+  void _updatePlan(SubscriptionPlan plan) {
+    final normalized = _normalizePlan(plan);
+    if (_plan.value == normalized) {
+      _syncLimitsForPlan();
+      return;
+    }
+    _plan.value = normalized;
+    _syncLimitsForPlan();
+  }
+
+  SubscriptionPlan _normalizePlan(SubscriptionPlan plan) {
+    if (plan.type == SubscriptionPlanType.premium && !plan.isActive) {
+      return SubscriptionPlan.free();
+    }
+    return plan;
+  }
+
+  void _syncLimitsForPlan() {
+    final bool premium = _plan.value.isPremium;
+    final int targetAuthLimit = premium
+        ? _premiumMonthlyLimit.value
+        : _currentUsageConfig.authenticatedMonthlyLimit;
+    final int targetShareLimit = premium
+        ? _premiumShareMonthlyLimit.value
+        : _currentUsageConfig.shareMonthlyLimit;
+
+    if (_authenticatedMonthlyLimit.value != targetAuthLimit) {
+      _authenticatedMonthlyLimit.value = targetAuthLimit;
+      if (!premium && _authenticatedRecipeCount.value > targetAuthLimit) {
+        _authenticatedRecipeCount.value = targetAuthLimit;
         unawaited(
           _preferences.setInt(
             _authRecipeCountKey,
@@ -512,10 +618,11 @@ class SessionServiceImpl extends GetxService implements SessionService {
         );
       }
     }
-    if (_shareMonthlyLimit.value != config.shareMonthlyLimit) {
-      _shareMonthlyLimit.value = config.shareMonthlyLimit;
-      if (_shareCount.value > config.shareMonthlyLimit) {
-        _shareCount.value = config.shareMonthlyLimit;
+
+    if (_shareMonthlyLimit.value != targetShareLimit) {
+      _shareMonthlyLimit.value = targetShareLimit;
+      if (!premium && _shareCount.value > targetShareLimit) {
+        _shareCount.value = targetShareLimit;
         unawaited(
           _preferences.setInt(_shareCountKey, _shareCount.value),
         );
