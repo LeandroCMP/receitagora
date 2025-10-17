@@ -35,6 +35,7 @@ Future<void> main() async {
   final sessionService = SessionServiceImpl(
     preferences: sharedPreferences,
     usageConfigService: usageConfigService,
+    firestore: firestore,
   );
   await sessionService.ensureInitialized();
   Get.put<SessionService>(sessionService, permanent: true);

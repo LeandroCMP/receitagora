@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/auth/auth_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
@@ -23,13 +26,18 @@ class UserProfileController extends GetxController {
   final isSaving = false.obs;
   final isSigningOut = false.obs;
   final RxBool isOnboarding = false.obs;
+  final RxBool isPremiumUser = false.obs;
 
   final RxList<String> dietaryPreferences = <String>[].obs;
   final RxList<String> favoriteCuisines = <String>[].obs;
   final RxList<String> cookingGoals = <String>[].obs;
   final RxList<String> allergies = <String>[].obs;
+  final Rxn<SubscriptionPlan> subscriptionPlan = Rxn<SubscriptionPlan>();
 
   UserModel? get user => sessionService.user;
+  static const String _premiumPriceLabel = 'R\$ 20,00';
+
+  String get premiumPriceDisplay => '$_premiumPriceLabel / mês';
 
   static const List<String> dietarySuggestions = <String>[
     'Vegetariano',
@@ -77,12 +85,21 @@ class UserProfileController extends GetxController {
     favoriteCuisines.assignAll(sessionService.user?.favoriteCuisines ?? const <String>[]);
     cookingGoals.assignAll(sessionService.user?.cookingGoals ?? const <String>[]);
     allergies.assignAll(sessionService.user?.allergies ?? const <String>[]);
+    subscriptionPlan.value = sessionService.plan;
+    isPremiumUser.value = sessionService.hasPremiumAccess;
+    _planSubscription = sessionService.planStream.listen((plan) {
+      subscriptionPlan.value = plan;
+      isPremiumUser.value = sessionService.hasPremiumAccess;
+    });
   }
+
+  late final StreamSubscription<SubscriptionPlan?> _planSubscription;
 
   @override
   void onClose() {
     nameController.dispose();
     bioController.dispose();
+    _planSubscription.cancel();
     super.onClose();
   }
 
@@ -132,6 +149,26 @@ class UserProfileController extends GetxController {
     } finally {
       isSaving.value = false;
     }
+  }
+
+  Future<void> refreshPlan() async {
+    await sessionService.refreshSubscriptionPlan();
+  }
+
+  void viewSubscriptionDetails() {
+    AppSnackbar.info(
+      title: 'Gerenciar assinatura',
+      message:
+          'Gerencie sua assinatura premium diretamente na loja do seu dispositivo para ver cobranças e histórico.',
+    );
+  }
+
+  void requestSubscriptionCancellation() {
+    AppSnackbar.warning(
+      title: 'Cancelar assinatura',
+      message:
+          'Para cancelar, acesse a seção de assinaturas da loja do seu dispositivo e finalize a renovação automática.',
+    );
   }
 
   Future<void> completeOnboardingWithoutChanges() async {

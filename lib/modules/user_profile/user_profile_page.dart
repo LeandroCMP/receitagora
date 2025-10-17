@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 
 import 'user_profile_controller.dart';
@@ -133,7 +134,26 @@ class _ProfileContent extends StatelessWidget {
           controller: controller,
           isOnboarding: isOnboarding,
         ),
-        const SizedBox(height: 16),
+        Obx(
+          () {
+            final isPremium = controller.isPremiumUser.value;
+            final plan = controller.subscriptionPlan.value;
+            if (!isPremium) {
+              return const SizedBox(height: 16);
+            }
+            return Column(
+              children: [
+                const SizedBox(height: 16),
+                _PremiumSubscriptionCard(
+                  theme: theme,
+                  controller: controller,
+                  plan: plan,
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
+        ),
         _AccountDetailsCard(theme: theme, user: user),
         const SizedBox(height: 24),
         _ProfileActions(theme: theme, controller: controller),
@@ -779,5 +799,94 @@ class _InfoTile extends StatelessWidget {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
+  }
+}
+
+class _PremiumSubscriptionCard extends StatelessWidget {
+  const _PremiumSubscriptionCard({
+    required this.theme,
+    required this.controller,
+    required this.plan,
+  });
+
+  final ThemeData theme;
+  final UserProfileController controller;
+  final SubscriptionPlan? plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final expiresLabel = _buildExpirationLabel(plan);
+    final autoRenews = plan?.autoRenews ?? false;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Assinatura premium',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Você tem acesso ao plano premium ativo. Consulte as informações da cobrança e gerencie sua assinatura abaixo.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 24),
+            _InfoTile(
+              icon: Icons.workspace_premium_outlined,
+              label: 'Plano atual',
+              value: plan?.planName ?? 'Premium',
+            ),
+            const Divider(height: 1),
+            _InfoTile(
+              icon: Icons.payments_outlined,
+              label: 'Valor',
+              value: controller.premiumPriceDisplay,
+            ),
+            const Divider(height: 1),
+            _InfoTile(
+              icon: autoRenews ? Icons.autorenew : Icons.event,
+              label: autoRenews ? 'Renovação' : 'Expiração',
+              value: expiresLabel,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: controller.viewSubscriptionDetails,
+              icon: const Icon(Icons.open_in_new),
+              label: const Text('Ver assinatura'),
+            ),
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: controller.requestSubscriptionCancellation,
+              icon: const Icon(Icons.cancel_outlined),
+              label: const Text('Cancelar assinatura'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _buildExpirationLabel(SubscriptionPlan? plan) {
+    final expiration = plan?.expiresAt;
+    if (expiration == null) {
+      return plan?.autoRenews == true
+          ? 'Renovação automática ativa'
+          : 'Sem data de expiração registrada';
+    }
+
+    final local = expiration.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year.toString();
+    final formatted = '$day/$month/$year';
+    return plan?.autoRenews == true ? 'Renova em $formatted' : 'Expira em $formatted';
   }
 }
