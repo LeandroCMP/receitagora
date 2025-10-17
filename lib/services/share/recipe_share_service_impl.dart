@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -83,13 +84,15 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
 
   Future<Uint8List> _composeImage(RecipeEntity recipe) async {
     const double width = 1080;
-    const double height = 1920;
+    final textTheme = _ShareTextTheme();
+    final calculatedHeight = _calculateHeight(recipe, textTheme, width);
+    final height = math.min(math.max(calculatedHeight, 1920.0), 8000.0);
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder, Rect.fromLTWH(0, 0, width, height));
 
     _paintBackground(canvas, width, height);
     _paintDecorations(canvas, width, height);
-    _paintContent(canvas, recipe, width, height);
+    _paintContent(canvas, recipe, width, height, textTheme);
 
     final picture = recorder.endRecording();
     final image = await picture.toImage(width.toInt(), height.toInt());
@@ -134,11 +137,11 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     RecipeEntity recipe,
     double width,
     double height,
+    _ShareTextTheme textTheme,
   ) {
     const double horizontalPadding = 88;
     const double topPadding = 120;
     const double cardTop = 340;
-    final textTheme = _ShareTextTheme();
 
     _paintTitle(canvas, textTheme, width, topPadding);
 
@@ -200,13 +203,15 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     );
 
     cursorY += 20;
+    final ingredientItems = _normalizeList(
+      recipe.ingredients,
+      'Ingredientes não informados.',
+    );
     cursorY += _drawBulletList(
       canvas,
       Offset(contentLeft, cursorY),
       contentWidth,
-      recipe.ingredients.isEmpty
-          ? ['Ingredientes não informados.']
-          : recipe.ingredients.take(6).toList(),
+      ingredientItems,
       textTheme.bullet,
     );
 
@@ -221,13 +226,15 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     );
 
     cursorY += 20;
+    final stepItems = _normalizeList(
+      recipe.steps,
+      'O modo de preparo será uma surpresa deliciosa!',
+    );
     cursorY += _drawNumberedList(
       canvas,
       Offset(contentLeft, cursorY),
       contentWidth,
-      recipe.steps.isEmpty
-          ? ['O modo de preparo será uma surpresa deliciosa!']
-          : recipe.steps.take(3).toList(),
+      stepItems,
       textTheme.numbered,
     );
 
@@ -476,6 +483,103 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
       'Baixe o app e descubra novas receitas perfeitas para o seu momento.',
       textTheme.footerSubtitle,
     );
+  }
+
+  double _calculateHeight(
+    RecipeEntity recipe,
+    _ShareTextTheme textTheme,
+    double width,
+  ) {
+    const double horizontalPadding = 88;
+    const double cardTop = 340;
+    final double contentWidth = width - (horizontalPadding * 2) - 120;
+
+    double cursorY = cardTop + 80;
+    cursorY += _measureText(recipe.name, textTheme.recipeTitle, contentWidth);
+    cursorY += 24;
+    cursorY +=
+        _measureText(recipe.description, textTheme.recipeDescription, contentWidth);
+    cursorY += 40;
+    cursorY += _measureChipHeight();
+    cursorY += 48;
+    cursorY +=
+        _measureText('Ingredientes em destaque', textTheme.sectionTitle, contentWidth);
+    cursorY += 20;
+
+    final ingredients =
+        _normalizeList(recipe.ingredients, 'Ingredientes não informados.');
+    cursorY += _measureBulletList(ingredients, textTheme.bullet, contentWidth);
+
+    cursorY += 32;
+    cursorY +=
+        _measureText('Primeiros passos', textTheme.sectionTitle, contentWidth);
+    cursorY += 20;
+    final steps = _normalizeList(
+      recipe.steps,
+      'O modo de preparo será uma surpresa deliciosa!',
+    );
+    cursorY += _measureNumberedList(steps, textTheme.numbered, contentWidth);
+
+    return cursorY + 320;
+  }
+
+  double _measureText(String text, TextStyle style, double maxWidth) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: maxWidth);
+    return painter.height;
+  }
+
+  double _measureBulletList(
+    List<String> items,
+    TextStyle style,
+    double maxWidth,
+  ) {
+    var total = 0.0;
+    const bulletSpacing = 16.0;
+    const bulletGap = 24.0;
+
+    for (final item in items) {
+      final height = _measureText(item, style, maxWidth - bulletGap);
+      total += height + bulletSpacing;
+    }
+
+    return total;
+  }
+
+  double _measureNumberedList(
+    List<String> items,
+    TextStyle style,
+    double maxWidth,
+  ) {
+    var total = 0.0;
+    const itemSpacing = 20.0;
+    const badgeSize = Size(36, 36);
+
+    for (final item in items) {
+      final height = _measureText(
+        item,
+        style,
+        maxWidth - badgeSize.width - 32,
+      );
+      total += height + itemSpacing;
+    }
+
+    return total;
+  }
+
+  double _measureChipHeight() => 64.0;
+
+  List<String> _normalizeList(List<String> source, String fallback) {
+    final sanitized = source
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+    if (sanitized.isEmpty) {
+      return [fallback];
+    }
+    return sanitized;
   }
 }
 

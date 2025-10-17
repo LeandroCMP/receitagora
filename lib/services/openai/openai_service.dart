@@ -271,7 +271,7 @@ Retorne um JSON com o formato:
   ]
 }
 
-Inclua pelo menos uma receita fácil e uma receita de dificuldade média, mantendo o nível de execução acessível. Descreva cada preparo de forma detalhada, com dicas práticas e contexto rápido, sem aumentar demais a complexidade. Indique o tempo total aproximado em minutos e certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos).''';
+Inclua pelo menos uma receita fácil e uma receita de dificuldade média, mantendo o nível de execução acessível. Descreva cada preparo de forma detalhada, com dicas práticas e contexto rápido, sem aumentar demais a complexidade. Indique o tempo total aproximado em minutos e certifique-se de que cada receita use somente os ingredientes informados (além dos genéricos permitidos). Antes de responder, revise se todos os ingredientes listados em cada receita estão presentes na lista fornecida; se encontrar algo fora dela, ajuste a receita para utilizar apenas os itens autorizados. Utilize exatamente os nomes dos ingredientes fornecidos quando fizer sentido e jamais introduza ingredientes novos com base nas preferências do perfil.''';
   }
 
   String _composeUserContext(UserModel user) {
@@ -297,7 +297,7 @@ Inclua pelo menos uma receita fácil e uma receita de dificuldade média, manten
           '- Evite ingredientes alérgenos: ${_formatList(user.allergies)}');
     }
     buffer.writeln(
-        '- Priorize sugestões que respeitem essas preferências e tragam variações alinhadas ao perfil informado.');
+        '- Use estas informações apenas para ajustar o estilo de texto, variações e sugestões de preparo, sem adicionar ingredientes além dos informados pelo usuário.');
     return buffer.toString();
   }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
+import 'package:receitagora/application/utils/app_loading.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/core/errors/app_exception.dart';
 import 'package:receitagora/models/user_model.dart';
@@ -115,6 +116,10 @@ class RecipeFinderController extends GetxController {
     isLoading.value = true;
     errorMessage.value = null;
 
+    await AppLoading.showBlocking(
+      message: 'Gerando receitas sob medida...',
+    );
+
     try {
       final results = await generateRecipesUseCase(
         ingredients: sanitizedIngredients,
@@ -137,6 +142,7 @@ class RecipeFinderController extends GetxController {
         );
       }
 
+      AppLoading.hide();
       String? helperMessage;
       if (adjustedResults.isEmpty) {
         helperMessage = 'Não encontramos receitas com esses ingredientes.';
@@ -156,6 +162,7 @@ class RecipeFinderController extends GetxController {
         ),
       );
     } catch (error) {
+      AppLoading.hide();
       String message;
       if (error is AppException) {
         message = error.message;
@@ -193,6 +200,7 @@ class RecipeFinderController extends GetxController {
         );
       }
     } finally {
+      AppLoading.hide();
       isLoading.value = false;
     }
   }

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
+import 'package:receitagora/application/utils/app_loading.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
@@ -106,34 +107,22 @@ class RecipeDetailPage extends StatelessWidget {
     }
 
     Future<void> shareRecipe() async {
-      var overlayShown = false;
-      if (!(Get.isDialogOpen ?? false)) {
-        overlayShown = true;
-        Get.dialog(
-          const Center(child: CircularProgressIndicator()),
-          barrierDismissible: false,
-        );
-      }
-
-      void closeOverlay() {
-        if (overlayShown && (Get.isDialogOpen ?? false)) {
-          Get.back();
-          overlayShown = false;
-        }
-      }
+      await AppLoading.showBlocking(
+        message: 'Preparando arte para compartilhar...',
+      );
 
       ShareOutcome outcome;
       try {
         outcome = await shareService.shareRecipe(args.recipe);
       } on ShareFailure catch (error) {
-        closeOverlay();
+        AppLoading.hide();
         AppSnackbar.error(
           title: 'Não foi possível compartilhar',
           message: error.message,
         );
         return;
       } catch (_) {
-        closeOverlay();
+        AppLoading.hide();
         AppSnackbar.error(
           title: 'Não foi possível compartilhar',
           message: 'Tente novamente em instantes.',
@@ -141,7 +130,7 @@ class RecipeDetailPage extends StatelessWidget {
         return;
       }
 
-      closeOverlay();
+      AppLoading.hide();
       switch (outcome) {
         case ShareOutcome.shared:
           AppSnackbar.success(
