@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "652588029247",
+    "project_id": "receitagora-7a6a2",
+    "storage_bucket": "receitagora-7a6a2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:652588029247:android:8f483eb1b5c1dbdaa2af8a",
+        "android_client_info": {
+          "package_name": "com.example.receitagora"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "652588029247-0ainoh9id4f686eeeusq8vv457rob5n8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.receitagora",
+            "certificate_hash": "659e743d6bd71c980661878ef0999cb59903a475"
+          }
+        },
+        {
+          "client_id": "652588029247-a3bn9717gqr9dcleb3jvshcbgmdnt8r9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1kr9roK7x2vsnaITT4SJF6sdDFT9Qb2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "652588029247-a3bn9717gqr9dcleb3jvshcbgmdnt8r9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
