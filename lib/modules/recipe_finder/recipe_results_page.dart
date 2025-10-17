@@ -89,12 +89,19 @@ class RecipeResultsPage extends StatelessWidget {
         titleSpacing: 16,
         title: Row(
           children: [
-            Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary),
+            Icon(
+              Icons.auto_awesome_rounded,
+              color: theme.colorScheme.primary,
+            ),
             const SizedBox(width: 12),
-            Text(
-              'Sugestões para hoje',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: Text(
+                'Sugestões para hoje',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

@@ -1,13 +1,17 @@
 # Receitagora
 
-Aplicativo Flutter para sugerir receitas com base nos ingredientes que o usuário
-tem em casa. A solução utiliza GetX, Clean Architecture e integra-se com a API
-da OpenAI para gerar receitas possíveis seguindo as restrições informadas.
-A experiência agora conta com splash screen animada, tela de boas-vindas e um
-modo visitante elegante em tema escuro. Inspiramos o layout em referências de
-apps de receitas premium, com gradientes suaves e cartões modernos que destacam
-dificuldade e tempo estimado logo na lista de resultados. O botão de login com
-Google já aparece na interface e será habilitado em uma versão futura.
+Aplicativo Flutter que sugere receitas personalizadas a partir dos ingredientes
+disponíveis. O projeto adota GetX e separação em camadas para manter o código
+organizado, integra-se à API da OpenAI para gerar sugestões gastronômicas e usa
+Firebase (Auth, Firestore e Storage) para persistir perfis, favoritos e limites
+de uso dinâmicos.
+
+A experiência visual combina tema claro vibrante inspirado em referências de
+design gastronômico, telas com gradientes responsivos e animações suaves. Usuários
+logados contam com onboarding de perfil (bio, preferências e objetivos), edição
+completa de dados, favoritos com métricas e tags, histórico de receitas e
+compartilhamento visual. Visitantes continuam navegando pelo app com limites
+controlados automaticamente e feedback consistente em toda a interface.
 
 ## Configuração
 
@@ -46,17 +50,20 @@ Google já aparece na interface e será habilitado em uma versão futura.
 > **Dica:** sem uma chave válida da OpenAI o aplicativo não consegue gerar
 > receitas. Configure a credencial antes de buscar sugestões.
 
-### Fluxo de acesso e limites do modo visitante
+### Fluxo de acesso e limites dinâmicos
 
-- **Splash screen & login:** ao abrir o app você verá uma tela de introdução e,
-  em seguida, a tela de autenticação com duas opções — o login social com Google
-  (em breve) ou o modo visitante.
-- **Modo visitante:** permite até **3 buscas por dia**, com retorno máximo de
-  **2 receitas por pesquisa**. O contador é reiniciado diariamente de forma
-  automática.
-- **Login com Google (em breve):** assim que habilitado, removerá os limites de
-  busca, preservará o histórico de sessão e exibirá o avatar do usuário na tela
-  principal.
+- **Splash screen & onboarding:** ao abrir o app, a sessão é restaurada
+  automaticamente. Caso o usuário esteja logado e ainda não tenha completado o
+  perfil, o fluxo direciona para o preenchimento rápido de bio, preferências,
+  objetivos e restrições alimentares (com opção de pular, mas sem ignorar a
+  etapa).
+- **Modo visitante:** por padrão permite até **2 buscas por dia**, devolvendo
+  no máximo **2 receitas por consulta** e **50 compartilhamentos por sessão**.
+  Esses limites são carregados dinamicamente do Firestore e reiniciados a cada
+  novo dia.
+- **Login com Google:** remove as restrições do modo visitante, habilita
+  favoritos sincronizados, histórico de receitas, compartilhamento ilimitado e
+  exibe o avatar no topo da tela principal.
 
 ### Erros comuns
 
@@ -72,24 +79,26 @@ Google já aparece na interface e será habilitado em uma versão futura.
 
 ### Resultado das receitas
 
-- Cada busca consulta o modelo de geração configurado para retornar, além do
-  nome e descrição, o nível de dificuldade (`fácil`, `médio` ou `difícil`) e o
-  tempo aproximado de preparo.
-- As informações são exibidas nos cartões resumidos e na página detalhada, para
-  que você escolha rapidamente a receita que combina com o tempo e o esforço
-  disponível no momento.
+- As consultas utilizam os ingredientes informados combinados com os dados de
+  perfil (quando disponíveis) para gerar receitas alinhadas às preferências do
+  usuário, indicando dificuldade, tempo médio e observações.
+- O histórico local garante uma experiência resiliente: caso a API da OpenAI
+  esteja indisponível, as últimas receitas válidas são reapresentadas e ficam
+  acessíveis para consulta rápida.
 
 ## Estrutura do Projeto
 
-- `lib/core`: configurações, serviços e tratamento de erros compartilhados.
-- `lib/modules/auth`: telas, bindings e controladores do login social e modo
-  visitante.
-- `lib/modules/splash`: controlador e tela da splash screen animada.
-- `lib/modules/recipe_finder`: módulo principal com camadas de domínio,
-  dados e apresentação seguindo Clean Architecture.
-- `lib/app`: inicialização do GetX, rotas e tema visual.
-- `docs/ads_setup.md`: guia passo a passo para habilitar propagandas com
-  AdMob mantendo a arquitetura do projeto alinhada com o padrão atual.
+- `lib/application`: configuração global (tema, rotas, bindings e utilitários de
+  layout/feedback).
+- `lib/models`: modelos de domínio como `UserModel`, compartilhados entre
+  serviços e camadas de UI.
+- `lib/modules`: módulos funcionais (splash, login, receita, favoritos, perfil),
+  cada um com bindings, controllers, páginas e widgets alinhados ao padrão do
+  projeto.
+- `lib/services`: abstrações e implementações para autenticação, sessão,
+  favoritos, histórico de receitas, OpenAI, compartilhamento e limites dinâmicos.
+- `docs/ads_setup.md`: guia passo a passo para habilitar propagandas com AdMob
+  mantendo a arquitetura do projeto alinhada ao padrão atual.
 
 ## Suporte
 
