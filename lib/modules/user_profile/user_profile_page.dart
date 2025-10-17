@@ -139,7 +139,16 @@ class _ProfileContent extends StatelessWidget {
             final isPremium = controller.isPremiumUser.value;
             final plan = controller.subscriptionPlan.value;
             if (!isPremium) {
-              return const SizedBox(height: 16);
+              return Column(
+                children: [
+                  const SizedBox(height: 16),
+                  _PremiumUpsellCard(
+                    theme: theme,
+                    controller: controller,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              );
             }
             return Column(
               children: [
@@ -851,22 +860,56 @@ class _PremiumSubscriptionCard extends StatelessWidget {
               value: controller.premiumPriceDisplay,
             ),
             const Divider(height: 1),
+            if (plan?.status != null)
+              _InfoTile(
+                icon: Icons.verified_outlined,
+                label: 'Status',
+                value: plan!.statusLabel ?? plan.status!,
+              ),
+            const Divider(height: 1),
             _InfoTile(
               icon: autoRenews ? Icons.autorenew : Icons.event,
               label: autoRenews ? 'Renovação' : 'Expiração',
               value: expiresLabel,
             ),
+            if (plan?.subscriptionId != null) ...[
+              const Divider(height: 1),
+              _InfoTile(
+                icon: Icons.confirmation_number_outlined,
+                label: 'ID da assinatura',
+                value: plan!.subscriptionId!,
+                denseValue: true,
+              ),
+            ],
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: controller.viewSubscriptionDetails,
-              icon: const Icon(Icons.open_in_new),
-              label: const Text('Ver assinatura'),
+            Obx(
+              () => ElevatedButton.icon(
+                onPressed: controller.isBillingBusy.value
+                    ? null
+                    : controller.viewSubscriptionDetails,
+                icon: controller.isBillingBusy.value
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.receipt_long_outlined),
+                label: Text(controller.isBillingBusy.value
+                    ? 'Carregando portal...'
+                    : 'Gerenciar cobrança'),
+              ),
             ),
             const SizedBox(height: 12),
-            TextButton.icon(
-              onPressed: controller.requestSubscriptionCancellation,
-              icon: const Icon(Icons.cancel_outlined),
-              label: const Text('Cancelar assinatura'),
+            Obx(
+              () => TextButton.icon(
+                onPressed: controller.isBillingBusy.value
+                    ? null
+                    : controller.requestSubscriptionCancellation,
+                icon: const Icon(Icons.cancel_outlined),
+                label: Text(controller.isBillingBusy.value
+                    ? 'Enviando...'
+                    : 'Cancelar assinatura'),
+              ),
             ),
           ],
         ),
@@ -888,5 +931,54 @@ class _PremiumSubscriptionCard extends StatelessWidget {
     final year = local.year.toString();
     final formatted = '$day/$month/$year';
     return plan?.autoRenews == true ? 'Renova em $formatted' : 'Expira em $formatted';
+  }
+}
+
+class _PremiumUpsellCard extends StatelessWidget {
+  const _PremiumUpsellCard({
+    required this.theme,
+    required this.controller,
+  });
+
+  final ThemeData theme;
+  final UserProfileController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final primary = colorScheme.primary;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Descubra o Receita Agora Premium',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Libere acesso completo a gerações ilimitadas, compartilhamentos extras e histórico estendido ativando o plano premium.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: controller.openPremiumPlans,
+              icon: const Icon(Icons.workspace_premium_outlined),
+              label: const Text('Conhecer planos'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

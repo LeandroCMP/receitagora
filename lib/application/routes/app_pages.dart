@@ -6,6 +6,7 @@ import 'package:receitagora/modules/login/login_module.dart';
 import 'package:receitagora/modules/recipe_finder/recipe_finder_module.dart';
 import 'package:receitagora/modules/splash/splash_module.dart';
 import 'package:receitagora/modules/user_profile/user_profile_module.dart';
+import 'package:receitagora/modules/billing/premium_plans_module.dart';
 
 import 'app_routes.dart';
 
@@ -18,6 +19,7 @@ class AppPages {
     RecipeFinderModule(),
     FavoritesModule(),
     UserProfileModule(),
+    PremiumPlansModule(),
   ];
 
   static final List<GetPage<dynamic>> routes =

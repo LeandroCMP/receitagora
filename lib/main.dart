@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,6 +13,8 @@ import 'package:receitagora/services/config/usage_config_service.dart';
 import 'package:receitagora/services/config/usage_config_service_impl.dart';
 import 'package:receitagora/services/session/session_service.dart';
 import 'package:receitagora/services/session/session_service_impl.dart';
+import 'package:receitagora/services/billing/billing_service.dart';
+import 'package:receitagora/services/billing/stripe_billing_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,9 +26,11 @@ Future<void> main() async {
 
   final firebaseAuth = FirebaseAuth.instance;
   final firestore = FirebaseFirestore.instance;
+  final functions = FirebaseFunctions.instance;
   final googleSignIn = GoogleSignIn.instance;
   Get.put<FirebaseAuth>(firebaseAuth, permanent: true);
   Get.put<FirebaseFirestore>(firestore, permanent: true);
+  Get.put<FirebaseFunctions>(functions, permanent: true);
   Get.put<GoogleSignIn>(googleSignIn, permanent: true);
 
   final usageConfigService = UsageConfigServiceImpl(firestore: firestore);
@@ -39,6 +44,10 @@ Future<void> main() async {
   );
   await sessionService.ensureInitialized();
   Get.put<SessionService>(sessionService, permanent: true);
+
+  final billingService = StripeBillingService(functions: functions);
+  await billingService.ensureInitialized();
+  Get.put<BillingService>(billingService, permanent: true);
 
   runApp(const ReceitagoraApp());
 }

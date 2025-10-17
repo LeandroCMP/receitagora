@@ -8,16 +8,20 @@ import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/auth/auth_service.dart';
+import 'package:receitagora/services/billing/billing_exception.dart';
+import 'package:receitagora/services/billing/billing_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
 class UserProfileController extends GetxController {
   UserProfileController({
     required this.sessionService,
     required this.authService,
+    required this.billingService,
   });
 
   final SessionService sessionService;
   final AuthService authService;
+  final BillingService billingService;
 
   late final TextEditingController nameController;
   late final TextEditingController bioController;
@@ -27,6 +31,7 @@ class UserProfileController extends GetxController {
   final isSigningOut = false.obs;
   final RxBool isOnboarding = false.obs;
   final RxBool isPremiumUser = false.obs;
+  final RxBool isBillingBusy = false.obs;
 
   final RxList<String> dietaryPreferences = <String>[].obs;
   final RxList<String> favoriteCuisines = <String>[].obs;
@@ -35,9 +40,13 @@ class UserProfileController extends GetxController {
   final Rxn<SubscriptionPlan> subscriptionPlan = Rxn<SubscriptionPlan>();
 
   UserModel? get user => sessionService.user;
-  static const String _premiumPriceLabel = 'R\$ 20,00';
-
-  String get premiumPriceDisplay => '$_premiumPriceLabel / mês';
+  String get premiumPriceDisplay {
+    final plan = subscriptionPlan.value;
+    if (plan?.formattedAmount != null && plan?.intervalLabel != null) {
+      return '${plan!.formattedAmount} / ${plan.intervalLabel}';
+    }
+    return 'R\$ 20,00 / mês';
+  }
 
   static const List<String> dietarySuggestions = <String>[
     'Vegetariano',
@@ -155,20 +164,90 @@ class UserProfileController extends GetxController {
     await sessionService.refreshSubscriptionPlan();
   }
 
-  void viewSubscriptionDetails() {
-    AppSnackbar.info(
-      title: 'Gerenciar assinatura',
-      message:
-          'Gerencie sua assinatura premium diretamente na loja do seu dispositivo para ver cobranças e histórico.',
-    );
+  Future<void> openPremiumPlans() async {
+    if (isPremiumUser.value) {
+      return;
+    }
+    await Get.toNamed(AppRoutes.premiumPlans);
   }
 
-  void requestSubscriptionCancellation() {
-    AppSnackbar.warning(
-      title: 'Cancelar assinatura',
-      message:
-          'Para cancelar, acesse a seção de assinaturas da loja do seu dispositivo e finalize a renovação automática.',
-    );
+  Future<void> viewSubscriptionDetails() async {
+    final plan = subscriptionPlan.value;
+    if (plan == null || plan.subscriptionId == null) {
+      AppSnackbar.warning(
+        title: 'Plano não encontrado',
+        message:
+            'Não encontramos uma assinatura ativa para sua conta. Tente atualizar as informações.',
+      );
+      return;
+    }
+
+    if (isBillingBusy.value) {
+      return;
+    }
+
+    isBillingBusy.value = true;
+    try {
+      final session = await billingService.createPortalSession();
+      await Get.toNamed(
+        AppRoutes.billingPortal,
+        arguments: session,
+      );
+    } on BillingException catch (error) {
+      AppSnackbar.error(
+        title: 'Não foi possível abrir o portal',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Erro inesperado',
+        message:
+            'Não foi possível abrir o portal de assinaturas agora. Tente novamente mais tarde.',
+      );
+    } finally {
+      isBillingBusy.value = false;
+    }
+  }
+
+  Future<void> requestSubscriptionCancellation() async {
+    final plan = subscriptionPlan.value;
+    final subscriptionId = plan?.subscriptionId;
+    if (subscriptionId == null) {
+      AppSnackbar.warning(
+        title: 'Assinatura não localizada',
+        message:
+            'Não encontramos uma assinatura ativa para cancelar. Atualize as informações e tente novamente.',
+      );
+      return;
+    }
+
+    if (isBillingBusy.value) {
+      return;
+    }
+
+    isBillingBusy.value = true;
+    try {
+      await billingService.cancelSubscription(subscriptionId);
+      AppSnackbar.success(
+        title: 'Cancelamento solicitado',
+        message:
+            'Sua assinatura permanecerá ativa até o fim do ciclo atual e não será renovada automaticamente.',
+      );
+    } on BillingException catch (error) {
+      AppSnackbar.error(
+        title: 'Não foi possível cancelar',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Erro inesperado',
+        message:
+            'Não foi possível cancelar a assinatura agora. Tente novamente mais tarde.',
+      );
+    } finally {
+      isBillingBusy.value = false;
+      await refreshPlan();
+    }
   }
 
   Future<void> completeOnboardingWithoutChanges() async {

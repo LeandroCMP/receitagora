@@ -36,12 +36,28 @@ O exemplo abaixo mostra um documento completo no caminho `users/{uid}` com os me
         "billing": {
           "plan": {
             "type": "premium",
-            "productId": "premium_monthly",
-            "transactionId": "manual-test",
-            "platform": "manual",
-            "autoRenews": false,
+            "productId": "prod_ABC123",
+            "priceId": "price_123",
+            "transactionId": "in_1PTeste12345",
+            "platform": "stripe",
+            "status": "active",
+            "subscriptionId": "sub_1PAssinaturaABC",
+            "customerId": "cus_Nqwe123",
+            "autoRenews": true,
+            "cancelAtPeriodEnd": false,
+            "amount": 2000,
+            "currency": "BRL",
+            "interval": "month",
             "expiresAt": {
               "_seconds": 1893456000,
+              "_nanoseconds": 0
+            },
+            "createdAt": {
+              "_seconds": 1734372000,
+              "_nanoseconds": 0
+            },
+            "updatedAt": {
+              "_seconds": 1734458400,
               "_nanoseconds": 0
             }
           }
@@ -56,5 +72,7 @@ O exemplo abaixo mostra um documento completo no caminho `users/{uid}` com os me
 
 - `_subcollections` indica que `billing`, `analytics` e `favorites` devem ser criadas como subcoleções reais do documento `users/{uid}`.
 - `type` precisa ser `"premium"` para liberar o plano pago; altere para `"free"` ou apague o documento para voltar ao plano gratuito.
-- `expiresAt` é opcional, mas, se informado, precisa apontar para uma data futura (o exemplo usa 1º de janeiro de 2030 UTC).
-- Ajuste os demais campos para refletir os dados reais do usuário no seu ambiente.
+- `priceId`, `subscriptionId`, `status` e `customerId` são preenchidos automaticamente pelas Cloud Functions com os dados vindos do Stripe.
+- `amount` representa o valor em centavos (2000 = R$ 20,00) e `currency` segue o padrão ISO (BRL, USD etc.).
+- `expiresAt` indica o fim do ciclo atual; quando ausente, o plano é tratado como ativo até nova sincronização.
+- Os campos `createdAt` e `updatedAt` ajudam a auditar quando o plano foi criado/sincronizado pela última vez.
