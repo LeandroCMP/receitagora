@@ -624,7 +624,7 @@ class _ShareTextTheme {
         fontFamily: 'Poppins',
       );
 
-  TextStyle get tagline => const TextStyle(
+  TextStyle get tagline => TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.w500,
         color: _mutedTextColor.withOpacity(0.85),
@@ -684,7 +684,7 @@ class _ShareTextTheme {
         fontFamily: 'Poppins',
       );
 
-  TextStyle get footerSubtitle => const TextStyle(
+  TextStyle get footerSubtitle => TextStyle(
         fontSize: 26,
         fontWeight: FontWeight.w500,
         color: Colors.white.withOpacity(0.8),
