@@ -166,7 +166,7 @@ class _FeatureComparisonCard extends StatelessWidget {
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      color: surfaces?.medium ?? theme.colorScheme.surface,
+      color: surfaces?.surface ?? theme.colorScheme.surface,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
         child: Column(
