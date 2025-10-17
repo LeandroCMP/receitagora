@@ -6,7 +6,7 @@ class AppLoading {
 
   static bool _isShowing = false;
 
-  static Future<void> showBlocking({String? message}) async {
+  static Future<void> showBlocking() async {
     if (_isShowing) {
       return;
     }
@@ -22,27 +22,8 @@ class AppLoading {
     Get.dialog(
       WillPopScope(
         onWillPop: () async => false,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              if (message != null && message.trim().isNotEmpty) ...[
-                const SizedBox(height: 16),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 220),
-                  child: Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
+        child: const Center(
+          child: CircularProgressIndicator(),
         ),
       ),
       barrierDismissible: false,

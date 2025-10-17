@@ -107,9 +107,7 @@ class RecipeDetailPage extends StatelessWidget {
     }
 
     Future<void> shareRecipe() async {
-      await AppLoading.showBlocking(
-        message: 'Preparando arte para compartilhar...',
-      );
+      await AppLoading.showBlocking();
 
       ShareOutcome outcome;
       try {

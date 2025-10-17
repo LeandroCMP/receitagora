@@ -12,12 +12,13 @@ import 'package:receitagora/services/session/session_service.dart';
 
 import 'recipe_share_service.dart';
 
-const _backgroundTop = Color(0xFF1B5E20);
-const _backgroundBottom = Color(0xFF4CAF50);
-const _accentColor = Color(0xFFFFF176);
-const _contentBackground = Color(0xFFFAFAFA);
-const _titleColor = Color(0xFF1B5E20);
-const _textColor = Color(0xFF37474F);
+const _backgroundTop = Color(0xFFEE6722);
+const _backgroundBottom = Color(0xFFB94F2C);
+const _accentColor = Color(0xFF6A994E);
+const _contentBackground = Color(0xFFFFEBD9);
+const _titleColor = Color(0xFF301F17);
+const _textColor = Color(0xFF5F4438);
+const _mutedTextColor = Color(0xFF8F6A55);
 
 class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
   RecipeShareServiceImpl({required SessionService sessionService})
@@ -114,7 +115,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
   }
 
   void _paintDecorations(Canvas canvas, double width, double height) {
-    final highlightPaint = Paint()..color = Colors.white.withOpacity(0.08);
+    final highlightPaint = Paint()..color = Colors.white.withOpacity(0.12);
     canvas.drawCircle(
       Offset(width * 0.8, height * 0.15),
       width * 0.4,
@@ -139,30 +140,32 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     double height,
     _ShareTextTheme textTheme,
   ) {
-    const double horizontalPadding = 88;
+    const double horizontalPadding = 96;
+    const double contentInset = 56;
     const double topPadding = 120;
-    const double cardTop = 340;
+    const double cardTop = 360;
 
-    _paintTitle(canvas, textTheme, width, topPadding);
+    _paintTitle(canvas, textTheme, width, topPadding, horizontalPadding);
 
+    final cardWidth = width - (horizontalPadding * 2);
     final contentRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(
         horizontalPadding,
         cardTop,
-        width - (horizontalPadding * 2),
-        height - cardTop - 200,
+        cardWidth,
+        height - cardTop - 240,
       ),
-      const Radius.circular(48),
+      const Radius.circular(44),
     );
 
-    final shadowPaint = Paint()..color = Colors.black.withOpacity(0.14);
-    canvas.drawRRect(contentRect.shift(const Offset(0, 18)), shadowPaint);
-    final cardPaint = Paint()..color = _contentBackground.withOpacity(0.96);
+    final shadowPaint = Paint()..color = Colors.black.withOpacity(0.12);
+    canvas.drawRRect(contentRect.shift(const Offset(0, 16)), shadowPaint);
+    final cardPaint = Paint()..color = _contentBackground.withOpacity(0.94);
     canvas.drawRRect(contentRect, cardPaint);
 
-    var cursorY = cardTop + 80;
-    final contentWidth = width - (horizontalPadding * 2) - 120;
-    final contentLeft = horizontalPadding + 60;
+    var cursorY = cardTop + 72;
+    final contentWidth = cardWidth - (contentInset * 2);
+    final contentLeft = horizontalPadding + contentInset;
 
     cursorY += _drawText(
       canvas,
@@ -246,37 +249,46 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     _ShareTextTheme textTheme,
     double width,
     double topPadding,
+    double horizontalPadding,
   ) {
+    const double logoSize = 152;
+    const double logoCornerRadius = 44;
+    const double logoInnerRadius = 56;
+    const double textSpacing = 40;
+
     final logoRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(88, topPadding, 140, 140),
-      const Radius.circular(40),
+      Rect.fromLTWH(horizontalPadding, topPadding, logoSize, logoSize),
+      const Radius.circular(logoCornerRadius),
     );
-    final logoPaint = Paint()..color = Colors.white.withOpacity(0.15);
+    final logoPaint = Paint()..color = Colors.white.withOpacity(0.18);
     canvas.drawRRect(logoRect, logoPaint);
 
     final innerCircle = Paint()..color = Colors.white;
-    canvas.drawCircle(logoRect.center, 52, innerCircle);
+    canvas.drawCircle(logoRect.center, logoInnerRadius, innerCircle);
 
     _drawText(
       canvas,
-      Offset(logoRect.center.dx - 36, logoRect.center.dy - 48),
-      120,
+      Offset(logoRect.center.dx - 40, logoRect.center.dy - 50),
+      logoSize,
       'R',
       textTheme.logo,
     );
 
+    final textLeft = horizontalPadding + logoSize + textSpacing;
+    final textWidth = width - textLeft - horizontalPadding;
+
     _drawText(
       canvas,
-      Offset(260, topPadding + 18),
-      width - 360,
+      Offset(textLeft, topPadding + 12),
+      textWidth,
       'ReceitaAgora',
       textTheme.brand,
     );
 
     _drawText(
       canvas,
-      Offset(260, topPadding + 108),
-      width - 360,
+      Offset(textLeft, topPadding + 96),
+      textWidth,
       'Sabores incríveis, prontos para compartilhar.',
       textTheme.tagline,
     );
@@ -303,7 +315,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
 
     final startX = offset.dx;
     var currentX = startX;
-    final chipPaint = Paint()..color = _accentColor.withOpacity(0.22);
+    final chipPaint = Paint()..color = _accentColor.withOpacity(0.18);
 
     void drawChip(String text, double chipWidth) {
       final rect = RRect.fromRectAndRadius(
@@ -362,8 +374,8 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     TextStyle style,
   ) {
     final underlinePaint = Paint()
-      ..color = _accentColor.withOpacity(0.6)
-      ..strokeWidth = 6
+      ..color = _accentColor.withOpacity(0.7)
+      ..strokeWidth = 5
       ..strokeCap = StrokeCap.round;
 
     final height = _drawText(canvas, offset, maxWidth, text, style);
@@ -390,7 +402,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
 
     for (final item in items) {
       final bulletCenter = Offset(offset.dx, cursorY + style.fontSize! / 1.6);
-      final bulletPaint = Paint()..color = _backgroundTop.withOpacity(0.9);
+      final bulletPaint = Paint()..color = _accentColor.withOpacity(0.85);
       canvas.drawCircle(bulletCenter, bulletRadius, bulletPaint);
       final height = _drawText(
         canvas,
@@ -426,7 +438,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
         ),
         const Radius.circular(12),
       );
-      final badgePaint = Paint()..color = _backgroundTop.withOpacity(0.12);
+      final badgePaint = Paint()..color = _accentColor.withOpacity(0.15);
       canvas.drawRRect(badgeRect, badgePaint);
       _drawText(
         canvas,
@@ -434,7 +446,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
         badgeSize.width,
         '${index + 1}',
         style.copyWith(
-          color: _backgroundTop.withOpacity(0.9),
+          color: _accentColor.withOpacity(0.9),
           fontWeight: FontWeight.w700,
         ),
       );
@@ -457,29 +469,40 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     double width,
     double height,
   ) {
+    const double horizontalPadding = 96;
+    const double contentInset = 56;
+    const double footerHeight = 136;
+    const double footerBottomSpacing = 72;
+
     final footerRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(
-        88,
-        height - 220,
-        width - 176,
-        120,
+        horizontalPadding,
+        height - footerHeight - footerBottomSpacing,
+        width - (horizontalPadding * 2),
+        footerHeight,
       ),
       const Radius.circular(32),
     );
-    final footerPaint = Paint()..color = Colors.white.withOpacity(0.16);
+    final footerPaint = Paint()..color = Colors.white.withOpacity(0.18);
     canvas.drawRRect(footerRect, footerPaint);
 
     _drawText(
       canvas,
-      Offset(120, height - 190),
-      width - 240,
+      Offset(
+        horizontalPadding + contentInset,
+        height - footerHeight - footerBottomSpacing + 36,
+      ),
+      width - (horizontalPadding * 2) - (contentInset * 2),
       'Compartilhe sabores com o ReceitaAgora',
       textTheme.footerTitle,
     );
     _drawText(
       canvas,
-      Offset(120, height - 130),
-      width - 240,
+      Offset(
+        horizontalPadding + contentInset,
+        height - footerHeight - footerBottomSpacing + 84,
+      ),
+      width - (horizontalPadding * 2) - (contentInset * 2),
       'Baixe o app e descubra novas receitas perfeitas para o seu momento.',
       textTheme.footerSubtitle,
     );
@@ -490,11 +513,13 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     _ShareTextTheme textTheme,
     double width,
   ) {
-    const double horizontalPadding = 88;
-    const double cardTop = 340;
-    final double contentWidth = width - (horizontalPadding * 2) - 120;
+    const double horizontalPadding = 96;
+    const double contentInset = 56;
+    const double cardTop = 360;
+    final double contentWidth =
+        width - (horizontalPadding * 2) - (contentInset * 2);
 
-    double cursorY = cardTop + 80;
+    double cursorY = cardTop + 72;
     cursorY += _measureText(recipe.name, textTheme.recipeTitle, contentWidth);
     cursorY += 24;
     cursorY +=
@@ -588,7 +613,7 @@ class _ShareTextTheme {
         fontSize: 88,
         fontWeight: FontWeight.w800,
         color: _backgroundTop,
-        fontFamily: 'Roboto',
+        fontFamily: 'Poppins',
       );
 
   TextStyle get brand => const TextStyle(
@@ -596,12 +621,14 @@ class _ShareTextTheme {
         fontWeight: FontWeight.w800,
         color: Colors.white,
         letterSpacing: 1.2,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get tagline => const TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.w500,
-        color: Colors.white70,
+        color: _mutedTextColor.withOpacity(0.85),
+        fontFamily: 'Poppins',
       );
 
   TextStyle get recipeTitle => const TextStyle(
@@ -609,6 +636,7 @@ class _ShareTextTheme {
         fontWeight: FontWeight.w800,
         color: _titleColor,
         height: 1.1,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get recipeDescription => const TextStyle(
@@ -616,18 +644,21 @@ class _ShareTextTheme {
         fontWeight: FontWeight.w500,
         color: _textColor,
         height: 1.4,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get chip => const TextStyle(
         fontSize: 26,
         fontWeight: FontWeight.w600,
         color: _titleColor,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get sectionTitle => const TextStyle(
         fontSize: 30,
         fontWeight: FontWeight.w700,
         color: _titleColor,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get bullet => const TextStyle(
@@ -635,6 +666,7 @@ class _ShareTextTheme {
         fontWeight: FontWeight.w500,
         color: _textColor,
         height: 1.5,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get numbered => const TextStyle(
@@ -642,17 +674,20 @@ class _ShareTextTheme {
         fontWeight: FontWeight.w500,
         color: _textColor,
         height: 1.5,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get footerTitle => const TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: Colors.white,
+        fontFamily: 'Poppins',
       );
 
   TextStyle get footerSubtitle => const TextStyle(
         fontSize: 26,
         fontWeight: FontWeight.w500,
-        color: Colors.white70,
+        color: Colors.white.withOpacity(0.8),
+        fontFamily: 'Poppins',
       );
 }

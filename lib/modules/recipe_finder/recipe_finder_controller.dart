@@ -116,9 +116,7 @@ class RecipeFinderController extends GetxController {
     isLoading.value = true;
     errorMessage.value = null;
 
-    await AppLoading.showBlocking(
-      message: 'Gerando receitas sob medida...',
-    );
+    await AppLoading.showBlocking();
 
     try {
       final results = await generateRecipesUseCase(
