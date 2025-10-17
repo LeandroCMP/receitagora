@@ -295,45 +295,21 @@ class _DailyLimitNotice extends StatelessWidget {
 
     return Obx(() {
       if (!controller.isGuest.value) {
-        final isPremium = controller.isPremiumPlan.value;
-        final limit = controller.authenticatedMonthlyLimit.value;
-        final shareLimit = controller.shareMonthlyLimit.value;
-
-        final description = isPremium
-            ? 'Plano Premium ativo: gere quantas receitas quiser, compartilhe sem limites e aproveite histórico ampliado.'
-            : 'Plano gratuito: até $limit receitas por mês e $shareLimit compartilhamentos. Atualize para o Premium e desbloqueie tudo.';
-
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  isPremium ? Icons.workspace_premium : Icons.trending_up_rounded,
-                  color: theme.colorScheme.tertiary,
-                ),
+                Icon(Icons.lightbulb_outline, color: theme.colorScheme.tertiary),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        description,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.72),
-                          height: 1.5,
-                        ),
-                      ),
-                      if (!isPremium) ...[
-                        const SizedBox(height: 16),
-                        FilledButton.icon(
-                          onPressed: () => Get.toNamed(AppRoutes.paywall),
-                          icon: const Icon(Icons.lock_open_rounded),
-                          label: const Text('Assinar Premium'),
-                        ),
-                      ],
-                    ],
+                  child: Text(
+                    'Adicione ingredientes, revise suas preferências no perfil e explore as combinações pensadas para hoje.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.72),
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
@@ -342,13 +318,10 @@ class _DailyLimitNotice extends StatelessWidget {
         );
       }
 
-      final remaining = controller.guestRecipesRemaining.value;
-      final limit = controller.guestMonthlyLimit.value;
-      final upgradeLimit =
-          controller.sessionService.authenticatedMonthlyLimit;
+      final remaining = controller.guestSearchesRemaining.value;
       final helper = remaining > 0
-          ? 'Modo visitante: restam $remaining de $limit receitas neste mês. Cada busca pode retornar até ${controller.guestRecipeLimit.value} receitas. Faça login para desbloquear $upgradeLimit receitas mensais, histórico completo e compartilhamento.'
-          : 'Você atingiu o limite mensal de $limit receitas no modo visitante. Entre com sua conta para liberar $upgradeLimit receitas mensais, compartilhar e salvar suas favoritas.';
+          ? 'Modo visitante: restam $remaining de ${controller.guestDailyLimit.value} buscas hoje. Cada pesquisa retorna até ${controller.guestRecipeLimit.value} receitas.'
+          : 'Você alcançou o limite diário no modo visitante. Volte amanhã ou faça login para liberar buscas ilimitadas.';
 
       return Card(
         child: Container(
@@ -374,22 +347,12 @@ class _DailyLimitNotice extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      helper,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.72),
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => Get.toNamed(AppRoutes.login),
-                      child: const Text('Fazer login'),
-                    ),
-                  ],
+                child: Text(
+                  helper,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.72),
+                    height: 1.5,
+                  ),
                 ),
               ),
             ],

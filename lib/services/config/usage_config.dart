@@ -3,47 +3,30 @@ import 'package:meta/meta.dart';
 @immutable
 class UsageConfig {
   const UsageConfig({
-    required this.guestMonthlyLimit,
+    required this.guestDailyLimit,
     required this.guestRecipeLimit,
-    required this.authenticatedMonthlyLimit,
-    required this.shareMonthlyLimit,
-    required this.premiumMonthlyLimit,
-    required this.premiumShareMonthlyLimit,
+    required this.shareDailyLimit,
   });
 
-  final int guestMonthlyLimit;
+  final int guestDailyLimit;
   final int guestRecipeLimit;
-  final int authenticatedMonthlyLimit;
-  final int shareMonthlyLimit;
-  final int premiumMonthlyLimit;
-  final int premiumShareMonthlyLimit;
+  final int shareDailyLimit;
 
   static const UsageConfig defaults = UsageConfig(
-    guestMonthlyLimit: 10,
+    guestDailyLimit: 2,
     guestRecipeLimit: 2,
-    authenticatedMonthlyLimit: 30,
-    shareMonthlyLimit: 10,
-    premiumMonthlyLimit: 999,
-    premiumShareMonthlyLimit: 999,
+    shareDailyLimit: 50,
   );
 
   UsageConfig copyWith({
-    int? guestMonthlyLimit,
+    int? guestDailyLimit,
     int? guestRecipeLimit,
-    int? authenticatedMonthlyLimit,
-    int? shareMonthlyLimit,
-    int? premiumMonthlyLimit,
-    int? premiumShareMonthlyLimit,
+    int? shareDailyLimit,
   }) {
     return UsageConfig(
-      guestMonthlyLimit: guestMonthlyLimit ?? this.guestMonthlyLimit,
+      guestDailyLimit: guestDailyLimit ?? this.guestDailyLimit,
       guestRecipeLimit: guestRecipeLimit ?? this.guestRecipeLimit,
-      authenticatedMonthlyLimit:
-          authenticatedMonthlyLimit ?? this.authenticatedMonthlyLimit,
-      shareMonthlyLimit: shareMonthlyLimit ?? this.shareMonthlyLimit,
-      premiumMonthlyLimit: premiumMonthlyLimit ?? this.premiumMonthlyLimit,
-      premiumShareMonthlyLimit:
-          premiumShareMonthlyLimit ?? this.premiumShareMonthlyLimit,
+      shareDailyLimit: shareDailyLimit ?? this.shareDailyLimit,
     );
   }
 
@@ -60,34 +43,20 @@ class UsageConfig {
     }
 
     return UsageConfig(
-      guestMonthlyLimit: _readLimit('guestMonthlyLimit', fallback.guestMonthlyLimit)
-          .clamp(0, 999),
+      guestDailyLimit:
+          _readLimit('guestDailyLimit', fallback.guestDailyLimit).clamp(0, 999),
       guestRecipeLimit:
           _readLimit('guestRecipeLimit', fallback.guestRecipeLimit).clamp(0, 999),
-      authenticatedMonthlyLimit: _readLimit(
-        'authenticatedMonthlyLimit',
-        fallback.authenticatedMonthlyLimit,
-      ).clamp(0, 999),
-      shareMonthlyLimit:
-          _readLimit('shareMonthlyLimit', fallback.shareMonthlyLimit).clamp(0, 999),
-      premiumMonthlyLimit:
-          _readLimit('premiumMonthlyLimit', fallback.premiumMonthlyLimit)
-              .clamp(0, 5000),
-      premiumShareMonthlyLimit: _readLimit(
-        'premiumShareMonthlyLimit',
-        fallback.premiumShareMonthlyLimit,
-      ).clamp(0, 5000),
+      shareDailyLimit:
+          _readLimit('shareDailyLimit', fallback.shareDailyLimit).clamp(0, 999),
     );
   }
 
   Map<String, dynamic> toSerializableMap() {
     return <String, dynamic>{
-      'guestMonthlyLimit': guestMonthlyLimit,
+      'guestDailyLimit': guestDailyLimit,
       'guestRecipeLimit': guestRecipeLimit,
-      'authenticatedMonthlyLimit': authenticatedMonthlyLimit,
-      'shareMonthlyLimit': shareMonthlyLimit,
-      'premiumMonthlyLimit': premiumMonthlyLimit,
-      'premiumShareMonthlyLimit': premiumShareMonthlyLimit,
+      'shareDailyLimit': shareDailyLimit,
     };
   }
 
@@ -97,19 +66,15 @@ class UsageConfig {
       return true;
     }
     return other is UsageConfig &&
-        other.guestMonthlyLimit == guestMonthlyLimit &&
+        other.guestDailyLimit == guestDailyLimit &&
         other.guestRecipeLimit == guestRecipeLimit &&
-        other.authenticatedMonthlyLimit == authenticatedMonthlyLimit &&
-        other.shareMonthlyLimit == shareMonthlyLimit;
+        other.shareDailyLimit == shareDailyLimit;
   }
 
   @override
   int get hashCode => Object.hash(
-        guestMonthlyLimit,
+        guestDailyLimit,
         guestRecipeLimit,
-        authenticatedMonthlyLimit,
-        shareMonthlyLimit,
-        premiumMonthlyLimit,
-        premiumShareMonthlyLimit,
+        shareDailyLimit,
       );
 }

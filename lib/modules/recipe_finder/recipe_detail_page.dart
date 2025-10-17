@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
-import 'package:receitagora/application/utils/app_loading.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
@@ -108,23 +106,34 @@ class RecipeDetailPage extends StatelessWidget {
     }
 
     Future<void> shareRecipe() async {
-      await AppLoading.showBlocking();
+      var overlayShown = false;
+      if (!(Get.isDialogOpen ?? false)) {
+        overlayShown = true;
+        Get.dialog(
+          const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+      }
+
+      void closeOverlay() {
+        if (overlayShown && (Get.isDialogOpen ?? false)) {
+          Get.back();
+          overlayShown = false;
+        }
+      }
 
       ShareOutcome outcome;
       try {
         outcome = await shareService.shareRecipe(args.recipe);
       } on ShareFailure catch (error) {
-        AppLoading.hide();
+        closeOverlay();
         AppSnackbar.error(
           title: 'Não foi possível compartilhar',
           message: error.message,
         );
-        if (!sessionService.isPremium) {
-          Get.toNamed(AppRoutes.paywall);
-        }
         return;
       } catch (_) {
-        AppLoading.hide();
+        closeOverlay();
         AppSnackbar.error(
           title: 'Não foi possível compartilhar',
           message: 'Tente novamente em instantes.',
@@ -132,7 +141,7 @@ class RecipeDetailPage extends StatelessWidget {
         return;
       }
 
-      AppLoading.hide();
+      closeOverlay();
       switch (outcome) {
         case ShareOutcome.shared:
           AppSnackbar.success(
@@ -170,11 +179,11 @@ class RecipeDetailPage extends StatelessWidget {
                 );
               } else {
                 shareButton = StreamBuilder<int>(
-                  stream: sessionService.shareMonthlyLimitStream,
-                  initialData: sessionService.shareMonthlyLimit,
+                  stream: sessionService.shareDailyLimitStream,
+                  initialData: sessionService.shareDailyLimit,
                   builder: (context, limitSnapshot) {
                     final limit =
-                        limitSnapshot.data ?? sessionService.shareMonthlyLimit;
+                        limitSnapshot.data ?? sessionService.shareDailyLimit;
                     return StreamBuilder<int>(
                       stream: sessionService.shareCountStream,
                       initialData: sessionService.shareCount,
@@ -187,7 +196,7 @@ class RecipeDetailPage extends StatelessWidget {
                         return IconButton(
                           tooltip: canShare
                               ? 'Compartilhar receita'
-                              : 'Limite mensal de compartilhamentos atingido',
+                              : 'Limite diário de compartilhamentos atingido',
                           icon: const Icon(Icons.ios_share_rounded),
                           onPressed: canShare ? shareRecipe : null,
                         );
