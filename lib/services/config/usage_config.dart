@@ -3,30 +3,36 @@ import 'package:meta/meta.dart';
 @immutable
 class UsageConfig {
   const UsageConfig({
-    required this.guestDailyLimit,
+    required this.guestMonthlyLimit,
     required this.guestRecipeLimit,
-    required this.shareDailyLimit,
+    required this.authenticatedMonthlyLimit,
+    required this.shareMonthlyLimit,
   });
 
-  final int guestDailyLimit;
+  final int guestMonthlyLimit;
   final int guestRecipeLimit;
-  final int shareDailyLimit;
+  final int authenticatedMonthlyLimit;
+  final int shareMonthlyLimit;
 
   static const UsageConfig defaults = UsageConfig(
-    guestDailyLimit: 2,
+    guestMonthlyLimit: 10,
     guestRecipeLimit: 2,
-    shareDailyLimit: 50,
+    authenticatedMonthlyLimit: 30,
+    shareMonthlyLimit: 10,
   );
 
   UsageConfig copyWith({
-    int? guestDailyLimit,
+    int? guestMonthlyLimit,
     int? guestRecipeLimit,
-    int? shareDailyLimit,
+    int? authenticatedMonthlyLimit,
+    int? shareMonthlyLimit,
   }) {
     return UsageConfig(
-      guestDailyLimit: guestDailyLimit ?? this.guestDailyLimit,
+      guestMonthlyLimit: guestMonthlyLimit ?? this.guestMonthlyLimit,
       guestRecipeLimit: guestRecipeLimit ?? this.guestRecipeLimit,
-      shareDailyLimit: shareDailyLimit ?? this.shareDailyLimit,
+      authenticatedMonthlyLimit:
+          authenticatedMonthlyLimit ?? this.authenticatedMonthlyLimit,
+      shareMonthlyLimit: shareMonthlyLimit ?? this.shareMonthlyLimit,
     );
   }
 
@@ -43,20 +49,25 @@ class UsageConfig {
     }
 
     return UsageConfig(
-      guestDailyLimit:
-          _readLimit('guestDailyLimit', fallback.guestDailyLimit).clamp(0, 999),
+      guestMonthlyLimit: _readLimit('guestMonthlyLimit', fallback.guestMonthlyLimit)
+          .clamp(0, 999),
       guestRecipeLimit:
           _readLimit('guestRecipeLimit', fallback.guestRecipeLimit).clamp(0, 999),
-      shareDailyLimit:
-          _readLimit('shareDailyLimit', fallback.shareDailyLimit).clamp(0, 999),
+      authenticatedMonthlyLimit: _readLimit(
+        'authenticatedMonthlyLimit',
+        fallback.authenticatedMonthlyLimit,
+      ).clamp(0, 999),
+      shareMonthlyLimit:
+          _readLimit('shareMonthlyLimit', fallback.shareMonthlyLimit).clamp(0, 999),
     );
   }
 
   Map<String, dynamic> toSerializableMap() {
     return <String, dynamic>{
-      'guestDailyLimit': guestDailyLimit,
+      'guestMonthlyLimit': guestMonthlyLimit,
       'guestRecipeLimit': guestRecipeLimit,
-      'shareDailyLimit': shareDailyLimit,
+      'authenticatedMonthlyLimit': authenticatedMonthlyLimit,
+      'shareMonthlyLimit': shareMonthlyLimit,
     };
   }
 
@@ -66,15 +77,17 @@ class UsageConfig {
       return true;
     }
     return other is UsageConfig &&
-        other.guestDailyLimit == guestDailyLimit &&
+        other.guestMonthlyLimit == guestMonthlyLimit &&
         other.guestRecipeLimit == guestRecipeLimit &&
-        other.shareDailyLimit == shareDailyLimit;
+        other.authenticatedMonthlyLimit == authenticatedMonthlyLimit &&
+        other.shareMonthlyLimit == shareMonthlyLimit;
   }
 
   @override
   int get hashCode => Object.hash(
-        guestDailyLimit,
+        guestMonthlyLimit,
         guestRecipeLimit,
-        shareDailyLimit,
+        authenticatedMonthlyLimit,
+        shareMonthlyLimit,
       );
 }

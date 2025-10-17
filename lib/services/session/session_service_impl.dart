@@ -27,23 +27,31 @@ class SessionServiceImpl extends GetxService implements SessionService {
   static const _userEmailKey = 'session.user.email';
   static const _userAvatarKey = 'session.user.avatar';
   static const _profileCompletedKey = 'session.user.profileCompleted';
-  static const _guestCountKey = 'session.guest.count';
-  static const _guestDateKey = 'session.guest.date';
+  static const _guestRecipeCountKey = 'session.guest.recipes.count';
+  static const _guestRecipePeriodKey = 'session.guest.recipes.period';
+  static const _guestLegacyCountKey = 'session.guest.count';
+  static const _guestLegacyDateKey = 'session.guest.date';
+  static const _authRecipeCountKey = 'session.auth.recipes.count';
+  static const _authRecipePeriodKey = 'session.auth.recipes.period';
   static const _shareCountKey = 'session.share.count';
-  static const _shareDateKey = 'session.share.date';
+  static const _sharePeriodKey = 'session.share.period';
+  static const _shareLegacyDateKey = 'session.share.date';
 
   final Completer<void> _readyCompleter;
   bool _isInitializing = false;
   final Rxn<UserMode> _mode = Rxn<UserMode>();
   final Rxn<UserModel> _user = Rxn<UserModel>();
-  final RxInt _guestSearchCount = 0.obs;
+  final RxInt _guestRecipeCount = 0.obs;
+  final RxInt _authenticatedRecipeCount = 0.obs;
   final RxInt _shareCount = 0.obs;
-  final RxInt _guestDailyLimit =
-      SessionService.defaultGuestDailyLimit.obs;
+  final RxInt _guestMonthlyLimit =
+      SessionService.defaultGuestMonthlyLimit.obs;
   final RxInt _guestRecipeLimit =
       SessionService.defaultGuestRecipeLimit.obs;
-  final RxInt _shareDailyLimit =
-      SessionService.defaultShareDailyLimit.obs;
+  final RxInt _authenticatedMonthlyLimit =
+      SessionService.defaultAuthenticatedMonthlyLimit.obs;
+  final RxInt _shareMonthlyLimit =
+      SessionService.defaultShareMonthlyLimit.obs;
   StreamSubscription<UsageConfig>? _configSubscription;
 
   @override
@@ -68,20 +76,33 @@ class SessionServiceImpl extends GetxService implements SessionService {
   bool get hasCompletedProfileSetup => _user.value?.profileCompleted ?? false;
 
   @override
-  int get guestDailyLimit => _guestDailyLimit.value;
+  int get guestMonthlyLimit => _guestMonthlyLimit.value;
 
   @override
   int get guestRecipeLimit => _guestRecipeLimit.value;
 
   @override
-  int get shareDailyLimit => _shareDailyLimit.value;
+  int get authenticatedMonthlyLimit => _authenticatedMonthlyLimit.value;
 
   @override
-  int get guestSearchCount => _guestSearchCount.value;
+  int get shareMonthlyLimit => _shareMonthlyLimit.value;
 
   @override
-  int get guestSearchesRemaining {
-    final remaining = _guestDailyLimit.value - _guestSearchCount.value;
+  int get guestRecipeCount => _guestRecipeCount.value;
+
+  @override
+  int get guestRecipesRemaining {
+    final remaining = _guestMonthlyLimit.value - _guestRecipeCount.value;
+    return remaining < 0 ? 0 : remaining;
+  }
+
+  @override
+  int get authenticatedRecipeCount => _authenticatedRecipeCount.value;
+
+  @override
+  int get authenticatedRecipesRemaining {
+    final remaining =
+        _authenticatedMonthlyLimit.value - _authenticatedRecipeCount.value;
     return remaining < 0 ? 0 : remaining;
   }
 
@@ -90,7 +111,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   int get sharesRemaining {
-    final remaining = _shareDailyLimit.value - _shareCount.value;
+    final remaining = _shareMonthlyLimit.value - _shareCount.value;
     return remaining < 0 ? 0 : remaining;
   }
 
@@ -101,19 +122,27 @@ class SessionServiceImpl extends GetxService implements SessionService {
   Stream<UserModel?> get userStream => _user.stream;
 
   @override
-  Stream<int> get guestSearchCountStream => _guestSearchCount.stream;
+  Stream<int> get guestRecipeCountStream => _guestRecipeCount.stream;
 
   @override
   Stream<int> get shareCountStream => _shareCount.stream;
 
   @override
-  Stream<int> get guestDailyLimitStream => _guestDailyLimit.stream;
+  Stream<int> get guestMonthlyLimitStream => _guestMonthlyLimit.stream;
 
   @override
   Stream<int> get guestRecipeLimitStream => _guestRecipeLimit.stream;
 
   @override
-  Stream<int> get shareDailyLimitStream => _shareDailyLimit.stream;
+  Stream<int> get authenticatedRecipeCountStream =>
+      _authenticatedRecipeCount.stream;
+
+  @override
+  Stream<int> get authenticatedMonthlyLimitStream =>
+      _authenticatedMonthlyLimit.stream;
+
+  @override
+  Stream<int> get shareMonthlyLimitStream => _shareMonthlyLimit.stream;
 
   @override
   Future<SessionService> init() async {
@@ -137,7 +166,8 @@ class SessionServiceImpl extends GetxService implements SessionService {
     try {
       await _hydrateFromPreferences();
       await _clearLegacyFavoriteEntries();
-      _ensureGuestQuotaFreshness();
+      _ensureGuestRecipeQuotaFreshness();
+      _ensureAuthenticatedRecipeQuotaFreshness();
       _ensureShareQuotaFreshness();
       await _initializeUsageConfig();
 
@@ -160,18 +190,23 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userAvatarKey);
     await _preferences.remove(_userJsonKey);
     await _preferences.remove(_profileCompletedKey);
-    _ensureGuestQuotaFreshness();
+    _ensureGuestRecipeQuotaFreshness();
     _ensureShareQuotaFreshness();
   }
 
   @override
   Future<void> startAuthenticatedSession(UserModel user) async {
     _mode.value = UserMode.authenticated;
+    final previousUserId = _preferences.getString(_userIdKey);
     await _persistUser(user);
     await _preferences.setString(_modeKey, UserMode.authenticated.name);
-    _guestSearchCount.value = 0;
-    await _preferences.remove(_guestCountKey);
-    await _preferences.remove(_guestDateKey);
+    if (previousUserId == null || previousUserId != user.id) {
+      await _resetAuthenticatedUsage();
+    }
+    _guestRecipeCount.value = 0;
+    await _preferences.remove(_guestRecipeCountKey);
+    await _preferences.remove(_guestRecipePeriodKey);
+    _ensureAuthenticatedRecipeQuotaFreshness();
     _ensureShareQuotaFreshness();
   }
 
@@ -186,11 +221,14 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userAvatarKey);
     await _preferences.remove(_userJsonKey);
     await _preferences.remove(_profileCompletedKey);
-    await _preferences.remove(_guestCountKey);
-    await _preferences.remove(_guestDateKey);
+    await _preferences.remove(_guestRecipeCountKey);
+    await _preferences.remove(_guestRecipePeriodKey);
+    await _preferences.remove(_authRecipeCountKey);
+    await _preferences.remove(_authRecipePeriodKey);
     await _preferences.remove(_shareCountKey);
-    await _preferences.remove(_shareDateKey);
-    _guestSearchCount.value = 0;
+    await _preferences.remove(_sharePeriodKey);
+    _guestRecipeCount.value = 0;
+    _authenticatedRecipeCount.value = 0;
     _shareCount.value = 0;
   }
 
@@ -228,35 +266,63 @@ class SessionServiceImpl extends GetxService implements SessionService {
   }
 
   @override
-  bool canPerformGuestSearch() {
+  bool canGenerateGuestRecipes({int forCount = 1}) {
     if (!isGuest) {
       return true;
     }
 
-    _ensureGuestQuotaFreshness();
-    return _guestSearchCount.value < _guestDailyLimit.value;
+    _ensureGuestRecipeQuotaFreshness();
+    return guestRecipesRemaining >= forCount;
   }
 
   @override
-  Future<void> registerGuestSearch() async {
-    if (!isGuest) {
+  bool canGenerateAuthenticatedRecipes({int forCount = 1}) {
+    if (!isAuthenticated) {
+      return false;
+    }
+
+    _ensureAuthenticatedRecipeQuotaFreshness();
+    return authenticatedRecipesRemaining >= forCount;
+  }
+
+  @override
+  Future<void> registerGuestRecipes(int generatedCount) async {
+    if (!isGuest || generatedCount <= 0) {
       return;
     }
 
-    _ensureGuestQuotaFreshness();
-    final updated = _guestSearchCount.value + 1;
-    _guestSearchCount.value = updated;
-    await _preferences.setInt(_guestCountKey, updated);
+    await ensureInitialized();
+    _ensureGuestRecipeQuotaFreshness();
+    final updated = _guestRecipeCount.value + generatedCount;
+    _guestRecipeCount.value = updated;
+    await _preferences.setInt(_guestRecipeCountKey, updated);
     await _preferences.setString(
-      _guestDateKey,
-      DateTime.now().toIso8601String(),
+      _guestRecipePeriodKey,
+      _currentPeriodString(),
+    );
+  }
+
+  @override
+  Future<void> registerAuthenticatedRecipes(int generatedCount) async {
+    if (!isAuthenticated || generatedCount <= 0) {
+      return;
+    }
+
+    await ensureInitialized();
+    _ensureAuthenticatedRecipeQuotaFreshness();
+    final updated = _authenticatedRecipeCount.value + generatedCount;
+    _authenticatedRecipeCount.value = updated;
+    await _preferences.setInt(_authRecipeCountKey, updated);
+    await _preferences.setString(
+      _authRecipePeriodKey,
+      _currentPeriodString(),
     );
   }
 
   @override
   bool canShareRecipe() {
     _ensureShareQuotaFreshness();
-    return _shareCount.value < _shareDailyLimit.value;
+    return _shareCount.value < _shareMonthlyLimit.value;
   }
 
   @override
@@ -267,8 +333,8 @@ class SessionServiceImpl extends GetxService implements SessionService {
     _shareCount.value = updated;
     await _preferences.setInt(_shareCountKey, updated);
     await _preferences.setString(
-      _shareDateKey,
-      DateTime.now().toIso8601String(),
+      _sharePeriodKey,
+      _currentPeriodString(),
     );
   }
 
@@ -309,50 +375,77 @@ class SessionServiceImpl extends GetxService implements SessionService {
       }
     }
 
-    _guestSearchCount.value = _preferences.getInt(_guestCountKey) ?? 0;
+    final hasLegacyGuestCount = _preferences.containsKey(_guestLegacyCountKey);
+    if (hasLegacyGuestCount) {
+      await _preferences.remove(_guestLegacyCountKey);
+    }
+    final hasLegacyGuestDate = _preferences.containsKey(_guestLegacyDateKey);
+    if (hasLegacyGuestDate) {
+      await _preferences.remove(_guestLegacyDateKey);
+    }
+    if (_preferences.containsKey(_shareLegacyDateKey)) {
+      await _preferences.remove(_shareLegacyDateKey);
+    }
+
+    _guestRecipeCount.value =
+        _preferences.getInt(_guestRecipeCountKey) ?? 0;
+    _authenticatedRecipeCount.value =
+        _preferences.getInt(_authRecipeCountKey) ?? 0;
     _shareCount.value = _preferences.getInt(_shareCountKey) ?? 0;
   }
 
-  void _ensureGuestQuotaFreshness() {
-    final storedDateString = _preferences.getString(_guestDateKey);
-    final now = DateTime.now();
+  void _ensureGuestRecipeQuotaFreshness() {
+    final storedPeriod = _preferences.getString(_guestRecipePeriodKey);
+    final currentPeriod = _currentPeriodString();
 
-    if (storedDateString == null) {
-      _guestSearchCount.value = 0;
-      _preferences.setString(_guestDateKey, now.toIso8601String());
-      _preferences.setInt(_guestCountKey, 0);
-      return;
-    }
-
-    final storedDate = DateTime.tryParse(storedDateString);
-    if (storedDate == null || !_isSameDay(storedDate, now)) {
-      _guestSearchCount.value = 0;
-      _preferences.setString(_guestDateKey, now.toIso8601String());
-      _preferences.setInt(_guestCountKey, 0);
+    if (storedPeriod == null || storedPeriod != currentPeriod) {
+      _guestRecipeCount.value = 0;
+      _preferences.setString(_guestRecipePeriodKey, currentPeriod);
+      _preferences.setInt(_guestRecipeCountKey, 0);
     }
   }
 
   void _ensureShareQuotaFreshness() {
-    final storedDateString = _preferences.getString(_shareDateKey);
-    final now = DateTime.now();
+    final storedPeriod = _preferences.getString(_sharePeriodKey);
+    final currentPeriod = _currentPeriodString();
 
-    if (storedDateString == null) {
+    if (storedPeriod == null || storedPeriod != currentPeriod) {
       _shareCount.value = 0;
-      _preferences.setString(_shareDateKey, now.toIso8601String());
-      _preferences.setInt(_shareCountKey, 0);
-      return;
-    }
-
-    final storedDate = DateTime.tryParse(storedDateString);
-    if (storedDate == null || !_isSameDay(storedDate, now)) {
-      _shareCount.value = 0;
-      _preferences.setString(_shareDateKey, now.toIso8601String());
+      _preferences.setString(_sharePeriodKey, currentPeriod);
       _preferences.setInt(_shareCountKey, 0);
     }
   }
 
-  bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
+  void _ensureAuthenticatedRecipeQuotaFreshness() {
+    final storedPeriod = _preferences.getString(_authRecipePeriodKey);
+    final currentPeriod = _currentPeriodString();
+
+    if (storedPeriod == null || storedPeriod != currentPeriod) {
+      _authenticatedRecipeCount.value = 0;
+      _preferences.setString(_authRecipePeriodKey, currentPeriod);
+      _preferences.setInt(_authRecipeCountKey, 0);
+    }
+  }
+
+  Future<void> _resetAuthenticatedUsage() async {
+    _authenticatedRecipeCount.value = 0;
+    await _preferences.setInt(_authRecipeCountKey, 0);
+    await _preferences.setString(
+      _authRecipePeriodKey,
+      _currentPeriodString(),
+    );
+    _shareCount.value = 0;
+    await _preferences.setInt(_shareCountKey, 0);
+    await _preferences.setString(
+      _sharePeriodKey,
+      _currentPeriodString(),
+    );
+  }
+
+  String _currentPeriodString() {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    return '${now.year}-$month';
   }
 
   Future<void> _clearLegacyFavoriteEntries() async {
@@ -395,22 +488,34 @@ class SessionServiceImpl extends GetxService implements SessionService {
   }
 
   void _applyUsageConfig(UsageConfig config) {
-    if (_guestDailyLimit.value != config.guestDailyLimit) {
-      _guestDailyLimit.value = config.guestDailyLimit;
-      if (_guestSearchCount.value > config.guestDailyLimit) {
-        _guestSearchCount.value = config.guestDailyLimit;
+    if (_guestMonthlyLimit.value != config.guestMonthlyLimit) {
+      _guestMonthlyLimit.value = config.guestMonthlyLimit;
+      if (_guestRecipeCount.value > config.guestMonthlyLimit) {
+        _guestRecipeCount.value = config.guestMonthlyLimit;
         unawaited(
-          _preferences.setInt(_guestCountKey, _guestSearchCount.value),
+          _preferences.setInt(_guestRecipeCountKey, _guestRecipeCount.value),
         );
       }
     }
     if (_guestRecipeLimit.value != config.guestRecipeLimit) {
       _guestRecipeLimit.value = config.guestRecipeLimit;
     }
-    if (_shareDailyLimit.value != config.shareDailyLimit) {
-      _shareDailyLimit.value = config.shareDailyLimit;
-      if (_shareCount.value > config.shareDailyLimit) {
-        _shareCount.value = config.shareDailyLimit;
+    if (_authenticatedMonthlyLimit.value != config.authenticatedMonthlyLimit) {
+      _authenticatedMonthlyLimit.value = config.authenticatedMonthlyLimit;
+      if (_authenticatedRecipeCount.value > config.authenticatedMonthlyLimit) {
+        _authenticatedRecipeCount.value = config.authenticatedMonthlyLimit;
+        unawaited(
+          _preferences.setInt(
+            _authRecipeCountKey,
+            _authenticatedRecipeCount.value,
+          ),
+        );
+      }
+    }
+    if (_shareMonthlyLimit.value != config.shareMonthlyLimit) {
+      _shareMonthlyLimit.value = config.shareMonthlyLimit;
+      if (_shareCount.value > config.shareMonthlyLimit) {
+        _shareCount.value = config.shareMonthlyLimit;
         unawaited(
           _preferences.setInt(_shareCountKey, _shareCount.value),
         );

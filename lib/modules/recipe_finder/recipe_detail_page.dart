@@ -166,11 +166,11 @@ class RecipeDetailPage extends StatelessWidget {
                 );
               } else {
                 shareButton = StreamBuilder<int>(
-                  stream: sessionService.shareDailyLimitStream,
-                  initialData: sessionService.shareDailyLimit,
+                  stream: sessionService.shareMonthlyLimitStream,
+                  initialData: sessionService.shareMonthlyLimit,
                   builder: (context, limitSnapshot) {
                     final limit =
-                        limitSnapshot.data ?? sessionService.shareDailyLimit;
+                        limitSnapshot.data ?? sessionService.shareMonthlyLimit;
                     return StreamBuilder<int>(
                       stream: sessionService.shareCountStream,
                       initialData: sessionService.shareCount,
@@ -183,7 +183,7 @@ class RecipeDetailPage extends StatelessWidget {
                         return IconButton(
                           tooltip: canShare
                               ? 'Compartilhar receita'
-                              : 'Limite diário de compartilhamentos atingido',
+                              : 'Limite mensal de compartilhamentos atingido',
                           icon: const Icon(Icons.ios_share_rounded),
                           onPressed: canShare ? shareRecipe : null,
                         );

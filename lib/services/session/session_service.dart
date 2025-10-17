@@ -3,9 +3,10 @@ import 'package:receitagora/models/user_model.dart';
 enum UserMode { guest, authenticated }
 
 abstract class SessionService {
-  static const int defaultGuestDailyLimit = 2;
+  static const int defaultGuestMonthlyLimit = 10;
   static const int defaultGuestRecipeLimit = 2;
-  static const int defaultShareDailyLimit = 50;
+  static const int defaultAuthenticatedMonthlyLimit = 30;
+  static const int defaultShareMonthlyLimit = 10;
 
   Future<void> get ready;
 
@@ -15,21 +16,26 @@ abstract class SessionService {
   bool get isAuthenticated;
   UserModel? get user;
   bool get hasCompletedProfileSetup;
-  int get guestDailyLimit;
+  int get guestMonthlyLimit;
   int get guestRecipeLimit;
-  int get shareDailyLimit;
-  int get guestSearchCount;
-  int get guestSearchesRemaining;
+  int get authenticatedMonthlyLimit;
+  int get shareMonthlyLimit;
+  int get guestRecipeCount;
+  int get guestRecipesRemaining;
+  int get authenticatedRecipeCount;
+  int get authenticatedRecipesRemaining;
   int get shareCount;
   int get sharesRemaining;
 
   Stream<UserMode?> get modeStream;
   Stream<UserModel?> get userStream;
-  Stream<int> get guestSearchCountStream;
+  Stream<int> get guestRecipeCountStream;
   Stream<int> get shareCountStream;
-  Stream<int> get guestDailyLimitStream;
+  Stream<int> get guestMonthlyLimitStream;
   Stream<int> get guestRecipeLimitStream;
-  Stream<int> get shareDailyLimitStream;
+  Stream<int> get authenticatedRecipeCountStream;
+  Stream<int> get authenticatedMonthlyLimitStream;
+  Stream<int> get shareMonthlyLimitStream;
 
   Future<SessionService> init();
   Future<void> ensureInitialized();
@@ -38,8 +44,10 @@ abstract class SessionService {
   Future<void> clearSession();
   Future<void> updateDisplayName(String displayName);
   Future<void> updateProfile(UserModel user);
-  bool canPerformGuestSearch();
-  Future<void> registerGuestSearch();
+  bool canGenerateGuestRecipes({int forCount = 1});
+  bool canGenerateAuthenticatedRecipes({int forCount = 1});
+  Future<void> registerGuestRecipes(int generatedCount);
+  Future<void> registerAuthenticatedRecipes(int generatedCount);
   bool canShareRecipe();
   Future<void> registerShare();
 }

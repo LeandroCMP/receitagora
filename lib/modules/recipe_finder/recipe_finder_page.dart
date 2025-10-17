@@ -318,10 +318,13 @@ class _DailyLimitNotice extends StatelessWidget {
         );
       }
 
-      final remaining = controller.guestSearchesRemaining.value;
+      final remaining = controller.guestRecipesRemaining.value;
+      final limit = controller.guestMonthlyLimit.value;
+      final upgradeLimit =
+          controller.sessionService.authenticatedMonthlyLimit;
       final helper = remaining > 0
-          ? 'Modo visitante: restam $remaining de ${controller.guestDailyLimit.value} buscas hoje. Cada pesquisa retorna até ${controller.guestRecipeLimit.value} receitas.'
-          : 'Você alcançou o limite diário no modo visitante. Volte amanhã ou faça login para liberar buscas ilimitadas.';
+          ? 'Modo visitante: restam $remaining de $limit receitas neste mês. Cada busca pode retornar até ${controller.guestRecipeLimit.value} receitas. Faça login para desbloquear $upgradeLimit receitas mensais, histórico completo e compartilhamento.'
+          : 'Você atingiu o limite mensal de $limit receitas no modo visitante. Entre com sua conta para liberar $upgradeLimit receitas mensais, compartilhar e salvar suas favoritas.';
 
       return Card(
         child: Container(
@@ -347,12 +350,22 @@ class _DailyLimitNotice extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  helper,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.72),
-                    height: 1.5,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      helper,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.72),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => Get.toNamed(AppRoutes.login),
+                      child: const Text('Fazer login'),
+                    ),
+                  ],
                 ),
               ),
             ],

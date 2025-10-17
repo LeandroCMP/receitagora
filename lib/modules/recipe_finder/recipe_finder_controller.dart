@@ -30,8 +30,8 @@ class RecipeFinderController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = RxnString();
   final isGuest = false.obs;
-  final guestSearchesRemaining = SessionService.defaultGuestDailyLimit.obs;
-  final guestDailyLimit = SessionService.defaultGuestDailyLimit.obs;
+  final guestRecipesRemaining = SessionService.defaultGuestMonthlyLimit.obs;
+  final guestMonthlyLimit = SessionService.defaultGuestMonthlyLimit.obs;
   final guestRecipeLimit = SessionService.defaultGuestRecipeLimit.obs;
   final currentUser = Rxn<UserModel>();
 
@@ -41,7 +41,7 @@ class RecipeFinderController extends GetxController {
   StreamSubscription<UserMode?>? _modeSubscription;
   StreamSubscription<int>? _guestQuotaSubscription;
   StreamSubscription<UserModel?>? _userSubscription;
-  StreamSubscription<int>? _guestDailyLimitSubscription;
+  StreamSubscription<int>? _guestMonthlyLimitSubscription;
   StreamSubscription<int>? _guestRecipeLimitSubscription;
 
   @override
@@ -50,15 +50,15 @@ class RecipeFinderController extends GetxController {
     _syncSessionState();
     _modeSubscription = sessionService.modeStream.listen((_) => _syncSessionState());
     _guestQuotaSubscription =
-        sessionService.guestSearchCountStream.listen((_) => _syncGuestQuota());
+        sessionService.guestRecipeCountStream.listen((_) => _syncGuestQuota());
     _userSubscription = sessionService.userStream.listen((user) {
       currentUser.value = user;
     });
-    guestDailyLimit.value = sessionService.guestDailyLimit;
+    guestMonthlyLimit.value = sessionService.guestMonthlyLimit;
     guestRecipeLimit.value = sessionService.guestRecipeLimit;
-    _guestDailyLimitSubscription =
-        sessionService.guestDailyLimitStream.listen((value) {
-      guestDailyLimit.value = value;
+    _guestMonthlyLimitSubscription =
+        sessionService.guestMonthlyLimitStream.listen((value) {
+      guestMonthlyLimit.value = value;
       _syncGuestQuota();
     });
     _guestRecipeLimitSubscription =
@@ -100,13 +100,29 @@ class RecipeFinderController extends GetxController {
       return;
     }
 
-    if (sessionService.isGuest && !sessionService.canPerformGuestSearch()) {
-      const message =
-          'Você atingiu o limite diário de buscas no modo visitante. O login social estará disponível em breve para liberar buscas ilimitadas.';
+    if (sessionService.isGuest &&
+        !sessionService.canGenerateGuestRecipes()) {
+      final limit = sessionService.guestMonthlyLimit;
+      final upgradeLimit = sessionService.authenticatedMonthlyLimit;
+      final message =
+          'Você atingiu o limite mensal de $limit receitas no modo visitante. Faça login para liberar $upgradeLimit receitas por mês e histórico ampliado.';
       errorMessage.value = message;
       recipes.clear();
       AppSnackbar.info(
-        title: 'Limite diário atingido',
+        title: 'Limite mensal atingido',
+        message: message,
+        duration: const Duration(seconds: 5),
+      );
+      return;
+    } else if (sessionService.isAuthenticated &&
+        !sessionService.canGenerateAuthenticatedRecipes()) {
+      final limit = sessionService.authenticatedMonthlyLimit;
+      final message =
+          'Você atingiu o limite mensal de $limit receitas do plano gratuito. Em breve teremos planos para expandir esse limite.';
+      errorMessage.value = message;
+      recipes.clear();
+      AppSnackbar.info(
+        title: 'Limite mensal atingido',
         message: message,
         duration: const Duration(seconds: 5),
       );
@@ -123,13 +139,32 @@ class RecipeFinderController extends GetxController {
         ingredients: sanitizedIngredients,
         user: sessionService.user,
       );
-      final adjustedResults = sessionService.isGuest
-          ? results.take(sessionService.guestRecipeLimit).toList()
-          : results;
-      recipes.assignAll(adjustedResults);
+      final List<RecipeEntity> adjustedResults;
       if (sessionService.isGuest) {
-        await sessionService.registerGuestSearch();
-        _syncGuestQuota();
+        final available = sessionService.guestRecipesRemaining;
+        final cap = available < sessionService.guestRecipeLimit
+            ? available
+            : sessionService.guestRecipeLimit;
+        adjustedResults =
+            cap > 0 ? results.take(cap).toList() : <RecipeEntity>[];
+      } else {
+        final available = sessionService.authenticatedRecipesRemaining;
+        adjustedResults = available <= 0
+            ? <RecipeEntity>[]
+            : (available < results.length
+                ? results.take(available).toList()
+                : results);
+      }
+
+      recipes.assignAll(adjustedResults);
+      final generatedCount = adjustedResults.length;
+      if (generatedCount > 0) {
+        if (sessionService.isGuest) {
+          await sessionService.registerGuestRecipes(generatedCount);
+          _syncGuestQuota();
+        } else if (sessionService.isAuthenticated) {
+          await sessionService.registerAuthenticatedRecipes(generatedCount);
+        }
       }
 
       if (adjustedResults.isNotEmpty) {
@@ -210,7 +245,7 @@ class RecipeFinderController extends GetxController {
     _modeSubscription?.cancel();
     _guestQuotaSubscription?.cancel();
     _userSubscription?.cancel();
-    _guestDailyLimitSubscription?.cancel();
+    _guestMonthlyLimitSubscription?.cancel();
     _guestRecipeLimitSubscription?.cancel();
     super.onClose();
   }
@@ -222,7 +257,7 @@ class RecipeFinderController extends GetxController {
   }
 
   void _syncGuestQuota() {
-    guestSearchesRemaining.value = sessionService.guestSearchesRemaining;
+    guestRecipesRemaining.value = sessionService.guestRecipesRemaining;
   }
 
   String _buildCacheKey(List<String> ingredients) {
