@@ -45,4 +45,28 @@ Este documento resume as etapas necessárias para ativar o fluxo de assinaturas 
 - **Restaurar compras**: utilize a opção “Restaurar compras” na tela de paywall para testar o fluxo após reinstalação.
 - **Validação automática**: ao concluir a compra, a função `billingVerifyPurchase` grava/atualiza o documento `users/{uid}/billing/plan` com as informações da assinatura.
 
+## 5. Estrutura do documento no Firestore
+
+Para habilitar manualmente um usuário como premium (útil em testes ou suporte), crie ou edite o documento `users/{uid}/billing/plan` seguindo o formato abaixo:
+
+```json
+{
+  "type": "premium",
+  "productId": "premium_monthly",
+  "transactionId": "manual-upgrade",
+  "platform": "manual",
+  "autoRenews": false,
+  "expiresAt": {
+    "_seconds": 1924982400,
+    "_nanoseconds": 0
+  }
+}
+```
+
+- `type`: defina como `"premium"` para liberar imediatamente os limites premium.
+- `productId` e `transactionId`: campos opcionais para rastreio/auditoria.
+- `platform`: string informativa (`"android"`, `"ios"`, `"manual"`, etc.).
+- `autoRenews`: indica se a assinatura está configurada para renovação automática.
+- `expiresAt`: timestamp do Firestore; utilize uma data futura (exemplo acima representa 30 de junho de 2031) ou remova o campo para acesso sem expiração.
+
 Com esses passos o back-end e o front-end ficarão sincronizados garantindo que apenas usuários com assinaturas válidas desfrutem do plano Premium.
