@@ -37,6 +37,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
   static const _shareCountKey = 'session.share.count';
   static const _shareDateKey = 'session.share.date';
   static const _planCacheKey = 'session.plan.cache';
+  static const _testerEmail = 'ins4nehs@gmail.com';
 
   final Completer<void> _readyCompleter;
   bool _isInitializing = false;
@@ -159,6 +160,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
       _ensureShareQuotaFreshness();
       await _initializeUsageConfig();
       if (isAuthenticated && _user.value != null) {
+        await _ensureTesterPremiumAccessIfNeeded(_user.value!);
         await _listenToPlanChanges(_user.value!.id);
       } else {
         await _stopPlanTracking(clearPlan: true);
@@ -197,6 +199,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_guestCountKey);
     await _preferences.remove(_guestDateKey);
     _ensureShareQuotaFreshness();
+    await _ensureTesterPremiumAccessIfNeeded(user);
     await _listenToPlanChanges(user.id);
   }
 
@@ -265,6 +268,10 @@ class SessionServiceImpl extends GetxService implements SessionService {
       return;
     }
 
+    final currentUser = _user.value;
+    if (currentUser != null) {
+      await _ensureTesterPremiumAccessIfNeeded(currentUser);
+    }
     await _listenToPlanChanges(userId);
   }
 
@@ -500,12 +507,21 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   Future<void> _fetchPlanSnapshot(String userId) async {
     try {
-      final doc = await _firestore
+      final docRef = _firestore
           .collection('users')
           .doc(userId)
           .collection('billing')
-          .doc('plan')
-          .get();
+          .doc('plan');
+      final doc = await docRef.get();
+      if (!doc.exists || doc.data() == null) {
+        final currentUser = _user.value;
+        if (currentUser != null) {
+          await _ensureTesterPremiumAccessIfNeeded(currentUser);
+          final refreshed = await docRef.get();
+          _applyPlanSnapshot(refreshed.data());
+          return;
+        }
+      }
       _applyPlanSnapshot(doc.data());
     } on FirebaseException {
       // Ignore transient errors; cached plan remains.
@@ -545,6 +561,66 @@ class SessionServiceImpl extends GetxService implements SessionService {
     if (clearPlan) {
       _plan.value = null;
       await _preferences.remove(_planCacheKey);
+    }
+  }
+
+  Future<void> _ensureTesterPremiumAccessIfNeeded(UserModel user) async {
+    final normalizedEmail = user.email.trim().toLowerCase();
+    if (normalizedEmail != _testerEmail) {
+      return;
+    }
+
+    final docRef = _firestore
+        .collection('users')
+        .doc(user.id)
+        .collection('billing')
+        .doc('plan');
+
+    try {
+      final snapshot = await docRef.get();
+      SubscriptionPlan? currentPlan;
+      final data = snapshot.data();
+      if (data != null) {
+        try {
+          currentPlan = SubscriptionPlan.fromMap(data);
+        } catch (_) {
+          currentPlan = null;
+        }
+      }
+
+      if (currentPlan != null && currentPlan.isPremium) {
+        return;
+      }
+
+      final now = DateTime.now();
+      final expiresAt = now.add(const Duration(days: 365));
+
+      final payload = <String, dynamic>{
+        'type': SubscriptionPlanType.premium.name,
+        'platform': 'tester',
+        'status': 'active',
+        'autoRenews': false,
+        'productId': 'premium_tester',
+        'priceId': 'premium_tester_monthly',
+        'transactionId': 'tester-${now.millisecondsSinceEpoch}',
+        'interval': 'month',
+        'amount': 2000,
+        'currency': 'BRL',
+        'subscriptionId': 'tester-${user.id}',
+        'customerId': user.id,
+        'cancelAtPeriodEnd': false,
+        'expiresAt': expiresAt.toIso8601String(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      final createdAt = data?['createdAt'];
+      if (createdAt == null) {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+      }
+
+      await docRef.set(payload, SetOptions(merge: true));
+    } on FirebaseException {
+      // Ignore promotion failures; tester can be retried later.
     }
   }
 
