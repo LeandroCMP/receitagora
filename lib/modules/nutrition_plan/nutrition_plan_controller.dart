@@ -12,6 +12,8 @@ import 'package:receitagora/models/nutrition/diet_profile.dart';
 import 'package:receitagora/services/nutrition/nutrition_plan_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
+enum _GeneratePlanDecision { keep, edit }
+
 class NutritionPlanController extends GetxController {
   NutritionPlanController({
     required this.service,
@@ -38,6 +40,7 @@ class NutritionPlanController extends GetxController {
   final RxBool isGenerating = false.obs;
   final RxBool isRecording = false.obs;
   final Rxn<NutritionPlan> currentPlan = Rxn<NutritionPlan>();
+  final RxBool isFormLocked = false.obs;
 
   StreamSubscription<NutritionPlan?>? _planSubscription;
 
@@ -73,6 +76,55 @@ class NutritionPlanController extends GetxController {
 
   String get intervalLabel => interval.value.label;
   String get cookingStyleLabel => cookingStyle.value.label;
+
+  bool get isPlanExpired => currentPlan.value?.isCheckInOverdue ?? false;
+
+  Future<void> onGenerateButtonPressed() async {
+    if (isGenerating.value) {
+      return;
+    }
+
+    final hasActivePlan = hasPlan && !isPlanExpired;
+    if (hasActivePlan && isFormLocked.value) {
+      final choice = await Get.dialog<_GeneratePlanDecision>(
+        AlertDialog(
+          title: const Text('Atualizar cardápio'),
+          content: const Text(
+            'Você deseja gerar um novo cardápio mantendo os dados atuais ou prefere atualizar suas informações primeiro?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Get.back(result: _GeneratePlanDecision.edit),
+              child: const Text('Editar informações'),
+            ),
+            FilledButton(
+              onPressed: () => Get.back(result: _GeneratePlanDecision.keep),
+              child: const Text('Manter dados'),
+            ),
+          ],
+        ),
+      );
+
+      if (choice == null) {
+        return;
+      }
+
+      if (choice == _GeneratePlanDecision.edit) {
+        isFormLocked.value = false;
+        AppSnackbar.info(
+          title: 'Edite seus dados',
+          message: 'Atualize as informações desejadas e gere o novo cardápio quando finalizar.',
+        );
+        return;
+      }
+    }
+
+    await generatePlan();
+  }
 
   Future<void> generatePlan() async {
     final height = _parseDouble(heightController.text.trim());
@@ -116,7 +168,7 @@ class NutritionPlanController extends GetxController {
     AppLoading.show();
     try {
       final plan = await service.generatePlan(profile);
-      currentPlan.value = plan;
+      _applyPlan(plan);
       AppSnackbar.success(
         title: 'Plano atualizado',
         message: 'Seu cardápio premium foi gerado com base nas informações informadas.',
@@ -155,7 +207,7 @@ class NutritionPlanController extends GetxController {
     AppLoading.show();
     try {
       final plan = await service.regeneratePlan();
-      currentPlan.value = plan;
+      _applyPlan(plan);
       AppSnackbar.success(
         title: 'Nova variação pronta',
         message: 'Geramos um novo cardápio com combinações diferentes mantendo seu objetivo atual.',
@@ -194,7 +246,7 @@ class NutritionPlanController extends GetxController {
     AppLoading.show();
     try {
       final plan = await service.recordWeighIn(value);
-      currentPlan.value = plan;
+      _applyPlan(plan);
       checkInController.clear();
       final message = plan.needsAdjustment
           ? 'Seu peso não evoluiu como esperado. Ajustaremos o próximo cardápio para buscar resultados melhores.'
@@ -243,8 +295,11 @@ class NutritionPlanController extends GetxController {
   void _applyPlan(NutritionPlan? plan) {
     currentPlan.value = plan;
     if (plan == null) {
+      isFormLocked.value = false;
       return;
     }
+
+    isFormLocked.value = !plan.isCheckInOverdue;
 
     final profile = plan.profile;
     heightController.text = profile.heightCm.toStringAsFixed(1);
