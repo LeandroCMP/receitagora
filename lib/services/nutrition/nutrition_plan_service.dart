@@ -273,8 +273,13 @@ class NutritionPlanService extends GetxService {
     buffer.writeln('      "focus": "string",');
     buffer.writeln('      "meals": [');
     buffer.writeln(
-        '        {"name": "Refeição", "description": "string", "calories": number, "macroFocus": "string", "prepNotes": "string",');
-    buffer.writeln('         "ingredients": ["string"...], "steps": ["string"...], "difficulty": "string", "duration": "string"}');
+        '        {"name": "Café da manhã", "description": "string", "calories": number, "macroFocus": "string", "prepNotes": "string", "ingredients": ["string"...], "steps": ["string"...], "difficulty": "string", "duration": "string"},');
+    buffer.writeln(
+        '        {"name": "Lanche da manhã", "description": "string", "calories": number, "macroFocus": "string", "prepNotes": "string", "ingredients": ["string"...], "steps": ["string"...], "difficulty": "string", "duration": "string"},');
+    buffer.writeln(
+        '        {"name": "Almoço", "description": "string", "calories": number, "macroFocus": "string", "prepNotes": "string", "ingredients": ["string"...], "steps": ["string"...], "difficulty": "string", "duration": "string"},');
+    buffer.writeln(
+        '        {"name": "Jantar", "description": "string", "calories": number, "macroFocus": "string", "prepNotes": "string", "ingredients": ["string"...], "steps": ["string"...], "difficulty": "string", "duration": "string"}');
     buffer.writeln('      ]');
     buffer.writeln('    }');
     buffer.writeln('  ],');
@@ -284,8 +289,9 @@ class NutritionPlanService extends GetxService {
     buffer.writeln('  "followUpTips": ["string"...]');
     buffer.writeln('}');
     buffer.writeln('Utilize alimentos acessíveis no Brasil, com combinações sazonais quando aplicável e versões possíveis de congelar quando o usuário optar por produzir em lote.');
+    buffer.writeln('Garanta que cada dia contenha pelo menos quatro refeições distintas (café da manhã, almoço, jantar e um lanche ou ceia) e inclua lanches extras somente se estiverem no mesmo formato JSON.');
     buffer.writeln('Inclua variações de café da manhã, almoço, jantar e lanches coerentes com o objetivo ${profile.goal.promptKeyword}.');
-    buffer.writeln('Forneça ingredientes detalhados e um modo de preparo passo a passo claro para cada refeição, com duração média e nível de dificuldade compatíveis com o perfil informado.');
+    buffer.writeln('Para cada refeição forneça ingredientes detalhados e um modo de preparo passo a passo claro, com duração média e nível de dificuldade compatíveis com o perfil informado.');
 
     return buffer.toString();
   }

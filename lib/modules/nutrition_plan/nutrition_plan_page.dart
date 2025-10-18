@@ -689,64 +689,13 @@ class _PlanMealTile extends StatelessWidget {
             children: metadata,
           ),
         ],
-        if (meal.ingredients.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Ingredientes',
-            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6),
-          ...meal.ingredients.map(
-            (ingredient) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('• ', style: theme.textTheme.bodyMedium),
-                  Expanded(
-                    child: Text(
-                      ingredient,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-        if (meal.steps.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Modo de preparo',
-            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 6),
-          ...List<Widget>.generate(meal.steps.length, (index) {
-            final step = meal.steps[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('${index + 1}. ', style: theme.textTheme.bodyMedium),
-                  Expanded(
-                    child: Text(
-                      step,
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
         const SizedBox(height: 12),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
             onPressed: () => _openRecipe(day, meal),
             icon: const Icon(Icons.menu_book_outlined),
-            label: const Text('Ver passo a passo completo'),
+            label: const Text('Ver ingredientes e preparo completos'),
           ),
         ),
       ],
