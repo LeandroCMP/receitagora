@@ -1,4 +1,4 @@
-# Keep Stripe push provisioning classes that are referenced via reflection
+# Keep Stripe push provisioning classes shipped in stripe-android-issuing-push-provisioning
 -keep class com.stripe.android.pushProvisioning.** { *; }
 -dontwarn com.stripe.android.pushProvisioning.**
 

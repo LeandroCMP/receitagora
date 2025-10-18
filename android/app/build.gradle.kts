@@ -57,5 +57,5 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-analytics-ktx")
     // Add additional Firebase dependencies here as needed, they will inherit the BoM version.
-    implementation("com.stripe:stripe-android-push-provisioning:21.6.0")
+    implementation("com.stripe:stripe-android-issuing-push-provisioning:1.1.0")
 }
