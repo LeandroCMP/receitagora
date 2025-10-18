@@ -392,7 +392,7 @@ class _ResponsiveFieldRow extends StatelessWidget {
           return Column(
             children: [
               for (int i = 0; i < children.length; i++) ...[
-                children[i].build(context),
+                children[i],
                 if (i != children.length - 1) const SizedBox(height: 16),
               ],
             ],
@@ -418,8 +418,8 @@ class _ResponsiveFieldRow extends StatelessWidget {
   }
 }
 
-abstract class _FormRowChild {
-  Widget build(BuildContext context);
+abstract class _FormRowChild extends StatelessWidget {
+  const _FormRowChild({super.key});
 }
 
 class _TextFieldItem extends _FormRowChild {
