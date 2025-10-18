@@ -166,6 +166,196 @@ class _PlanArea extends StatelessWidget {
   }
 }
 
+class _WeightHistoryCard extends StatelessWidget {
+  const _WeightHistoryCard({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final history = plan.weightHistory.toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    final startingWeight = plan.startingWeightKg;
+    final latestWeight = plan.lastWeighInKg;
+    final delta = latestWeight - startingWeight;
+
+    String _formatWeight(double value) {
+      final normalized = value.abs() < 0.05 ? 0.0 : value;
+      final formatted = normalized.toStringAsFixed(1).replaceAll('.', ',');
+      return '$formatted kg';
+    }
+
+    String _formatDate(DateTime date) =>
+        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+    Widget _buildMetric(String label, String value, {Color? color}) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: color ?? theme.colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      );
+    }
+
+    String deltaLabel;
+    Color deltaColor;
+    if (delta.abs() < 0.05) {
+      deltaLabel = 'Sem variação relevante';
+      deltaColor = theme.colorScheme.onSurface.withOpacity(0.6);
+    } else {
+      final prefix = delta > 0 ? '+' : '-';
+      deltaLabel = '$prefix${delta.abs().toStringAsFixed(1).replaceAll('.', ',')} kg';
+      deltaColor = delta > 0
+          ? theme.colorScheme.error
+          : theme.colorScheme.primary;
+    }
+
+    return _PlanSectionCard(
+      title: 'Histórico de peso',
+      description: history.isEmpty
+          ? 'Registre o peso ao final de cada ciclo para acompanhar a evolução.'
+          : 'Acompanhe os registros anteriores para entender a evolução do plano.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final metrics = <Widget>[
+                _buildMetric('Peso inicial', _formatWeight(startingWeight)),
+                _buildMetric('Último peso', _formatWeight(latestWeight)),
+                _buildMetric('Variação total', deltaLabel, color: deltaColor),
+              ];
+
+              if (constraints.maxWidth < 520) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < metrics.length; i++) ...[
+                      metrics[i],
+                      if (i < metrics.length - 1) const SizedBox(height: 12),
+                    ],
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: metrics[0]),
+                  const SizedBox(width: 12),
+                  Expanded(child: metrics[1]),
+                  const SizedBox(width: 12),
+                  Expanded(child: metrics[2]),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+          if (history.isEmpty)
+            Text(
+              'Ainda não há registros de peso para este plano.',
+              style: theme.textTheme.bodyMedium,
+            )
+          else
+            Column(
+              children: [
+                for (var i = 0; i < history.length; i++)
+                  _WeightHistoryTile(
+                    entry: history[i],
+                    previous: i + 1 < history.length ? history[i + 1] : null,
+                    formatDate: _formatDate,
+                    formatWeight: _formatWeight,
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeightHistoryTile extends StatelessWidget {
+  const _WeightHistoryTile({
+    required this.entry,
+    this.previous,
+    required this.formatDate,
+    required this.formatWeight,
+  });
+
+  final WeightEntry entry;
+  final WeightEntry? previous;
+  final String Function(DateTime date) formatDate;
+  final String Function(double weight) formatWeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final difference = previous != null ? entry.weightKg - previous!.weightKg : 0;
+    final hasDifference = previous != null && difference.abs() >= 0.05;
+
+    Color? diffColor;
+    String? diffLabel;
+    if (hasDifference) {
+      final prefix = difference > 0 ? '+' : '-';
+      diffLabel = '$prefix${difference.abs().toStringAsFixed(1).replaceAll('.', ',')} kg';
+      diffColor = difference > 0
+          ? theme.colorScheme.error
+          : theme.colorScheme.primary;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.fitness_center, color: theme.colorScheme.primary.withOpacity(0.8)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  formatDate(entry.date),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Peso registrado: ${formatWeight(entry.weightKg)}',
+                  style: theme.textTheme.bodySmall,
+                ),
+                if (diffLabel != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'Variação desde o registro anterior: $diffLabel',
+                      style: theme.textTheme.bodySmall?.copyWith(color: diffColor),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _PlanStatusCard extends StatelessWidget {
   const _PlanStatusCard({required this.plan});
 
