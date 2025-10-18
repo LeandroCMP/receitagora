@@ -334,9 +334,22 @@ class WeightEntry {
         return DateTime.fromMillisecondsSinceEpoch(value);
       }
       if (value is Map<String, dynamic>) {
-        final seconds = value['seconds'];
-        final nanoseconds = value['nanoseconds'] ?? 0;
-        if (seconds is int) {
+        int? _readInt(dynamic input) {
+          if (input is int) {
+            return input;
+          }
+          if (input is num) {
+            return input.toInt();
+          }
+          if (input is String) {
+            return int.tryParse(input);
+          }
+          return null;
+        }
+
+        final seconds = _readInt(value['seconds']);
+        final nanoseconds = _readInt(value['nanoseconds']) ?? 0;
+        if (seconds != null) {
           return DateTime.fromMillisecondsSinceEpoch(
             seconds * 1000 + (nanoseconds ~/ 1000000),
           );
@@ -439,9 +452,22 @@ class NutritionPlan {
         return DateTime.fromMillisecondsSinceEpoch(value);
       }
       if (value is Map<String, dynamic>) {
-        final seconds = value['seconds'];
-        final nanoseconds = value['nanoseconds'] ?? 0;
-        if (seconds is int) {
+        int? _readInt(dynamic input) {
+          if (input is int) {
+            return input;
+          }
+          if (input is num) {
+            return input.toInt();
+          }
+          if (input is String) {
+            return int.tryParse(input);
+          }
+          return null;
+        }
+
+        final seconds = _readInt(value['seconds']);
+        final nanoseconds = _readInt(value['nanoseconds']) ?? 0;
+        if (seconds != null) {
           return DateTime.fromMillisecondsSinceEpoch(
             seconds * 1000 + (nanoseconds ~/ 1000000),
           );
