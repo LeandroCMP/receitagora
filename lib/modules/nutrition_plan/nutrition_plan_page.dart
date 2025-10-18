@@ -35,70 +35,127 @@ class NutritionPlanPage extends GetView<NutritionPlanController> {
           ),
         ),
         child: SafeArea(
-          child: Obx(
-            () {
-              final plan = controller.currentPlan.value;
-              final isGenerating = controller.isGenerating.value;
-              final isRecording = controller.isRecording.value;
-              return SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Chef nutricional da Receita Agora',
-                      style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 1024;
+              return Obx(
+                () {
+                  final plan = controller.currentPlan.value;
+                  final isGenerating = controller.isGenerating.value;
+                  final isRecording = controller.isRecording.value;
+
+                  final form = _ProfileForm(controller: controller);
+
+                  final planView = _PlanArea(
+                    controller: controller,
+                    plan: plan,
+                    isGenerating: isGenerating,
+                    isRecording: isRecording,
+                  );
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Chef nutricional da Receita Agora',
+                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Preencha o questionário para receber um cardápio equilibrado com metas calóricas, macros e lista de '
+                          'compras automática. Registre o peso ao final de cada ciclo para que a estratégia seja ajustada.',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.75),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        if (isWide)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(flex: 5, child: form),
+                              const SizedBox(width: 32),
+                              Expanded(flex: 4, child: planView),
+                            ],
+                          )
+                        else ...[
+                          form,
+                          const SizedBox(height: 24),
+                          planView,
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Responda o questionário premium para que a IA monte um cardápio equilibrado com metas calóricas, macros e lista de compras. '
-                      'Depois registre o peso para ajustarmos a estratégia.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.75),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    _ProfileForm(controller: controller),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: isGenerating ? null : controller.generatePlan,
-                      icon: isGenerating
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2.5),
-                            )
-                          : const Icon(Icons.dining_outlined),
-                      label: Text(isGenerating ? 'Gerando plano...' : 'Gerar cardápio personalizado'),
-                    ),
-                    const SizedBox(height: 32),
-                    if (plan == null) ...[
-                      _EmptyPlanState(theme: theme),
-                    ] else ...[
-                      _PlanStatusCard(plan: plan),
-                      const SizedBox(height: 20),
-                      _MacroSummaryCard(plan: plan.plan),
-                      const SizedBox(height: 20),
-                      _PlanDaysView(plan: plan.plan),
-                      const SizedBox(height: 20),
-                      _ShoppingListCard(plan: plan.plan),
-                      const SizedBox(height: 20),
-                      _FollowUpCard(plan: plan.plan),
-                      const SizedBox(height: 20),
-                      _CheckInCard(
-                        controller: controller,
-                        plan: plan,
-                        isRecording: isRecording,
-                      ),
-                    ],
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PlanArea extends StatelessWidget {
+  const _PlanArea({
+    required this.controller,
+    required this.plan,
+    required this.isGenerating,
+    required this.isRecording,
+  });
+
+  final NutritionPlanController controller;
+  final NutritionPlan? plan;
+  final bool isGenerating;
+  final bool isRecording;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: isGenerating ? null : controller.generatePlan,
+            icon: isGenerating
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  )
+                : const Icon(Icons.dining_outlined),
+            label: Text(isGenerating ? 'Gerando plano...' : 'Gerar cardápio personalizado'),
+          ),
+        ),
+        const SizedBox(height: 24),
+        if (plan == null)
+          _PlanSectionCard(
+            title: 'Resultado do cardápio',
+            child: _EmptyPlanState(theme: theme),
+          )
+        else ...[
+          _PlanStatusCard(plan: plan!),
+          const SizedBox(height: 16),
+          _MacroSummaryCard(plan: plan!.plan),
+          const SizedBox(height: 16),
+          _PlanDaysView(plan: plan!.plan),
+          const SizedBox(height: 16),
+          _ShoppingListCard(plan: plan!.plan),
+          const SizedBox(height: 16),
+          if (plan!.plan.followUpTips.isNotEmpty) _FollowUpCard(plan: plan!.plan),
+          const SizedBox(height: 16),
+          _CheckInCard(
+            controller: controller,
+            plan: plan!,
+            isRecording: isRecording,
+          ),
+        ],
+      ],
     );
   }
 }
@@ -111,152 +168,135 @@ class _ProfileForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Seu perfil metabólico',
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 24),
-            Row(
+    return _PlanSectionCard(
+      title: 'Seu perfil metabólico',
+      description:
+          'Responda de forma sincera para que a IA calcule metas realistas e mantenha o cardápio adaptado ao seu ritmo.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _ResponsiveFieldRow(
+            children: [
+              _TextFieldItem(
+                controller: controller.heightController,
+                label: 'Altura (cm)',
+                hint: 'Ex.: 172',
+              ),
+              _TextFieldItem(
+                controller: controller.weightController,
+                label: 'Peso atual (kg)',
+                hint: 'Ex.: 78.5',
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _ChoiceSection<DietActivityLevel>(
+            title: 'Rotina de exercícios',
+            description: 'Conte para a IA com que frequência você se exercita.',
+            options: DietActivityLevel.values,
+            selected: controller.activityLevel,
+            labelBuilder: (level) => level.label,
+            onSelected: controller.setActivityLevel,
+          ),
+          const SizedBox(height: 20),
+          Obx(
+            () => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: controller.heightController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Altura (cm)',
-                      hintText: 'Ex.: 172',
-                    ),
+                Text(
+                  'Facilidade para emagrecer',
+                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Avalie seu metabolismo: 0 (muito difícil perder peso) a 5 (metabolismo acelerado).',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextField(
-                    controller: controller.weightController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Peso atual (kg)',
-                      hintText: 'Ex.: 78.5',
-                    ),
-                  ),
+                Slider(
+                  value: controller.metabolicEase.value,
+                  min: 0,
+                  max: 5,
+                  divisions: 5,
+                  label: controller.metabolicEase.value.round().toString(),
+                  onChanged: (value) => controller.metabolicEase.value = value,
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            _ChoiceSection<DietActivityLevel>(
-              title: 'Rotina de exercícios',
-              description: 'Conte para a IA com que frequência você se exercita.',
-              options: DietActivityLevel.values,
-              selected: controller.activityLevel,
-              labelBuilder: (level) => level.label,
-              onSelected: controller.setActivityLevel,
-            ),
-            const SizedBox(height: 16),
-            Obx(
-              () => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Facilidade para emagrecer',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Avalie seu metabolismo em uma escala de 0 (muito difícil perder peso) a 5 (metabolismo acelerado).',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+          const SizedBox(height: 20),
+          _ChoiceSection<DietGoal>(
+            title: 'Objetivo principal',
+            description: 'O cardápio será calibrado para este foco.',
+            options: DietGoal.values,
+            selected: controller.goal,
+            labelBuilder: (goal) => goal.label,
+            onSelected: controller.setGoal,
+          ),
+          const SizedBox(height: 20),
+          _ChoiceSection<DietPlanInterval>(
+            title: 'Frequência do plano',
+            description: 'Prefere cardápio semanal ou mensal?',
+            options: DietPlanInterval.values,
+            selected: controller.interval,
+            labelBuilder: (value) => value.label,
+            onSelected: controller.setInterval,
+          ),
+          const SizedBox(height: 20),
+          _ChoiceSection<DietCookingStyle>(
+            title: 'Modo de preparo',
+            description: 'Defina se cozinha diariamente ou prefere preparar e congelar.',
+            options: DietCookingStyle.values,
+            selected: controller.cookingStyle,
+            labelBuilder: (value) => value.label,
+            onSelected: controller.setCookingStyle,
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile.adaptive(
+            value: controller.prefersBrazilianCuisine.value,
+            onChanged: controller.toggleBrazilianCuisine,
+            title: const Text('Priorizar sabores brasileiros'),
+            subtitle: const Text('Ative para privilegiar temperos e preparos nacionais.'),
+          ),
+          SwitchListTile.adaptive(
+            value: controller.prefersSeasonalProduce.value,
+            onChanged: controller.toggleSeasonalProduce,
+            title: const Text('Usar ingredientes sazonais'),
+            subtitle: const Text('Sugestões alinhadas à safra para economizar e ganhar sabor.'),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Frequência de lanches',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: NutritionPlanController.snackOptions
+                .map(
+                  (option) => Obx(
+                    () => ChoiceChip(
+                      label: Text(option),
+                      selected: controller.snackFrequency.value == option,
+                      onSelected: (_) => controller.setSnackFrequency(option),
                     ),
                   ),
-                  Slider(
-                    value: controller.metabolicEase.value,
-                    min: 0,
-                    max: 5,
-                    divisions: 5,
-                    label: controller.metabolicEase.value.round().toString(),
-                    onChanged: (value) => controller.metabolicEase.value = value,
-                  ),
-                ],
-              ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            controller: controller.notesController,
+            maxLines: 4,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Observações adicionais',
+              hintText: 'Restrições médicas, utensílios disponíveis, preferências familiares...',
             ),
-            const SizedBox(height: 16),
-            _ChoiceSection<DietGoal>(
-              title: 'Objetivo principal',
-              description: 'O cardápio será calibrado para este foco.',
-              options: DietGoal.values,
-              selected: controller.goal,
-              labelBuilder: (goal) => goal.label,
-              onSelected: controller.setGoal,
-            ),
-            const SizedBox(height: 16),
-            _ChoiceSection<DietPlanInterval>(
-              title: 'Frequência do plano',
-              description: 'Escolha se deseja um menu semanal ou mensal.',
-              options: DietPlanInterval.values,
-              selected: controller.interval,
-              labelBuilder: (value) => value.label,
-              onSelected: controller.setInterval,
-            ),
-            const SizedBox(height: 16),
-            _ChoiceSection<DietCookingStyle>(
-              title: 'Modo de preparo',
-              description: 'Defina se você cozinha diariamente ou prefere produzir e congelar.',
-              options: DietCookingStyle.values,
-              selected: controller.cookingStyle,
-              labelBuilder: (value) => value.label,
-              onSelected: controller.setCookingStyle,
-            ),
-            const SizedBox(height: 16),
-            SwitchListTile.adaptive(
-              value: controller.prefersBrazilianCuisine.value,
-              onChanged: controller.toggleBrazilianCuisine,
-              title: const Text('Priorizar sabores brasileiros'),
-              subtitle: const Text('Ative para privilegiar temperos e preparos nacionais.'),
-            ),
-            SwitchListTile.adaptive(
-              value: controller.prefersSeasonalProduce.value,
-              onChanged: controller.toggleSeasonalProduce,
-              title: const Text('Usar ingredientes sazonais'),
-              subtitle: const Text('Sugestões alinhadas à safra para economizar e ganhar sabor.'),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Frequência de lanches',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: NutritionPlanController.snackOptions
-                  .map(
-                    (option) => Obx(
-                      () => ChoiceChip(
-                        label: Text(option),
-                        selected: controller.snackFrequency.value == option,
-                        onSelected: (_) => controller.setSnackFrequency(option),
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller.notesController,
-              maxLines: 4,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: 'Observações adicionais',
-                hintText: 'Restrições médicas, utensílios disponíveis, preferências familiares...',
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -327,54 +367,44 @@ class _PlanStatusCard extends StatelessWidget {
     final theme = Theme.of(context);
     final nextCheckIn = plan.nextCheckInAt;
     final dateLabel = '${nextCheckIn.day.toString().padLeft(2, '0')}/${nextCheckIn.month.toString().padLeft(2, '0')}/${nextCheckIn.year}';
-    final statusColor = plan.needsAdjustment
-        ? theme.colorScheme.error
-        : theme.colorScheme.primary;
+    final statusColor = plan.needsAdjustment ? theme.colorScheme.error : theme.colorScheme.primary;
     final statusText = plan.needsAdjustment
         ? 'Vamos ajustar o plano na próxima rodada para acelerar resultados.'
         : 'Continue seguindo o cardápio atual; os resultados estão no caminho certo.';
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Situação do plano',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.timeline_outlined, color: statusColor),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    statusText,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: statusColor,
-                      fontWeight: FontWeight.w600,
-                    ),
+    return _PlanSectionCard(
+      title: 'Situação do plano',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.timeline_outlined, color: statusColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  statusText,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: statusColor,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Próximo check-in: $dateLabel',
-              style: theme.textTheme.bodyMedium,
-            ),
-            Text(
-              'Peso inicial: ${plan.startingWeightKg.toStringAsFixed(1)} kg · Último registro: ${plan.lastWeighInKg.toStringAsFixed(1)} kg',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Próximo check-in: $dateLabel',
+            style: theme.textTheme.bodyMedium,
+          ),
+          Text(
+            'Peso inicial: ${plan.startingWeightKg.toStringAsFixed(1)} kg · Último registro: ${plan.lastWeighInKg.toStringAsFixed(1)} kg',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -388,58 +418,46 @@ class _MacroSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Metas diárias',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _MacroChip(
-                  label: 'Calorias',
-                  value: '${plan.targets.caloriesPerDay} kcal',
-                  color: theme.colorScheme.primary,
-                ),
-                _MacroChip(
-                  label: 'Carboidratos',
-                  value: '${plan.targets.carbsPercentage.toStringAsFixed(0)}%',
-                  color: Colors.orangeAccent,
-                ),
-                _MacroChip(
-                  label: 'Proteínas',
-                  value: '${plan.targets.proteinPercentage.toStringAsFixed(0)}%',
-                  color: Colors.green,
-                ),
-                _MacroChip(
-                  label: 'Gorduras',
-                  value: '${plan.targets.fatPercentage.toStringAsFixed(0)}%',
-                  color: Colors.purpleAccent,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              plan.strategy,
-              style: theme.textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              plan.hydrationGoal,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+    return _PlanSectionCard(
+      title: 'Metas diárias',
+      description: plan.strategy,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              _MacroChip(
+                label: 'Calorias',
+                value: '${plan.targets.caloriesPerDay} kcal',
+                color: theme.colorScheme.primary,
               ),
+              _MacroChip(
+                label: 'Carboidratos',
+                value: '${plan.targets.carbsPercentage.toStringAsFixed(0)}%',
+                color: Colors.orangeAccent,
+              ),
+              _MacroChip(
+                label: 'Proteínas',
+                value: '${plan.targets.proteinPercentage.toStringAsFixed(0)}%',
+                color: Colors.green,
+              ),
+              _MacroChip(
+                label: 'Gorduras',
+                value: '${plan.targets.fatPercentage.toStringAsFixed(0)}%',
+                color: Colors.purpleAccent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            plan.hydrationGoal,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -459,22 +477,31 @@ class _MacroChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 22,
-          backgroundColor: color.withOpacity(0.15),
-          child: Icon(Icons.local_dining, color: color),
-        ),
-        const SizedBox(height: 8),
-        Text(value, style: theme.textTheme.titleMedium),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(minWidth: 120),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: color.withOpacity(0.08),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.local_dining, color: color),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, color: color),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -487,22 +514,14 @@ class _PlanDaysView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Agenda de refeições',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            ...plan.days.map((day) => _PlanDayTile(day: day)).toList(),
-          ],
-        ),
+    return _PlanSectionCard(
+      title: 'Agenda de refeições',
+      child: Column(
+        children: plan.days
+            .map(
+              (day) => _PlanDayTile(day: day),
+            )
+            .toList(),
       ),
     );
   }
@@ -522,41 +541,61 @@ class _PlanDayTile extends StatelessWidget {
       elevation: 0,
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        title: Text(day.label, style: theme.textTheme.titleMedium),
-        subtitle: Text(day.focus,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.7))),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        title: Text(day.label, style: theme.textTheme.titleMedium),
+        subtitle: Text(
+          day.focus,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
         children: day.meals
             .map(
-              (meal) => ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.restaurant_menu,
-                    color: theme.colorScheme.primary.withOpacity(0.8)),
-                title: Text(meal.name),
-                subtitle: Column(
+              (meal) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(meal.description),
-                    if (meal.macroFocus != null && meal.macroFocus!.isNotEmpty)
-                      Text(
-                        meal.macroFocus!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.65),
-                        ),
+                    Icon(Icons.restaurant_menu, color: theme.colorScheme.primary.withOpacity(0.8)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            meal.name,
+                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(meal.description),
+                          if (meal.macroFocus != null && meal.macroFocus!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              meal.macroFocus!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                              ),
+                            ),
+                          ],
+                          if (meal.prepNotes != null && meal.prepNotes!.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Dica: ${meal.prepNotes!}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    if (meal.prepNotes != null && meal.prepNotes!.isNotEmpty)
+                    ),
+                    if (meal.calories != null)
                       Text(
-                        'Dica: ${meal.prepNotes!}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
+                        '${meal.calories} kcal',
+                        style: theme.textTheme.bodySmall,
                       ),
                   ],
                 ),
-                trailing: meal.calories != null
-                    ? Text('${meal.calories} kcal')
-                    : null,
               ),
             )
             .toList(),
@@ -573,38 +612,28 @@ class _ShoppingListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Lista de compras inteligente',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            if (plan.shoppingList.isEmpty)
-              Text(
-                'A IA não gerou itens de compras desta vez. Gere o plano novamente para obter uma lista atualizada.',
-                style: theme.textTheme.bodyMedium,
-              )
-            else
-              ...plan.shoppingList
-                  .map(
-                    (item) => ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(Icons.check_circle_outline,
-                          color: theme.colorScheme.secondary),
-                      title: Text('${item.item} · ${item.quantity}'),
-                      subtitle: Text('${item.category}${item.notes != null && item.notes!.isNotEmpty ? ' · ${item.notes}' : ''}'),
+    return _PlanSectionCard(
+      title: 'Lista de compras inteligente',
+      child: Column(
+        children: plan.shoppingList.isEmpty
+            ? [
+                Text(
+                  'A IA não gerou itens de compras desta vez. Gere o plano novamente para obter uma lista atualizada.',
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ]
+            : plan.shoppingList
+                .map(
+                  (item) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.check_circle_outline, color: theme.colorScheme.secondary),
+                    title: Text('${item.item} · ${item.quantity}'),
+                    subtitle: Text(
+                      '${item.category}${item.notes != null && item.notes!.isNotEmpty ? ' · ${item.notes}' : ''}',
                     ),
-                  )
-                  .toList(),
-          ],
-        ),
+                  ),
+                )
+                .toList(),
       ),
     );
   }
@@ -618,40 +647,25 @@ class _FollowUpCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    if (plan.followUpTips.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Orientações para a próxima semana',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            ...plan.followUpTips
-                .map(
-                  (tip) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(Icons.lightbulb_outline,
-                            color: theme.colorScheme.primary),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text(tip)),
-                      ],
-                    ),
-                  ),
-                )
-                .toList(),
-          ],
-        ),
+    return _PlanSectionCard(
+      title: 'Orientações para a próxima semana',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: plan.followUpTips
+            .map(
+              (tip) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.lightbulb_outline, color: theme.colorScheme.primary),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(tip)),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
       ),
     );
   }
@@ -671,6 +685,55 @@ class _CheckInCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    return _PlanSectionCard(
+      title: 'Registrar peso do ciclo',
+      description:
+          'No último dia da semana ou do mês informe o peso atualizado para que o algoritmo avalie os resultados e ajuste o cardápio.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Próximo registro sugerido: ${plan.nextCheckInAt.day.toString().padLeft(2, '0')}/${plan.nextCheckInAt.month.toString().padLeft(2, '0')}/${plan.nextCheckInAt.year}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _ResponsiveFieldRow(
+            children: [
+              _TextFieldItem(
+                controller: controller.checkInController,
+                label: 'Peso atual (kg)',
+                hint: 'Ex.: 77.2',
+              ),
+              _ButtonItem(
+                label: isRecording ? 'Registrando...' : 'Registrar peso',
+                icon: Icons.published_with_changes,
+                isLoading: isRecording,
+                onPressed: isRecording ? null : controller.recordWeighIn,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlanSectionCard extends StatelessWidget {
+  const _PlanSectionCard({
+    this.title,
+    this.description,
+    required this.child,
+  });
+
+  final String? title;
+  final String? description;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       elevation: 0,
@@ -679,46 +742,125 @@ class _CheckInCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Registrar peso da semana/mês',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No último dia do ciclo informe o peso atualizado para que o algoritmo avalie os resultados.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+            if (title != null) ...[
+              Text(
+                title!,
+                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: controller.checkInController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(
-                      labelText: 'Peso atual (kg)',
-                      hintText: 'Ex.: 77.2',
-                    ),
-                  ),
+              const SizedBox(height: 12),
+            ],
+            if (description != null) ...[
+              Text(
+                description!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
-                const SizedBox(width: 16),
-                ElevatedButton.icon(
-                  onPressed: isRecording ? null : controller.recordWeighIn,
-                  icon: isRecording
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2.5),
-                        )
-                      : const Icon(Icons.published_with_changes),
-                  label: Text(isRecording ? 'Registrando...' : 'Registrar peso'),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+            ],
+            child,
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ResponsiveFieldRow extends StatelessWidget {
+  const _ResponsiveFieldRow({required this.children});
+
+  final List<_FormRowChild> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final canSplit = constraints.maxWidth >= 520 && children.length > 1;
+        if (!canSplit) {
+          return Column(
+            children: [
+              for (int i = 0; i < children.length; i++) ...[
+                children[i].build(context),
+                if (i != children.length - 1) const SizedBox(height: 16),
+              ],
+            ],
+          );
+        }
+
+        final left = <_FormRowChild>[];
+        final right = <_FormRowChild>[];
+        for (var i = 0; i < children.length; i++) {
+          (i.isEven ? left : right).add(children[i]);
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: _ResponsiveFieldRow(children: left)),
+            const SizedBox(width: 16),
+            Expanded(child: _ResponsiveFieldRow(children: right)),
+          ],
+        );
+      },
+    );
+  }
+}
+
+abstract class _FormRowChild {
+  Widget build(BuildContext context);
+}
+
+class _TextFieldItem extends _FormRowChild {
+  _TextFieldItem({
+    required this.controller,
+    required this.label,
+    required this.hint,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+      ),
+    );
+  }
+}
+
+class _ButtonItem extends _FormRowChild {
+  _ButtonItem({
+    required this.label,
+    required this.icon,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: isLoading
+            ? const SizedBox(
+                height: 18,
+                width: 18,
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+              )
+            : Icon(icon),
+        label: Text(label),
       ),
     );
   }
@@ -734,7 +876,7 @@ class _EmptyPlanState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
       ),
       child: Row(
@@ -744,7 +886,7 @@ class _EmptyPlanState extends StatelessWidget {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              'Ainda não há cardápio gerado. Informe seus dados e toque em "Gerar cardápio" para receber um plano nutricional completo com metas e lista de compras.',
+              'Ainda não há cardápio gerado. Informe seus dados e toque em "Gerar cardápio" para receber metas nutricionais e a lista de compras automática.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.75),
               ),
