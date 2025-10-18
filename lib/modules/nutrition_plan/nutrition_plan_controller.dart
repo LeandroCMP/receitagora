@@ -63,10 +63,17 @@ class NutritionPlanController extends GetxController {
 
   @override
   void onClose() {
-    heightController.dispose();
-    weightController.dispose();
-    notesController.dispose();
-    checkInController.dispose();
+    final height = heightController;
+    final weight = weightController;
+    final notes = notesController;
+    final checkIn = checkInController;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      height.dispose();
+      weight.dispose();
+      notes.dispose();
+      checkIn.dispose();
+    });
     _planSubscription?.cancel();
     super.onClose();
   }
