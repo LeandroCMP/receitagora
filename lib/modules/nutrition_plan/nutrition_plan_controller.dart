@@ -145,6 +145,54 @@ class NutritionPlanController extends GetxController {
     }
   }
 
+  Future<void> generateAlternativePlan() async {
+    final current = currentPlan.value;
+    if (current == null) {
+      AppSnackbar.info(
+        title: 'Gere o plano inicial',
+        message: 'Finalize o preenchimento do questionário e gere o primeiro cardápio antes de pedir uma nova versão.',
+      );
+      return;
+    }
+
+    if (isGenerating.value) {
+      return;
+    }
+
+    var overlayShown = false;
+    try {
+      if (!(Get.isDialogOpen ?? false)) {
+        overlayShown = true;
+        Get.dialog(
+          const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+      }
+      isGenerating.value = true;
+      final plan = await service.regeneratePlan();
+      currentPlan.value = plan;
+      AppSnackbar.success(
+        title: 'Nova variação pronta',
+        message: 'Geramos um novo cardápio com combinações diferentes mantendo seu objetivo atual.',
+      );
+    } on AppException catch (error) {
+      AppSnackbar.error(
+        title: 'Não foi possível gerar outra versão',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Erro inesperado',
+        message: 'Não conseguimos gerar uma nova variação agora. Tente novamente em instantes.',
+      );
+    } finally {
+      isGenerating.value = false;
+      if (overlayShown && (Get.isDialogOpen ?? false)) {
+        Get.back();
+      }
+    }
+  }
+
   Future<void> recordWeighIn() async {
     final value = _parseDouble(checkInController.text.trim());
     if (value == null || value <= 0) {

@@ -104,6 +104,46 @@ class NutritionPlanService extends GetxService {
     return nutritionPlan;
   }
 
+  Future<NutritionPlan> regeneratePlan() async {
+    await sessionService.ensureInitialized();
+    if (!sessionService.hasPremiumAccess) {
+      throw const AppException(
+        'O plano nutricional é exclusivo para assinantes Premium. Faça o upgrade para acessar o cardápio personalizado.',
+      );
+    }
+
+    final doc = _planDocument();
+    if (doc == null) {
+      throw const AppException('É necessário estar autenticado para gerar o plano.');
+    }
+
+    final current = await fetchCurrentPlan();
+    if (current == null) {
+      throw const AppException('Gere um cardápio inicial antes de solicitar uma nova variação.');
+    }
+
+    final systemPrompt =
+        'Você é o Chef Nutricional do Receitagora. Crie cardápios brasileiros equilibrados, com foco em segurança, variedade e viabilidade para o dia a dia.';
+    final userPrompt = _buildPlanPrompt(current.profile, previousPlan: current);
+    final response = await openAIService.requestStructuredJson(
+      systemPrompt: systemPrompt,
+      userPrompt: userPrompt,
+      temperature: 0.65,
+    );
+
+    final plan = DietPlan.fromMap(response);
+    final now = DateTime.now();
+    final updatedPlan = current.copyWith(
+      plan: plan,
+      generatedAt: now,
+      nextCheckInAt: now.add(current.profile.interval.duration),
+      needsAdjustment: false,
+    );
+
+    await doc.set(_serializePlan(updatedPlan), SetOptions(merge: true));
+    return updatedPlan;
+  }
+
   Future<NutritionPlan> recordWeighIn(double weightKg) async {
     if (weightKg <= 0) {
       throw const AppException('Informe um peso válido para registrar o check-in.');
@@ -176,7 +216,10 @@ class NutritionPlanService extends GetxService {
     }
   }
 
-  String _buildPlanPrompt(DietProfile profile) {
+  String _buildPlanPrompt(
+    DietProfile profile, {
+    NutritionPlan? previousPlan,
+  }) {
     final user = sessionService.user;
     final buffer = StringBuffer();
     buffer.writeln('Monte um plano ${profile.interval.label.toLowerCase()} com foco em ${profile.goal.label.toLowerCase()}.');
@@ -201,6 +244,21 @@ class NutritionPlanService extends GetxService {
       if (user.favoriteCuisines.isNotEmpty) {
         buffer.writeln('Culinárias favoritas: ${user.favoriteCuisines.join(', ')}.');
       }
+    }
+
+    if (previousPlan != null) {
+      final history = previousPlan.weightHistory
+          .map((entry) => '${entry.date.toIso8601String().split('T').first}: ${entry.weightKg.toStringAsFixed(1)} kg')
+          .join(' | ');
+      buffer.writeln('Histórico de peso recente: $history.');
+      if (previousPlan.needsAdjustment) {
+        buffer.writeln('O usuário relatou que o último plano não gerou o resultado esperado. Ajuste estratégia e variedade.');
+      } else {
+        buffer.writeln('O usuário deseja uma nova variação mantendo o objetivo atual, explorando combinações diferentes.');
+      }
+      buffer.writeln('Evite repetir as mesmas combinações da última semana e proponha novidades mantendo equilíbrio nutricional.');
+    } else {
+      buffer.writeln('Entregue um cardápio inédito baseado nesses dados.');
     }
 
     buffer.writeln('Estruture o JSON exatamente como segue:');

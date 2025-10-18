@@ -146,6 +146,27 @@ class _PlanArea extends StatelessWidget {
             label: Text(isGenerating ? 'Gerando plano...' : 'Gerar cardápio personalizado'),
           ),
         ),
+        if (plan != null) ...[
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: isGenerating ? null : controller.generateAlternativePlan,
+              icon: isGenerating
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    )
+                  : const Icon(Icons.auto_awesome_outlined),
+              label: Text(
+                isGenerating
+                    ? 'Gerando nova versão...'
+                    : 'Gerar nova variação do cardápio',
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 24),
         if (plan == null)
           _PlanSectionCard(
