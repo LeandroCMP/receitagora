@@ -31,6 +31,7 @@ class LoginController extends GetxController {
       await sessionService.ensureInitialized();
       final user = await authService.signInWithGoogle();
 
+      await sessionService.ensureTesterPremiumAccessIfNeeded();
       // Temporarily inform the user about their subscription status right
       // after login so testers can verify premium recognition flows.
       await sessionService.refreshSubscriptionPlan();

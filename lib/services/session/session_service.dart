@@ -43,6 +43,7 @@ abstract class SessionService {
   Future<void> updateDisplayName(String displayName);
   Future<void> updateProfile(UserModel user);
   Future<void> refreshSubscriptionPlan();
+  Future<void> ensureTesterPremiumAccessIfNeeded();
   bool canPerformGuestSearch();
   Future<void> registerGuestSearch();
   bool canShareRecipe();
