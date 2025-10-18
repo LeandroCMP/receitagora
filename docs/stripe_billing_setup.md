@@ -55,7 +55,7 @@ O webhook é responsável por manter o documento `users/{uid}/billing/plan` sinc
 ## 4. Configurações no aplicativo Flutter
 
 1. Execute `flutter pub get` após atualizar o `pubspec.yaml` com as dependências (`flutter_stripe`, `cloud_functions`, `url_launcher`, etc.).
-   - No `android/app/build.gradle.kts`, garanta a presença de `implementation("com.stripe:stripe-android-issuing-push-provisioning:1.1.0")` para evitar erros do R8 ao compilar a versão de release.
+   - Certifique-se de que o build `release` esteja com `minifyEnabled = false`; dessa forma não é necessário incluir bibliotecas opcionais do Stripe (como push provisioning) e o processo de assembleRelease não falha por dependências inexistentes.
 2. No painel do Firebase Console, habilite Cloud Functions e Firestore.
 3. Distribua um build interno (TestFlight/Google Play Internal Testing) para validar a cobrança usando contas de teste.
 4. Garanta que o arquivo `.env` ou demais configurações locais contenham as chaves do Firebase correspondentes ao mesmo projeto usado pelas funções.
