@@ -1,0 +1,34 @@
+# Ideias para Expansão do Plano Premium
+
+## Laboratório de Ingredientes
+O Laboratório de Ingredientes seria um espaço interativo onde o assinante combina ingredientes da despensa para explorar substituições, criar variações de receitas e avaliar impactos nutricionais ou sensoriais antes de cozinhar.
+
+### Objetivos principais
+- **Exploração guiada:** permitir que o usuário selecione um ingrediente principal e visualize substituições compatíveis, com notas de sabor, textura e sugestões de preparo.
+- **Simulação de resultados:** apresentar previsões de como a troca altera o tempo de preparo, a consistência do prato e o perfil nutricional.
+- **Registro de experimentos:** salvar combinações favoritas ou fracassadas, criando um histórico pessoal de descobertas culinárias.
+
+### Fluxo sugerido
+1. O usuário abre o laboratório a partir de uma receita ou da sua despensa virtual.
+2. Seleciona os ingredientes que deseja testar. O sistema sugere substitutos baseados em química culinária e preferências declaradas (restrições, alergias, gostos).
+3. Cada substituição gera uma ficha com:
+   - Descrição do ingrediente sugerido.
+   - Ajustes necessários (temperatura, tempo, utensílios).
+   - Impacto esperado no sabor e na textura.
+   - Variação nutricional estimada.
+4. O usuário pode comparar alternativas lado a lado e registrar anotações.
+5. Ao finalizar, pode transformar a combinação escolhida em uma nova receita ou adicioná-la a um plano semanal.
+
+### Recursos complementares
+- **Modo educativo:** pequenos vídeos ou dicas rápidas explicando a ciência por trás de cada substituição.
+- **Desafios mensais:** propor missões como “crie um prato vegano inspirado em carbonara” e recompensar com badges exclusivos.
+- **Integração com IA:** permitir perguntas em linguagem natural (“posso trocar creme de leite por iogurte grego?”) e gerar respostas contextualizadas.
+- **Alertas inteligentes:** identificar conflitos (ex.: alergias, reações químicas indesejadas) e sugerir correções.
+
+## Outras ideias premium
+- **Rotina gastronômica personalizada:** planos semanais com listas de compras inteligentes e preparo antecipado.
+- **Aulas rápidas com chefs convidados:** conteúdo em vídeo exclusivo alinhado às preferências do usuário.
+- **Modo desafio surpresa:** desafios culinários com conquistas e recompensas digitais.
+- **Integração com dispositivos de cozinha:** sincronização de timers e modos de preparo com aparelhos conectados.
+- **Pairing avançado:** harmonizações de bebidas e acompanhamentos baseadas no perfil de sabor.
+
