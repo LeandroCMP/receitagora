@@ -158,8 +158,18 @@ class NutritionPlanController extends GetxController {
       return;
     }
 
+    var overlayShown = false;
+
     isRecording.value = true;
     try {
+      if (!(Get.isDialogOpen ?? false)) {
+        overlayShown = true;
+        Get.dialog(
+          const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+      }
+
       final plan = await service.recordWeighIn(value);
       currentPlan.value = plan;
       checkInController.clear();
@@ -182,6 +192,9 @@ class NutritionPlanController extends GetxController {
       );
     } finally {
       isRecording.value = false;
+      if (overlayShown && (Get.isDialogOpen ?? false)) {
+        Get.back();
+      }
     }
   }
 

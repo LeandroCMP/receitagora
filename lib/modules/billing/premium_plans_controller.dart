@@ -64,10 +64,24 @@ class PremiumPlansController extends GetxController {
       return;
     }
 
+    var overlayShown = false;
+
     isProcessing.value = true;
     try {
+      if (!(Get.isDialogOpen ?? false)) {
+        overlayShown = true;
+        Get.dialog(
+          const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false,
+        );
+      }
+
       final result = await billingService.subscribe(plan);
       if (result.completed) {
+        if (overlayShown && (Get.isDialogOpen ?? false)) {
+          Get.back();
+          overlayShown = false;
+        }
         await sessionService.refreshSubscriptionPlan();
         AppSnackbar.success(
           title: 'Bem-vindo ao Premium',
@@ -94,6 +108,9 @@ class PremiumPlansController extends GetxController {
       );
     } finally {
       isProcessing.value = false;
+      if (overlayShown && (Get.isDialogOpen ?? false)) {
+        Get.back();
+      }
     }
   }
 }
