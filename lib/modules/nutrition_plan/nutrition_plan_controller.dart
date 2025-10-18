@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
+import 'package:receitagora/application/utils/app_loading.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/core/errors/app_exception.dart';
 import 'package:receitagora/models/nutrition/diet_plan.dart';
@@ -111,16 +112,9 @@ class NutritionPlanController extends GetxController {
       return;
     }
 
-    var overlayShown = false;
+    isGenerating.value = true;
+    AppLoading.show();
     try {
-      if (!(Get.isDialogOpen ?? false)) {
-        overlayShown = true;
-        Get.dialog(
-          const Center(child: CircularProgressIndicator()),
-          barrierDismissible: false,
-        );
-      }
-      isGenerating.value = true;
       final plan = await service.generatePlan(profile);
       currentPlan.value = plan;
       AppSnackbar.success(
@@ -139,9 +133,7 @@ class NutritionPlanController extends GetxController {
       );
     } finally {
       isGenerating.value = false;
-      if (overlayShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
-      }
+      AppLoading.hide();
     }
   }
 
@@ -159,16 +151,9 @@ class NutritionPlanController extends GetxController {
       return;
     }
 
-    var overlayShown = false;
+    isGenerating.value = true;
+    AppLoading.show();
     try {
-      if (!(Get.isDialogOpen ?? false)) {
-        overlayShown = true;
-        Get.dialog(
-          const Center(child: CircularProgressIndicator()),
-          barrierDismissible: false,
-        );
-      }
-      isGenerating.value = true;
       final plan = await service.regeneratePlan();
       currentPlan.value = plan;
       AppSnackbar.success(
@@ -187,9 +172,7 @@ class NutritionPlanController extends GetxController {
       );
     } finally {
       isGenerating.value = false;
-      if (overlayShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
-      }
+      AppLoading.hide();
     }
   }
 
@@ -207,18 +190,9 @@ class NutritionPlanController extends GetxController {
       return;
     }
 
-    var overlayShown = false;
-
     isRecording.value = true;
+    AppLoading.show();
     try {
-      if (!(Get.isDialogOpen ?? false)) {
-        overlayShown = true;
-        Get.dialog(
-          const Center(child: CircularProgressIndicator()),
-          barrierDismissible: false,
-        );
-      }
-
       final plan = await service.recordWeighIn(value);
       currentPlan.value = plan;
       checkInController.clear();
@@ -241,9 +215,7 @@ class NutritionPlanController extends GetxController {
       );
     } finally {
       isRecording.value = false;
-      if (overlayShown && (Get.isDialogOpen ?? false)) {
-        Get.back();
-      }
+      AppLoading.hide();
     }
   }
 
