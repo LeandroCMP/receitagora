@@ -30,6 +30,23 @@ class LoginController extends GetxController {
     try {
       await sessionService.ensureInitialized();
       final user = await authService.signInWithGoogle();
+
+      // Temporarily inform the user about their subscription status right
+      // after login so testers can verify premium recognition flows.
+      await sessionService.refreshSubscriptionPlan();
+      final plan = sessionService.plan;
+      if (sessionService.hasPremiumAccess || plan?.isPremium == true) {
+        AppSnackbar.success(
+          title: 'Assinatura ativa',
+          message: 'Sua conta está no plano Premium. Aproveite os benefícios!',
+        );
+      } else {
+        AppSnackbar.info(
+          title: 'Plano gratuito',
+          message: 'Sua conta está no plano gratuito no momento.',
+        );
+      }
+
       googleErrorMessage.value = null;
       if (user.profileCompleted) {
         await Get.offAllNamed(AppRoutes.recipeFinder);
