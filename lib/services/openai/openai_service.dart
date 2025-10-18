@@ -29,9 +29,11 @@ class OpenAIService {
     }
 
     try {
-      final content = await _requestRecipesFromOpenAI(
-        sanitized,
-        user: user,
+      final content = await _requestChatCompletion(
+        systemPrompt:
+            'Você é um assistente culinário especializado em sugerir receitas brasileiras rápidas. Sempre retorne um JSON seguindo o schema fornecido pelo usuário.',
+        userPrompt: _buildPrompt(sanitized, user),
+        temperature: 0.7,
       );
       if (content != null && content.trim().isNotEmpty) {
         return content;
@@ -47,9 +49,47 @@ class OpenAIService {
     }
   }
 
-  Future<String?> _requestRecipesFromOpenAI(
-    List<String> ingredients, {
-    UserModel? user,
+  Future<Map<String, dynamic>> requestStructuredJson({
+    required String systemPrompt,
+    required String userPrompt,
+    double temperature = 0.6,
+  }) async {
+    if (!config.hasValidCredentials) {
+      throw const AppException(
+        'Chave da OpenAI ausente ou inválida. Configure a variável OPENAI_API_KEY para usar os recursos de IA.',
+      );
+    }
+
+    try {
+      final content = await _requestChatCompletion(
+        systemPrompt: systemPrompt,
+        userPrompt: userPrompt,
+        temperature: temperature,
+      );
+      if (content == null || content.trim().isEmpty) {
+        throw const AppException('A OpenAI retornou uma resposta vazia.');
+      }
+      final decoded = jsonDecode(content) as Map<String, dynamic>;
+      return decoded;
+    } on AppException {
+      rethrow;
+    } on FormatException catch (error) {
+      throw AppException(
+        'A resposta da OpenAI veio em um formato inesperado. Tente novamente.',
+        details: error.message,
+      );
+    } catch (error) {
+      throw AppException(
+        'Falha ao comunicar com a OpenAI. Tente novamente em instantes.',
+        details: error.toString(),
+      );
+    }
+  }
+
+  Future<String?> _requestChatCompletion({
+    required String systemPrompt,
+    required String userPrompt,
+    double temperature = 0.7,
   }) async {
     final uri = Uri.parse('${config.openAIBaseUrl}/chat/completions');
     final headers = <String, String>{
@@ -59,19 +99,18 @@ class OpenAIService {
 
     final payload = jsonEncode({
       'model': config.model,
-      'temperature': 0.7,
+      'temperature': temperature,
       'response_format': {
         'type': 'json_object',
       },
       'messages': [
         {
           'role': 'system',
-          'content':
-              'Você é um assistente culinário especializado em sugerir receitas brasileiras rápidas. Sempre retorne um JSON seguindo o schema fornecido pelo usuário.',
+          'content': systemPrompt,
         },
         {
           'role': 'user',
-          'content': _buildPrompt(ingredients, user),
+          'content': userPrompt,
         },
       ],
     });

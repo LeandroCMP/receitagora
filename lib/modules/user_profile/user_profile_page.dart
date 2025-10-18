@@ -159,6 +159,11 @@ class _ProfileContent extends StatelessWidget {
                   plan: plan,
                 ),
                 const SizedBox(height: 16),
+                _PremiumToolkitCard(
+                  theme: theme,
+                  controller: controller,
+                ),
+                const SizedBox(height: 16),
               ],
             );
           },
@@ -936,6 +941,67 @@ class _PremiumSubscriptionCard extends StatelessWidget {
     final year = local.year.toString();
     final formatted = '$day/$month/$year';
     return plan?.autoRenews == true ? 'Renova em $formatted' : 'Expira em $formatted';
+  }
+}
+
+class _PremiumToolkitCard extends StatelessWidget {
+  const _PremiumToolkitCard({
+    required this.theme,
+    required this.controller,
+  });
+
+  final ThemeData theme;
+  final UserProfileController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Laboratórios exclusivos do Premium',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Acesse o laboratório de ingredientes com o Chef IA e monte cardápios nutricionais personalizados com lista de compras.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: controller.openIngredientLab,
+                  icon: const Icon(Icons.science_outlined),
+                  label: const Text('Laboratório de ingredientes'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: controller.openNutritionPlan,
+                  icon: const Icon(Icons.spa_outlined),
+                  label: const Text('Plano nutricional'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Use essas ferramentas sempre que quiser testar substituições, ajustar a dieta ou revisar sua evolução.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

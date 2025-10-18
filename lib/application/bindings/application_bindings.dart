@@ -16,6 +16,8 @@ import 'package:receitagora/services/recipe/recipe_history_service_impl.dart';
 import 'package:receitagora/services/session/session_service.dart';
 import 'package:receitagora/services/share/recipe_share_service.dart';
 import 'package:receitagora/services/share/recipe_share_service_impl.dart';
+import 'package:receitagora/services/ingredient_lab/ingredient_lab_service.dart';
+import 'package:receitagora/services/nutrition/nutrition_plan_service.dart';
 
 class ApplicationBindings extends Bindings {
   @override
@@ -65,6 +67,21 @@ class ApplicationBindings extends Bindings {
     );
     Get.lazyPut<RecipeShareService>(
       () => RecipeShareServiceImpl(
+        sessionService: Get.find<SessionService>(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut<IngredientLabService>(
+      () => IngredientLabService(
+        openAIService: Get.find<OpenAIService>(),
+        sessionService: Get.find<SessionService>(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut<NutritionPlanService>(
+      () => NutritionPlanService(
+        firestore: Get.find<FirebaseFirestore>(),
+        openAIService: Get.find<OpenAIService>(),
         sessionService: Get.find<SessionService>(),
       ),
       fenix: true,

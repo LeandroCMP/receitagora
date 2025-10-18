@@ -37,7 +37,6 @@ class SessionServiceImpl extends GetxService implements SessionService {
   static const _shareCountKey = 'session.share.count';
   static const _shareDateKey = 'session.share.date';
   static const _planCacheKey = 'session.plan.cache';
-  static const _testerPremiumEmail = 'leandrogamer275@gmail.com';
 
   final Completer<void> _readyCompleter;
   bool _isInitializing = false;
@@ -55,7 +54,6 @@ class SessionServiceImpl extends GetxService implements SessionService {
   StreamSubscription<UsageConfig>? _configSubscription;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _planSubscription;
   String? _planUserId;
-  bool _testerUpgradeApplied = false;
 
   @override
   Future<void> get ready => _readyCompleter.future;
@@ -271,15 +269,6 @@ class SessionServiceImpl extends GetxService implements SessionService {
   }
 
   @override
-  Future<void> ensureTesterPremiumAccessIfNeeded() async {
-    await ensureInitialized();
-    if (!isAuthenticated) {
-      return;
-    }
-
-    await _ensureTesterPremiumPromotion(_plan.value, force: true);
-  }
-
   @override
   bool canPerformGuestSearch() {
     if (!isGuest) {
@@ -501,8 +490,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
     _planSubscription = docRef.snapshots().listen(
       (snapshot) {
-        final parsedPlan = _applyPlanSnapshot(snapshot.data());
-        unawaited(_ensureTesterPremiumPromotion(parsedPlan));
+        _applyPlanSnapshot(snapshot.data());
       },
       onError: (_) {},
     );
@@ -518,8 +506,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
           .collection('billing')
           .doc('plan')
           .get();
-      final parsedPlan = _applyPlanSnapshot(doc.data());
-      await _ensureTesterPremiumPromotion(parsedPlan);
+      _applyPlanSnapshot(doc.data());
     } on FirebaseException {
       // Ignore transient errors; cached plan remains.
     }
@@ -561,66 +548,4 @@ class SessionServiceImpl extends GetxService implements SessionService {
     }
   }
 
-  Future<void> _ensureTesterPremiumPromotion(
-    SubscriptionPlan? currentPlan, {
-    bool force = false,
-  }) async {
-    final user = _user.value;
-    if (user == null || !isAuthenticated) {
-      return;
-    }
-
-    final email = user.email.trim().toLowerCase();
-    if (email != _testerPremiumEmail) {
-      return;
-    }
-
-    if (!force) {
-      if (currentPlan != null && currentPlan.isPremium) {
-        _testerUpgradeApplied = true;
-        return;
-      }
-
-      if (_testerUpgradeApplied) {
-        return;
-      }
-    } else if (currentPlan != null && currentPlan.isPremium) {
-      _testerUpgradeApplied = true;
-      return;
-    }
-
-    final docRef = _firestore
-        .collection('users')
-        .doc(user.id)
-        .collection('billing')
-        .doc('plan');
-
-    final now = DateTime.now().toUtc();
-    final expiresAt = now.add(const Duration(days: 365));
-
-    try {
-      await docRef.set(
-        <String, dynamic>{
-          'type': SubscriptionPlanType.premium.name,
-          'status': 'active',
-          'autoRenews': false,
-          'interval': 'month',
-          'currency': 'BRL',
-          'amount': 2000,
-          'platform': 'manual',
-          'priceId': 'manual-test-monthly',
-          'subscriptionId': 'manual-test-upgrade',
-          'transactionId': 'manual-test-upgrade',
-          'customerId': user.id,
-          'expiresAt': Timestamp.fromDate(expiresAt),
-          'updatedAt': FieldValue.serverTimestamp(),
-          'createdAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
-      );
-      _testerUpgradeApplied = true;
-    } on FirebaseException {
-      // Ignore failures silently; the promotion can be attempted again later.
-    }
-  }
 }

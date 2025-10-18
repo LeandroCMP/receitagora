@@ -172,6 +172,22 @@ class UserProfileController extends GetxController {
     await Get.toNamed(AppRoutes.premiumPlans);
   }
 
+  Future<void> openIngredientLab() async {
+    if (!isPremiumUser.value) {
+      await openPremiumPlans();
+      return;
+    }
+    await Get.toNamed(AppRoutes.ingredientLab);
+  }
+
+  Future<void> openNutritionPlan() async {
+    if (!isPremiumUser.value) {
+      await openPremiumPlans();
+      return;
+    }
+    await Get.toNamed(AppRoutes.nutritionPlan);
+  }
+
   Future<void> viewSubscriptionDetails() async {
     final plan = subscriptionPlan.value;
     if (plan == null || plan.subscriptionId == null) {
