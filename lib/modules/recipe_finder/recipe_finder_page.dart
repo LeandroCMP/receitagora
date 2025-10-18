@@ -126,6 +126,7 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
                           const SizedBox(height: 28),
                           _DailyLimitNotice(controller: controller),
                           const SizedBox(height: 28),
+                          _PremiumShortcuts(controller: controller),
                           _IngredientComposer(controller: controller),
                           const SizedBox(height: 32),
                           _GenerateButton(controller: controller),
@@ -360,6 +361,265 @@ class _DailyLimitNotice extends StatelessWidget {
         ),
       );
     });
+  }
+}
+
+class _PremiumShortcuts extends StatelessWidget {
+  const _PremiumShortcuts({required this.controller});
+
+  final RecipeFinderController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
+
+    return Obx(() {
+      if (controller.isGuest.value) {
+        return const SizedBox.shrink();
+      }
+
+      final hasPremium = controller.hasPremiumAccess.value;
+      final colorScheme = theme.colorScheme;
+
+      if (!hasPremium) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          height: 44,
+                          width: 44,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: colorScheme.primary.withOpacity(0.12),
+                          ),
+                          child: Icon(
+                            Icons.workspace_premium_outlined,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            'Desbloqueie experiências completas',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'O plano Premium libera o Laboratório de Ingredientes com o chef IA e um cardápio nutricional guiado com lista de compras automática.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.72),
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilledButton.icon(
+                        onPressed: controller.openPremiumPlans,
+                        icon: const Icon(Icons.lock_open_rounded),
+                        label: const Text('Conhecer o Premium'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+          ],
+        );
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(28, 28, 28, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        height: 44,
+                        width: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colorScheme.primaryContainer.withOpacity(0.25),
+                        ),
+                        child: Icon(
+                          Icons.star_rate_rounded,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Recursos Premium ao seu alcance',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Acesse rapidamente o Laboratório de Ingredientes e o plano nutricional para organizar sua semana.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.72),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final maxWidth = constraints.maxWidth;
+                      final itemWidth = maxWidth >= 520 ? 260.0 : maxWidth;
+                      return Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          _PremiumShortcutButton(
+                            icon: Icons.local_dining_rounded,
+                            title: 'Plano nutricional',
+                            description:
+                                'Revise metas diárias, check-ins de peso e cardápio completo.',
+                            width: itemWidth,
+                            backgroundColor: surfaces?.surface,
+                            onTap: controller.openNutritionPlan,
+                          ),
+                          _PremiumShortcutButton(
+                            icon: Icons.science_rounded,
+                            title: 'Laboratório de ingredientes',
+                            description:
+                                'Teste substituições e receba relatórios do chef IA.',
+                            width: itemWidth,
+                            backgroundColor:
+                                colorScheme.secondaryContainer.withOpacity(0.35),
+                            onTap: controller.openIngredientLab,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
+        ],
+      );
+    });
+  }
+}
+
+class _PremiumShortcutButton extends StatelessWidget {
+  const _PremiumShortcutButton({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.onTap,
+    required this.width,
+    this.backgroundColor,
+  });
+
+  final IconData icon;
+  final String title;
+  final String description;
+  final VoidCallback onTap;
+  final double width;
+  final Color? backgroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          width: width,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.55),
+            border: Border.all(
+              color: colorScheme.primary.withOpacity(0.08),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 40,
+                width: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.primary.withOpacity(0.12),
+                ),
+                child: Icon(
+                  icon,
+                  color: colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  height: 1.45,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'Abrir',
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.arrow_outward_rounded,
+                    size: 18,
+                    color: colorScheme.primary,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
