@@ -105,7 +105,12 @@ class NutritionPlanController extends GetxController {
       return;
     }
     _redirectedDueToEmptyPlan = true;
-    unawaited(openForm(replace: true));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (isClosed) {
+        return;
+      }
+      unawaited(openForm(replace: true));
+    });
   }
 
   Future<void> requestProfileEdit() async {
