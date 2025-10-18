@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/models/nutrition/diet_plan.dart';
-import 'package:receitagora/models/nutrition/diet_profile.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/modules/recipe_finder/recipe_detail_page.dart';
 
@@ -18,98 +17,70 @@ class NutritionPlanPage extends GetView<NutritionPlanController> {
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
     final background = surfaces?.lowest ?? theme.colorScheme.background;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Plano nutricional premium'),
-      ),
-      floatingActionButton: Obx(() {
-        final shoppingList =
-            controller.currentPlan.value?.plan.shoppingList ?? const <ShoppingListItem>[];
-        if (shoppingList.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        return FloatingActionButton.extended(
-          onPressed: controller.openShoppingList,
-          icon: const Icon(Icons.shopping_cart_outlined),
-          label: const Text('Lista de compras'),
+    return Obx(() {
+      final plan = controller.currentPlan.value;
+      final isGenerating = controller.isGenerating.value;
+      final isRecording = controller.isRecording.value;
+      final shoppingList = plan?.plan.shoppingList ?? const <ShoppingListItem>[];
+
+      if (plan == null) {
+        controller.navigateToFormIfNoPlan();
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Plano nutricional premium'),
+          ),
+          body: const Center(child: CircularProgressIndicator()),
         );
-      }),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.05),
-                background,
+      }
+
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Plano nutricional premium'),
+          actions: [
+            TextButton.icon(
+              onPressed: isGenerating ? null : controller.requestProfileEdit,
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Atualizar dados'),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        floatingActionButton: shoppingList.isEmpty
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: controller.openShoppingList,
+                icon: const Icon(Icons.shopping_cart_outlined),
+                label: const Text('Lista de compras'),
               ),
-              background,
-            ],
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color.alphaBlend(
+                  theme.colorScheme.primary.withOpacity(0.05),
+                  background,
+                ),
+                background,
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              physics: const BouncingScrollPhysics(),
+              child: _PlanArea(
+                controller: controller,
+                plan: plan,
+                isGenerating: isGenerating,
+                isRecording: isRecording,
+              ),
+            ),
           ),
         ),
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 1024;
-              return Obx(
-                () {
-                  final plan = controller.currentPlan.value;
-                  final isGenerating = controller.isGenerating.value;
-                  final isRecording = controller.isRecording.value;
-
-                  final form = _ProfileForm(controller: controller);
-
-                  final planView = _PlanArea(
-                    controller: controller,
-                    plan: plan,
-                    isGenerating: isGenerating,
-                    isRecording: isRecording,
-                  );
-
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Chef nutricional da Receita Agora',
-                          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Preencha o questionário para receber um cardápio equilibrado com metas calóricas, macros e lista de '
-                          'compras automática. Registre o peso ao final de cada ciclo para que a estratégia seja ajustada.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.75),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        if (isWide)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(flex: 5, child: form),
-                              const SizedBox(width: 32),
-                              Expanded(flex: 4, child: planView),
-                            ],
-                          )
-                        else ...[
-                          form,
-                          const SizedBox(height: 24),
-                          planView,
-                        ],
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -122,332 +93,74 @@ class _PlanArea extends StatelessWidget {
   });
 
   final NutritionPlanController controller;
-  final NutritionPlan? plan;
+  final NutritionPlan plan;
   final bool isGenerating;
   final bool isRecording;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 52,
-          child: ElevatedButton.icon(
-            onPressed: isGenerating ? null : controller.onGenerateButtonPressed,
-            icon: isGenerating
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  )
-                : const Icon(Icons.dining_outlined),
-            label: Text(isGenerating ? 'Gerando plano...' : 'Gerar cardápio personalizado'),
-          ),
-        ),
-        if (plan != null) ...[
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 48,
-            child: OutlinedButton.icon(
-              onPressed: isGenerating ? null : controller.generateAlternativePlan,
-              icon: isGenerating
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    )
-                  : const Icon(Icons.auto_awesome_outlined),
-              label: Text(
-                isGenerating
-                    ? 'Gerando nova versão...'
-                    : 'Gerar nova variação do cardápio',
-              ),
-            ),
-          ),
-        ],
-        const SizedBox(height: 24),
-        if (plan == null)
-          _PlanSectionCard(
-            title: 'Resultado do cardápio',
-            child: _EmptyPlanState(theme: theme),
-          )
-        else ...[
-          _PlanStatusCard(plan: plan!),
-          const SizedBox(height: 16),
-          _MacroSummaryCard(plan: plan!.plan),
-          const SizedBox(height: 16),
-          _PlanDaysView(plan: plan!.plan),
-          if (plan!.plan.shoppingList.isNotEmpty) ...[
-            const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
             SizedBox(
               height: 52,
-              child: OutlinedButton.icon(
-                onPressed: controller.openShoppingList,
-                icon: const Icon(Icons.shopping_cart_checkout_outlined),
-                label: const Text('Abrir lista de compras completa'),
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          if (plan!.plan.followUpTips.isNotEmpty) _FollowUpCard(plan: plan!.plan),
-          const SizedBox(height: 16),
-          _CheckInCard(
-            controller: controller,
-            plan: plan!,
-            isRecording: isRecording,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _ProfileForm extends StatelessWidget {
-  const _ProfileForm({required this.controller});
-
-  final NutritionPlanController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Obx(() {
-      final locked = controller.isFormLocked.value;
-      return _PlanSectionCard(
-        title: 'Seu perfil metabólico',
-        description:
-            'Responda de forma sincera para que a IA calcule metas realistas e mantenha o cardápio adaptado ao seu ritmo.',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AnimatedOpacity(
-              duration: const Duration(milliseconds: 200),
-              opacity: locked ? 0.55 : 1,
-              child: AbsorbPointer(
-                absorbing: locked,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _ResponsiveFieldRow(
-                      children: [
-                        _TextFieldItem(
-                          controller: controller.heightController,
-                          label: 'Altura (cm)',
-                          hint: 'Ex.: 172',
-                          enabled: !locked,
-                        ),
-                        _TextFieldItem(
-                          controller: controller.weightController,
-                          label: 'Peso atual (kg)',
-                          hint: 'Ex.: 78.5',
-                          enabled: !locked,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    _ChoiceSection<DietActivityLevel>(
-                      title: 'Rotina de exercícios',
-                      description: 'Conte para a IA com que frequência você se exercita.',
-                      options: DietActivityLevel.values,
-                      selected: controller.activityLevel,
-                      labelBuilder: (level) => level.label,
-                      onSelected: controller.setActivityLevel,
-                      enabled: !locked,
-                    ),
-                    const SizedBox(height: 20),
-                    Obx(
-                      () {
-                        final value = controller.metabolicEase.value;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Facilidade para emagrecer',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Avalie seu metabolismo: 0 (muito difícil perder peso) a 5 (metabolismo acelerado).',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                            ),
-                            Slider(
-                              value: value,
-                              min: 0,
-                              max: 5,
-                              divisions: 5,
-                              label: value.round().toString(),
-                              onChanged: locked
-                                  ? null
-                                  : (newValue) => controller.metabolicEase.value = newValue,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    _ChoiceSection<DietGoal>(
-                      title: 'Objetivo principal',
-                      description: 'O cardápio será calibrado para este foco.',
-                      options: DietGoal.values,
-                      selected: controller.goal,
-                      labelBuilder: (goal) => goal.label,
-                      onSelected: controller.setGoal,
-                      enabled: !locked,
-                    ),
-                    const SizedBox(height: 20),
-                    _ChoiceSection<DietPlanInterval>(
-                      title: 'Frequência do plano',
-                      description: 'Prefere cardápio semanal ou mensal?',
-                      options: DietPlanInterval.values,
-                      selected: controller.interval,
-                      labelBuilder: (value) => value.label,
-                      onSelected: controller.setInterval,
-                      enabled: !locked,
-                    ),
-                    const SizedBox(height: 20),
-                    _ChoiceSection<DietCookingStyle>(
-                      title: 'Modo de preparo',
-                      description: 'Defina se cozinha diariamente ou prefere preparar e congelar.',
-                      options: DietCookingStyle.values,
-                      selected: controller.cookingStyle,
-                      labelBuilder: (value) => value.label,
-                      onSelected: controller.setCookingStyle,
-                      enabled: !locked,
-                    ),
-                    const SizedBox(height: 12),
-                    Obx(
-                      () => SwitchListTile.adaptive(
-                        value: controller.prefersBrazilianCuisine.value,
-                        onChanged: locked ? null : controller.toggleBrazilianCuisine,
-                        title: const Text('Priorizar sabores brasileiros'),
-                        subtitle: const Text('Ative para privilegiar temperos e preparos nacionais.'),
-                      ),
-                    ),
-                    Obx(
-                      () => SwitchListTile.adaptive(
-                        value: controller.prefersSeasonalProduce.value,
-                        onChanged: locked ? null : controller.toggleSeasonalProduce,
-                        title: const Text('Usar ingredientes sazonais'),
-                        subtitle: const Text('Sugestões alinhadas à safra para economizar e ganhar sabor.'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Frequência de lanches',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: NutritionPlanController.snackOptions
-                          .map(
-                            (option) => Obx(
-                              () => ChoiceChip(
-                                label: Text(option),
-                                selected: controller.snackFrequency.value == option,
-                                onSelected: locked
-                                    ? null
-                                    : (_) => controller.setSnackFrequency(option),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: controller.notesController,
-                      maxLines: 4,
-                      enabled: !locked,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Observações adicionais',
-                        hintText: 'Restrições médicas, utensílios disponíveis, preferências familiares...',
-                      ),
-                    ),
-                  ],
+              child: ElevatedButton.icon(
+                onPressed: isGenerating ? null : controller.generateAlternativePlan,
+                icon: isGenerating
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    : const Icon(Icons.auto_awesome_outlined),
+                label: Text(
+                  isGenerating
+                      ? 'Gerando variação...'
+                      : 'Nova variação do cardápio',
                 ),
               ),
             ),
-            if (locked) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.lock_outline, color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Cardápio ativo. Toque em "Gerar cardápio personalizado" para renovar mantendo os dados ou escolha editar para alterar as informações.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.75),
-                      ),
-                    ),
-                  ),
-                ],
+            SizedBox(
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: isGenerating ? null : controller.requestFreshPlan,
+                icon: const Icon(Icons.manage_search_outlined),
+                label: const Text('Gerar com novas informações'),
               ),
-            ],
+            ),
           ],
         ),
-      );
-    });
-  }
-}
-
-class _ChoiceSection<T> extends StatelessWidget {
-  const _ChoiceSection({
-    required this.title,
-    required this.description,
-    required this.options,
-    required this.selected,
-    required this.labelBuilder,
-    required this.onSelected,
-    this.enabled = true,
-  });
-
-  final String title;
-  final String description;
-  final List<T> options;
-  final Rx<T> selected;
-  final String Function(T value) labelBuilder;
-  final void Function(T value) onSelected;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          description,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+        const SizedBox(height: 24),
+        _PlanStatusCard(plan: plan),
+        const SizedBox(height: 16),
+        _MacroSummaryCard(plan: plan.plan),
+        const SizedBox(height: 16),
+        _PlanDaysView(plan: plan.plan),
+        if (plan.plan.shoppingList.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 52,
+            child: OutlinedButton.icon(
+              onPressed: controller.openShoppingList,
+              icon: const Icon(Icons.shopping_cart_checkout_outlined),
+              label: const Text('Abrir lista de compras completa'),
+            ),
           ),
+        ],
+        const SizedBox(height: 16),
+        if (plan.plan.followUpTips.isNotEmpty) _FollowUpCard(plan: plan.plan),
+        const SizedBox(height: 16),
+        _CheckInCard(
+          controller: controller,
+          plan: plan,
+          isRecording: isRecording,
         ),
-        const SizedBox(height: 12),
-        Obx(
-          () => Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: options
-                .map(
-                  (option) => ChoiceChip(
-                    label: Text(labelBuilder(option)),
-                    selected: selected.value == option,
-                    onSelected: enabled ? (_) => onSelected(option) : null,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+        const SizedBox(height: 16),
+        _WeightHistoryCard(plan: plan),
       ],
     );
   }
@@ -974,6 +687,7 @@ class _CheckInCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final canRecord = controller.canRecordWeight;
     return _PlanSectionCard(
       title: 'Registrar peso do ciclo',
       description:
@@ -987,6 +701,15 @@ class _CheckInCard extends StatelessWidget {
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
+          if (!canRecord) ...[
+            const SizedBox(height: 8),
+            Text(
+              'O check-in será liberado quando o ciclo atual terminar. Continue seguindo o cardápio até a data indicada.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           _ResponsiveFieldRow(
             children: [
@@ -994,12 +717,16 @@ class _CheckInCard extends StatelessWidget {
                 controller: controller.checkInController,
                 label: 'Peso atual (kg)',
                 hint: 'Ex.: 77.2',
+                enabled: canRecord && !isRecording,
               ),
               _ButtonItem(
-                label: isRecording ? 'Registrando...' : 'Registrar peso',
+                label: canRecord
+                    ? (isRecording ? 'Registrando...' : 'Registrar peso')
+                    : 'Aguardar fim do ciclo',
                 icon: Icons.published_with_changes,
                 isLoading: isRecording,
-                onPressed: isRecording ? null : controller.recordWeighIn,
+                onPressed:
+                    (!canRecord || isRecording) ? null : controller.recordWeighIn,
               ),
             ],
           ),
@@ -1158,34 +885,3 @@ class _ButtonItem extends _FormRowChild {
   }
 }
 
-class _EmptyPlanState extends StatelessWidget {
-  const _EmptyPlanState({required this.theme});
-
-  final ThemeData theme;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.spa_outlined, color: theme.colorScheme.primary),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Ainda não há cardápio gerado. Informe seus dados e toque em "Gerar cardápio" para receber metas nutricionais e a lista de compras automática.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -12,8 +12,6 @@ import 'package:receitagora/models/nutrition/diet_profile.dart';
 import 'package:receitagora/services/nutrition/nutrition_plan_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
-enum _GeneratePlanDecision { keep, edit }
-
 class NutritionPlanController extends GetxController {
   NutritionPlanController({
     required this.service,
@@ -43,6 +41,9 @@ class NutritionPlanController extends GetxController {
   final RxBool isFormLocked = false.obs;
 
   StreamSubscription<NutritionPlan?>? _planSubscription;
+
+  bool _navigatingToForm = false;
+  bool _redirectedDueToEmptyPlan = false;
 
   static const List<String> snackOptions = <String>[
     'Baixa',
@@ -78,52 +79,43 @@ class NutritionPlanController extends GetxController {
   String get cookingStyleLabel => cookingStyle.value.label;
 
   bool get isPlanExpired => currentPlan.value?.isCheckInOverdue ?? false;
+  bool get canRecordWeight => currentPlan.value?.isCheckInOverdue ?? false;
 
-  Future<void> onGenerateButtonPressed() async {
-    if (isGenerating.value) {
+  Future<void> openForm({bool editing = false, bool replace = false}) async {
+    if (_navigatingToForm) {
       return;
     }
 
-    final hasActivePlan = hasPlan && !isPlanExpired;
-    if (hasActivePlan && isFormLocked.value) {
-      final choice = await Get.dialog<_GeneratePlanDecision>(
-        AlertDialog(
-          title: const Text('Atualizar cardápio'),
-          content: const Text(
-            'Você deseja gerar um novo cardápio mantendo os dados atuais ou prefere atualizar suas informações primeiro?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Get.back(result: _GeneratePlanDecision.edit),
-              child: const Text('Editar informações'),
-            ),
-            FilledButton(
-              onPressed: () => Get.back(result: _GeneratePlanDecision.keep),
-              child: const Text('Manter dados'),
-            ),
-          ],
-        ),
-      );
-
-      if (choice == null) {
-        return;
+    _navigatingToForm = true;
+    final arguments = {'editing': editing};
+    final route = AppRoutes.nutritionPlanForm;
+    try {
+      if (replace) {
+        await Get.offNamed(route, arguments: arguments);
+      } else {
+        await Get.toNamed(route, arguments: arguments);
       }
-
-      if (choice == _GeneratePlanDecision.edit) {
-        isFormLocked.value = false;
-        AppSnackbar.info(
-          title: 'Edite seus dados',
-          message: 'Atualize as informações desejadas e gere o novo cardápio quando finalizar.',
-        );
-        return;
-      }
+    } finally {
+      _navigatingToForm = false;
     }
+  }
 
-    await generatePlan();
+  void navigateToFormIfNoPlan() {
+    if (currentPlan.value != null || _redirectedDueToEmptyPlan) {
+      return;
+    }
+    _redirectedDueToEmptyPlan = true;
+    unawaited(openForm(replace: true));
+  }
+
+  Future<void> requestProfileEdit() async {
+    isFormLocked.value = false;
+    await openForm(editing: true);
+  }
+
+  Future<void> requestFreshPlan() async {
+    isFormLocked.value = false;
+    await openForm(editing: false);
   }
 
   Future<void> generatePlan() async {
@@ -169,6 +161,10 @@ class NutritionPlanController extends GetxController {
     try {
       final plan = await service.generatePlan(profile);
       _applyPlan(plan);
+      _redirectedDueToEmptyPlan = false;
+      if (Get.currentRoute != AppRoutes.nutritionPlan) {
+        await Get.offNamed(AppRoutes.nutritionPlan);
+      }
       AppSnackbar.success(
         title: 'Plano atualizado',
         message: 'Seu cardápio premium foi gerado com base nas informações informadas.',
@@ -206,7 +202,9 @@ class NutritionPlanController extends GetxController {
     isGenerating.value = true;
     AppLoading.show();
     try {
-      final plan = await service.regeneratePlan();
+      final plan = await service.regeneratePlan(
+        trigger: RegenerationTrigger.variety,
+      );
       _applyPlan(plan);
       AppSnackbar.success(
         title: 'Nova variação pronta',
@@ -238,6 +236,23 @@ class NutritionPlanController extends GetxController {
       return;
     }
 
+    final activePlan = currentPlan.value;
+    if (activePlan == null) {
+      AppSnackbar.info(
+        title: 'Plano indisponível',
+        message: 'Gere um cardápio para liberar o registro de peso.',
+      );
+      return;
+    }
+
+    if (!activePlan.isCheckInOverdue) {
+      AppSnackbar.info(
+        title: 'Ainda não é hora do check-in',
+        message: 'Aguarde o final do ciclo atual para informar o novo peso.',
+      );
+      return;
+    }
+
     if (isRecording.value) {
       return;
     }
@@ -245,14 +260,25 @@ class NutritionPlanController extends GetxController {
     isRecording.value = true;
     AppLoading.show();
     try {
-      final plan = await service.recordWeighIn(value);
-      _applyPlan(plan);
+      final result = await service.recordWeighIn(value);
+      _applyPlan(result.plan);
       checkInController.clear();
-      final message = plan.needsAdjustment
-          ? 'Seu peso não evoluiu como esperado. Ajustaremos o próximo cardápio para buscar resultados melhores.'
-          : 'Excelente! Vamos manter a estratégia atual nas próximas sugestões.';
-      AppSnackbar.info(
-        title: 'Check-in registrado',
+      _redirectedDueToEmptyPlan = false;
+      String message;
+      switch (result.trigger) {
+        case RegenerationTrigger.adjustment:
+          message =
+              'Não identificamos o resultado esperado. Montamos um novo cardápio com ajustes mais intensos para o próximo ciclo.';
+          break;
+        case RegenerationTrigger.progress:
+          message =
+              'Excelente resultado! Geramos uma nova variação mantendo a estratégia vencedora e trazendo novidades no cardápio.';
+          break;
+        default:
+          message = 'Atualizamos o cardápio com uma nova variação personalizada para o próximo ciclo.';
+      }
+      AppSnackbar.success(
+        title: 'Check-in concluído',
         message: message,
       );
     } on AppException catch (error) {
@@ -296,9 +322,13 @@ class NutritionPlanController extends GetxController {
     currentPlan.value = plan;
     if (plan == null) {
       isFormLocked.value = false;
+      if (Get.currentRoute == AppRoutes.nutritionPlan) {
+        navigateToFormIfNoPlan();
+      }
       return;
     }
 
+    _redirectedDueToEmptyPlan = false;
     isFormLocked.value = !plan.isCheckInOverdue;
 
     final profile = plan.profile;

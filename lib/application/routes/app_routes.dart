@@ -9,6 +9,7 @@ abstract class AppRoutes {
   static const premiumPlans = '/billing/plans';
   static const ingredientLab = '/premium/ingredient-lab';
   static const nutritionPlan = '/premium/nutrition-plan';
+  static const nutritionPlanForm = '/premium/nutrition-plan/form';
   static const nutritionPlanShoppingList =
       '/premium/nutrition-plan/shopping-list';
 }

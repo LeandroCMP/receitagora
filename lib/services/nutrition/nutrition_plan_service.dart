@@ -10,6 +10,18 @@ import 'package:receitagora/models/nutrition/diet_profile.dart';
 import 'package:receitagora/services/openai/openai_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
+enum RegenerationTrigger { initial, variety, progress, adjustment }
+
+class NutritionPlanRegenerationResult {
+  const NutritionPlanRegenerationResult({
+    required this.plan,
+    required this.trigger,
+  });
+
+  final NutritionPlan plan;
+  final RegenerationTrigger trigger;
+}
+
 class NutritionPlanService extends GetxService {
   NutritionPlanService({
     required this.firestore,
@@ -79,8 +91,11 @@ class NutritionPlanService extends GetxService {
     final systemPrompt =
         'Você é o Chef Nutricional do Receitagora. Crie cardápios brasileiros equilibrados, com foco em segurança, variedade e viabilidade para o dia a dia.';
     final recommendedTargets = _calculateRecommendedTargets(profile);
-    final userPrompt =
-        _buildPlanPrompt(profile, recommendedTargets: recommendedTargets);
+    final userPrompt = _buildPlanPrompt(
+      profile,
+      recommendedTargets: recommendedTargets,
+      trigger: RegenerationTrigger.initial,
+    );
     final response = await openAIService.requestStructuredJson(
       systemPrompt: systemPrompt,
       userPrompt: userPrompt,
@@ -108,7 +123,10 @@ class NutritionPlanService extends GetxService {
     return nutritionPlan;
   }
 
-  Future<NutritionPlan> regeneratePlan() async {
+  Future<NutritionPlan> regeneratePlan({
+    NutritionPlan? planOverride,
+    RegenerationTrigger trigger = RegenerationTrigger.variety,
+  }) async {
     await sessionService.ensureInitialized();
     if (!sessionService.hasPremiumAccess) {
       throw const AppException(
@@ -121,7 +139,7 @@ class NutritionPlanService extends GetxService {
       throw const AppException('É necessário estar autenticado para gerar o plano.');
     }
 
-    final current = await fetchCurrentPlan();
+    final current = planOverride ?? await fetchCurrentPlan();
     if (current == null) {
       throw const AppException('Gere um cardápio inicial antes de solicitar uma nova variação.');
     }
@@ -134,6 +152,7 @@ class NutritionPlanService extends GetxService {
       current.profile,
       recommendedTargets: recommendedTargets,
       previousPlan: current,
+      trigger: trigger,
     );
     final response = await openAIService.requestStructuredJson(
       systemPrompt: systemPrompt,
@@ -158,7 +177,7 @@ class NutritionPlanService extends GetxService {
     return updatedPlan;
   }
 
-  Future<NutritionPlan> recordWeighIn(double weightKg) async {
+  Future<NutritionPlanRegenerationResult> recordWeighIn(double weightKg) async {
     if (weightKg <= 0) {
       throw const AppException('Informe um peso válido para registrar o check-in.');
     }
@@ -167,9 +186,8 @@ class NutritionPlanService extends GetxService {
       throw const AppException('Nenhum plano encontrado. Gere um cardápio antes de registrar o peso.');
     }
 
-    final doc = _planDocument();
-    if (doc == null) {
-      throw const AppException('Não foi possível localizar o documento do plano.');
+    if (!current.isCheckInOverdue) {
+      throw const AppException('Aguarde o término do ciclo atual para registrar o peso.');
     }
 
     final now = DateTime.now();
@@ -189,12 +207,17 @@ class NutritionPlanService extends GetxService {
       profile: updatedProfile,
       lastWeighInKg: weightKg,
       weightHistory: List<WeightEntry>.unmodifiable(history),
-      nextCheckInAt: now.add(updatedProfile.interval.duration),
       needsAdjustment: needsAdjustment,
     );
 
-    await doc.set(_serializePlan(updatedPlan), SetOptions(merge: true));
-    return updatedPlan;
+    final trigger =
+        needsAdjustment ? RegenerationTrigger.adjustment : RegenerationTrigger.progress;
+    final plan = await regeneratePlan(
+      planOverride: updatedPlan,
+      trigger: trigger,
+    );
+
+    return NutritionPlanRegenerationResult(plan: plan, trigger: trigger);
   }
 
   Map<String, dynamic> _serializePlan(NutritionPlan plan) {
@@ -260,6 +283,7 @@ class NutritionPlanService extends GetxService {
     DietProfile profile, {
     required DietPlanTargets recommendedTargets,
     NutritionPlan? previousPlan,
+    required RegenerationTrigger trigger,
   }) {
     final user = sessionService.user;
     final buffer = StringBuffer();
@@ -299,10 +323,21 @@ class NutritionPlanService extends GetxService {
           .map((entry) => '${entry.date.toIso8601String().split('T').first}: ${entry.weightKg.toStringAsFixed(1)} kg')
           .join(' | ');
       buffer.writeln('Histórico de peso recente: $history.');
-      if (previousPlan.needsAdjustment) {
-        buffer.writeln('O usuário relatou que o último plano não gerou o resultado esperado. Ajuste estratégia e variedade.');
-      } else {
-        buffer.writeln('O usuário deseja uma nova variação mantendo o objetivo atual, explorando combinações diferentes.');
+      switch (trigger) {
+        case RegenerationTrigger.adjustment:
+          buffer.writeln(
+              'O ciclo anterior não trouxe o resultado desejado. Ajuste calorias, macronutrientes e estratégias (como hidratação, descanso e preparo em lote) para acelerar resultados sem comprometer a segurança.');
+          break;
+        case RegenerationTrigger.progress:
+          buffer.writeln(
+              'O ciclo anterior gerou bons resultados. Mantenha a estratégia principal, mas ofereça variedade, reforçando hábitos que deram certo.');
+          break;
+        case RegenerationTrigger.variety:
+          buffer.writeln(
+              'O usuário solicitou uma nova variação mantendo os objetivos atuais, explorando combinações diferentes das já apresentadas.');
+          break;
+        case RegenerationTrigger.initial:
+          break;
       }
       buffer.writeln('Evite repetir as mesmas combinações da última semana e proponha novidades mantendo equilíbrio nutricional.');
     } else {
