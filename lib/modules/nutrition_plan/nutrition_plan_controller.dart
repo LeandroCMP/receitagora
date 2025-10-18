@@ -44,6 +44,7 @@ class NutritionPlanController extends GetxController {
 
   bool _navigatingToForm = false;
   bool _redirectedDueToEmptyPlan = false;
+  bool _hasReceivedPlanSnapshot = false;
 
   static const List<String> snackOptions = <String>[
     'Baixa',
@@ -58,7 +59,10 @@ class NutritionPlanController extends GetxController {
     weightController = TextEditingController();
     notesController = TextEditingController();
     checkInController = TextEditingController();
-    _planSubscription = service.watchCurrentPlan().listen(_applyPlan);
+    _planSubscription = service.watchCurrentPlan().listen((plan) {
+      _hasReceivedPlanSnapshot = true;
+      _applyPlan(plan);
+    });
   }
 
   @override
@@ -108,7 +112,9 @@ class NutritionPlanController extends GetxController {
   }
 
   void navigateToFormIfNoPlan() {
-    if (currentPlan.value != null || _redirectedDueToEmptyPlan) {
+    if (!_hasReceivedPlanSnapshot ||
+        currentPlan.value != null ||
+        _redirectedDueToEmptyPlan) {
       return;
     }
     _redirectedDueToEmptyPlan = true;
@@ -172,6 +178,7 @@ class NutritionPlanController extends GetxController {
     AppLoading.show();
     try {
       final plan = await service.generatePlan(profile);
+      _hasReceivedPlanSnapshot = true;
       _applyPlan(plan);
       _redirectedDueToEmptyPlan = false;
       if (Get.currentRoute != AppRoutes.nutritionPlan) {
@@ -217,6 +224,7 @@ class NutritionPlanController extends GetxController {
       final plan = await service.regeneratePlan(
         trigger: RegenerationTrigger.variety,
       );
+      _hasReceivedPlanSnapshot = true;
       _applyPlan(plan);
       AppSnackbar.success(
         title: 'Nova variação pronta',
@@ -273,6 +281,7 @@ class NutritionPlanController extends GetxController {
     AppLoading.show();
     try {
       final result = await service.recordWeighIn(value);
+      _hasReceivedPlanSnapshot = true;
       _applyPlan(result.plan);
       checkInController.clear();
       _redirectedDueToEmptyPlan = false;
@@ -334,10 +343,15 @@ class NutritionPlanController extends GetxController {
     currentPlan.value = plan;
     if (plan == null) {
       isFormLocked.value = false;
-      if (Get.currentRoute == AppRoutes.nutritionPlan) {
+      if (_hasReceivedPlanSnapshot &&
+          Get.currentRoute == AppRoutes.nutritionPlan) {
         navigateToFormIfNoPlan();
       }
       return;
+    }
+
+    if (!_hasReceivedPlanSnapshot) {
+      _hasReceivedPlanSnapshot = true;
     }
 
     _redirectedDueToEmptyPlan = false;

@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
+import 'package:receitagora/application/utils/app_loading.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/core/errors/app_exception.dart';
+import 'package:receitagora/models/nutrition/diet_plan.dart';
 import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/modules/recipe_finder/domain/usecases/generate_recipes_usecase.dart';
+import 'package:receitagora/services/nutrition/nutrition_plan_service.dart';
 import 'package:receitagora/services/recipe/recipe_history_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 import 'recipe_results_page.dart';
@@ -19,11 +22,13 @@ class RecipeFinderController extends GetxController {
     required this.generateRecipesUseCase,
     required this.sessionService,
     required this.recipeHistoryService,
+    required this.nutritionPlanService,
   });
 
   final GenerateRecipesUseCase generateRecipesUseCase;
   final SessionService sessionService;
   final RecipeHistoryService recipeHistoryService;
+  final NutritionPlanService nutritionPlanService;
 
   final ingredients = <String>[].obs;
   final recipes = <RecipeEntity>[].obs;
@@ -260,7 +265,38 @@ class RecipeFinderController extends GetxController {
       await Get.toNamed(AppRoutes.premiumPlans);
       return;
     }
-    await Get.toNamed(AppRoutes.nutritionPlan);
+    AppLoading.show();
+    NutritionPlan? plan;
+    var failed = false;
+    try {
+      plan = await nutritionPlanService.fetchCurrentPlan();
+    } on AppException catch (error) {
+      failed = true;
+      AppSnackbar.error(
+        title: 'Não foi possível carregar o plano',
+        message: error.message,
+      );
+    } catch (_) {
+      failed = true;
+      AppSnackbar.error(
+        title: 'Erro inesperado',
+        message:
+            'Não conseguimos verificar o seu plano agora. Tente novamente em instantes.',
+      );
+    } finally {
+      AppLoading.hide();
+    }
+
+    if (failed) {
+      return;
+    }
+
+    if (plan != null) {
+      await Get.toNamed(AppRoutes.nutritionPlan);
+      return;
+    }
+
+    await Get.toNamed(AppRoutes.nutritionPlanForm, arguments: {'editing': false});
   }
 
   Future<void> openPremiumPlans() async {
