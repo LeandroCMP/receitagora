@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/core/errors/app_exception.dart';
 import 'package:receitagora/models/nutrition/diet_plan.dart';
@@ -196,6 +197,18 @@ class NutritionPlanController extends GetxController {
         Get.back();
       }
     }
+  }
+
+  void openShoppingList() {
+    final plan = currentPlan.value;
+    if (plan == null || plan.plan.shoppingList.isEmpty) {
+      AppSnackbar.info(
+        title: 'Lista indisponível',
+        message: 'Gere um cardápio para liberar a lista de compras completa.',
+      );
+      return;
+    }
+    Get.toNamed(AppRoutes.nutritionPlanShoppingList);
   }
 
   void setActivityLevel(DietActivityLevel level) => activityLevel.value = level;

@@ -5,6 +5,7 @@ import 'package:receitagora/application/routes/app_routes.dart';
 
 import 'nutrition_plan_bindings.dart';
 import 'nutrition_plan_page.dart';
+import 'nutrition_shopping_list_page.dart';
 
 class NutritionPlanModule implements Module {
   @override
@@ -12,6 +13,11 @@ class NutritionPlanModule implements Module {
         GetPage(
           name: AppRoutes.nutritionPlan,
           page: () => const NutritionPlanPage(),
+          binding: NutritionPlanBindings(),
+        ),
+        GetPage(
+          name: AppRoutes.nutritionPlanShoppingList,
+          page: () => const NutritionShoppingListPage(),
           binding: NutritionPlanBindings(),
         ),
       ];

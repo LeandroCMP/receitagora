@@ -81,6 +81,10 @@ class DietPlanMeal {
     this.calories,
     this.macroFocus,
     this.prepNotes,
+    this.ingredients = const <String>[],
+    this.steps = const <String>[],
+    this.difficulty,
+    this.duration,
   });
 
   final String name;
@@ -88,6 +92,10 @@ class DietPlanMeal {
   final int? calories;
   final String? macroFocus;
   final String? prepNotes;
+  final List<String> ingredients;
+  final List<String> steps;
+  final String? difficulty;
+  final String? duration;
 
   factory DietPlanMeal.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
@@ -118,6 +126,10 @@ class DietPlanMeal {
       calories: _readInt(map['calories']),
       macroFocus: _readString(map['macroFocus']),
       prepNotes: _readString(map['prepNotes']),
+      ingredients: _readOrderedList(map['ingredients']),
+      steps: _readOrderedList(map['steps']),
+      difficulty: _readString(map['difficulty']),
+      duration: _readString(map['duration']),
     );
   }
 
@@ -128,6 +140,10 @@ class DietPlanMeal {
       'calories': calories,
       'macroFocus': macroFocus,
       'prepNotes': prepNotes,
+      'ingredients': ingredients,
+      'steps': steps,
+      'difficulty': difficulty,
+      'duration': duration,
     };
   }
 }
@@ -513,6 +529,19 @@ String? _readString(dynamic value) {
     return sanitized.isEmpty ? null : sanitized;
   }
   return null;
+}
+
+List<String> _readOrderedList(dynamic value) {
+  if (value is Iterable) {
+    final list = value
+        .map((dynamic item) => item?.toString())
+        .whereType<String>()
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
+    return List<String>.unmodifiable(list);
+  }
+  return const <String>[];
 }
 
 List<String> _readStringList(dynamic value) {

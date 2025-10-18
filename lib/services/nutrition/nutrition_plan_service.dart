@@ -214,7 +214,9 @@ class NutritionPlanService extends GetxService {
     buffer.writeln('      "label": "Dia 1",');
     buffer.writeln('      "focus": "string",');
     buffer.writeln('      "meals": [');
-    buffer.writeln('        {"name": "Refeição", "description": "string", "calories": number, "macroFocus": "string", "prepNotes": "string"}');
+    buffer.writeln(
+        '        {"name": "Refeição", "description": "string", "calories": number, "macroFocus": "string", "prepNotes": "string",');
+    buffer.writeln('         "ingredients": ["string"...], "steps": ["string"...], "difficulty": "string", "duration": "string"}');
     buffer.writeln('      ]');
     buffer.writeln('    }');
     buffer.writeln('  ],');
@@ -225,6 +227,7 @@ class NutritionPlanService extends GetxService {
     buffer.writeln('}');
     buffer.writeln('Utilize alimentos acessíveis no Brasil, com combinações sazonais quando aplicável e versões possíveis de congelar quando o usuário optar por produzir em lote.');
     buffer.writeln('Inclua variações de café da manhã, almoço, jantar e lanches coerentes com o objetivo ${profile.goal.promptKeyword}.');
+    buffer.writeln('Forneça ingredientes detalhados e um modo de preparo passo a passo claro para cada refeição, com duração média e nível de dificuldade compatíveis com o perfil informado.');
 
     return buffer.toString();
   }

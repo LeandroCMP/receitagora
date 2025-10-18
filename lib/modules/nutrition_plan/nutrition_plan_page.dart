@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/models/nutrition/diet_plan.dart';
 import 'package:receitagora/models/nutrition/diet_profile.dart';
+import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
+import 'package:receitagora/modules/recipe_finder/recipe_detail_page.dart';
 
 import 'nutrition_plan_controller.dart';
 
@@ -20,6 +22,18 @@ class NutritionPlanPage extends GetView<NutritionPlanController> {
       appBar: AppBar(
         title: const Text('Plano nutricional premium'),
       ),
+      floatingActionButton: Obx(() {
+        final shoppingList =
+            controller.currentPlan.value?.plan.shoppingList ?? const <ShoppingListItem>[];
+        if (shoppingList.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return FloatingActionButton.extended(
+          onPressed: controller.openShoppingList,
+          icon: const Icon(Icons.shopping_cart_outlined),
+          label: const Text('Lista de compras'),
+        );
+      }),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -144,8 +158,17 @@ class _PlanArea extends StatelessWidget {
           _MacroSummaryCard(plan: plan!.plan),
           const SizedBox(height: 16),
           _PlanDaysView(plan: plan!.plan),
-          const SizedBox(height: 16),
-          _ShoppingListCard(plan: plan!.plan),
+          if (plan!.plan.shoppingList.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 52,
+              child: OutlinedButton.icon(
+                onPressed: controller.openShoppingList,
+                icon: const Icon(Icons.shopping_cart_checkout_outlined),
+                label: const Text('Abrir lista de compras completa'),
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           if (plan!.plan.followUpTips.isNotEmpty) _FollowUpCard(plan: plan!.plan),
           const SizedBox(height: 16),
@@ -549,91 +572,231 @@ class _PlanDayTile extends StatelessWidget {
             color: theme.colorScheme.onSurface.withOpacity(0.7),
           ),
         ),
-        children: day.meals
-            .map(
-              (meal) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.restaurant_menu, color: theme.colorScheme.primary.withOpacity(0.8)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            meal.name,
-                            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(meal.description),
-                          if (meal.macroFocus != null && meal.macroFocus!.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              meal.macroFocus!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.65),
-                              ),
-                            ),
-                          ],
-                          if (meal.prepNotes != null && meal.prepNotes!.isNotEmpty) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              'Dica: ${meal.prepNotes!}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    if (meal.calories != null)
-                      Text(
-                        '${meal.calories} kcal',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
+        children: [
+          for (var i = 0; i < day.meals.length; i++) ...[
+            _PlanMealTile(day: day, meal: day.meals[i]),
+            if (i < day.meals.length - 1) const Divider(height: 28),
+          ],
+        ],
       ),
     );
   }
 }
 
-class _ShoppingListCard extends StatelessWidget {
-  const _ShoppingListCard({required this.plan});
+class _PlanMealTile extends StatelessWidget {
+  const _PlanMealTile({
+    required this.day,
+    required this.meal,
+  });
 
-  final DietPlan plan;
+  final DietPlanDay day;
+  final DietPlanMeal meal;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return _PlanSectionCard(
-      title: 'Lista de compras inteligente',
-      child: Column(
-        children: plan.shoppingList.isEmpty
-            ? [
-                Text(
-                  'A IA não gerou itens de compras desta vez. Gere o plano novamente para obter uma lista atualizada.',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ]
-            : plan.shoppingList
-                .map(
-                  (item) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.check_circle_outline, color: theme.colorScheme.secondary),
-                    title: Text('${item.item} · ${item.quantity}'),
-                    subtitle: Text(
-                      '${item.category}${item.notes != null && item.notes!.isNotEmpty ? ' · ${item.notes}' : ''}',
+
+    final metadata = <Widget>[];
+    if (meal.calories != null) {
+      metadata.add(_MealMetaChip(
+        icon: Icons.local_fire_department_outlined,
+        label: '${meal.calories} kcal',
+      ));
+    }
+    if (meal.duration != null && meal.duration!.isNotEmpty) {
+      metadata.add(_MealMetaChip(
+        icon: Icons.schedule_outlined,
+        label: meal.duration!,
+      ));
+    }
+    if (meal.difficulty != null && meal.difficulty!.isNotEmpty) {
+      metadata.add(_MealMetaChip(
+        icon: Icons.leaderboard_outlined,
+        label: meal.difficulty!,
+      ));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.restaurant_menu,
+              color: theme.colorScheme.primary.withOpacity(0.8),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    meal.name,
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(meal.description),
+                  if (meal.macroFocus != null && meal.macroFocus!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      meal.macroFocus!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.65),
+                      ),
+                    ),
+                  ],
+                  if (meal.prepNotes != null && meal.prepNotes!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Dica: ${meal.prepNotes!}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (metadata.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: metadata,
+          ),
+        ],
+        if (meal.ingredients.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Ingredientes',
+            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          ...meal.ingredients.map(
+            (ingredient) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('• ', style: theme.textTheme.bodyMedium),
+                  Expanded(
+                    child: Text(
+                      ingredient,
+                      style: theme.textTheme.bodyMedium,
                     ),
                   ),
-                )
-                .toList(),
+                ],
+              ),
+            ),
+          ),
+        ],
+        if (meal.steps.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Text(
+            'Modo de preparo',
+            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 6),
+          ...List<Widget>.generate(meal.steps.length, (index) {
+            final step = meal.steps[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${index + 1}. ', style: theme.textTheme.bodyMedium),
+                  Expanded(
+                    child: Text(
+                      step,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () => _openRecipe(day, meal),
+            icon: const Icon(Icons.menu_book_outlined),
+            label: const Text('Ver passo a passo completo'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openRecipe(DietPlanDay day, DietPlanMeal meal) {
+    final recipe = _mealToRecipe(meal);
+    final heroTag =
+        'nutrition-${day.label}-${meal.name}'.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    Get.to(() => RecipeDetailPage(recipe: recipe, heroTag: heroTag));
+  }
+
+  RecipeEntity _mealToRecipe(DietPlanMeal meal) {
+    String sanitize(String? value, String fallback) {
+      if (value == null) {
+        return fallback;
+      }
+      final trimmed = value.trim();
+      return trimmed.isEmpty ? fallback : trimmed;
+    }
+
+    final ingredients = meal.ingredients.isNotEmpty
+        ? meal.ingredients
+        : <String>[sanitize(meal.macroFocus, 'Ingredientes não especificados.')];
+    final steps = meal.steps.isNotEmpty
+        ? meal.steps
+        : <String>[sanitize(meal.prepNotes, 'Prepare conforme indicado na descrição.')];
+
+    return RecipeEntity(
+      name: meal.name,
+      description: sanitize(meal.description, 'Receita gerada pelo plano nutricional.'),
+      ingredients: ingredients,
+      steps: steps,
+      difficulty: sanitize(meal.difficulty, 'Dificuldade não informada'),
+      duration: sanitize(meal.duration, 'Tempo não informado'),
+    );
+  }
+}
+
+class _MealMetaChip extends StatelessWidget {
+  const _MealMetaChip({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        color: theme.colorScheme.primary.withOpacity(0.08),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: theme.colorScheme.primary),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
