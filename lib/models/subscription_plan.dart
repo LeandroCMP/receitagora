@@ -152,10 +152,7 @@ class SubscriptionPlan {
   }
 
   factory SubscriptionPlan.fromMap(Map<String, dynamic> map) {
-    final typeValue = (map['type'] as String?)?.toLowerCase().trim();
-    final planType = typeValue == SubscriptionPlanType.premium.name
-        ? SubscriptionPlanType.premium
-        : SubscriptionPlanType.free;
+    final planType = _readPlanType(map);
 
     return SubscriptionPlan(
       type: planType,
@@ -163,14 +160,14 @@ class SubscriptionPlan {
       priceId: _readString(map['priceId']),
       transactionId: _readString(map['transactionId']),
       platform: _readString(map['platform']),
-      autoRenews: map['autoRenews'] as bool? ?? false,
+      autoRenews: _readBool(map['autoRenews']),
       expiresAt: _readExpiration(map['expiresAt']),
       amount: map['amount'] is num ? (map['amount'] as num).toInt() : null,
       currency: _readString(map['currency']),
       interval: _readString(map['interval']),
       status: _readString(map['status']),
       subscriptionId: _readString(map['subscriptionId']),
-      cancelAtPeriodEnd: map['cancelAtPeriodEnd'] as bool? ?? false,
+      cancelAtPeriodEnd: _readBool(map['cancelAtPeriodEnd']),
       customerId: _readString(map['customerId']),
       updatedAt: _readExpiration(map['updatedAt']),
       createdAt: _readExpiration(map['createdAt']),
@@ -218,6 +215,30 @@ class SubscriptionPlan {
     return null;
   }
 
+  static bool _readBool(dynamic value, {bool defaultValue = false}) {
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      if (normalized.isEmpty) {
+        return defaultValue;
+      }
+      const positive = <String>{'true', '1', 'yes', 'sim'};
+      const negative = <String>{'false', '0', 'no', 'nao', 'não'};
+      if (positive.contains(normalized)) {
+        return true;
+      }
+      if (negative.contains(normalized)) {
+        return false;
+      }
+    }
+    return defaultValue;
+  }
+
   static DateTime? _readExpiration(dynamic value) {
     if (value == null) {
       return null;
@@ -225,6 +246,15 @@ class SubscriptionPlan {
 
     if (value is Timestamp) {
       return value.toDate().toLocal();
+    }
+
+    if (value is num) {
+      final seconds = value.toInt();
+      if (seconds <= 0) {
+        return null;
+      }
+      return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true)
+          .toLocal();
     }
 
     if (value is String) {
@@ -245,5 +275,26 @@ class SubscriptionPlan {
     }
 
     return null;
+  }
+
+  static SubscriptionPlanType _readPlanType(Map<String, dynamic> map) {
+    final typeValue = _readString(map['type'])?.toLowerCase();
+    if (typeValue == SubscriptionPlanType.premium.name) {
+      return SubscriptionPlanType.premium;
+    }
+
+    final statusValue = _readString(map['status'])?.toLowerCase();
+    const premiumStatuses = <String>{
+      'trialing',
+      'active',
+      'past_due',
+      'unpaid',
+    };
+
+    if (statusValue != null && premiumStatuses.contains(statusValue)) {
+      return SubscriptionPlanType.premium;
+    }
+
+    return SubscriptionPlanType.free;
   }
 }
