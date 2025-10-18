@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
@@ -189,10 +190,22 @@ class UserProfileController extends GetxController {
     isBillingBusy.value = true;
     try {
       final session = await billingService.createPortalSession();
-      await Get.toNamed(
-        AppRoutes.billingPortal,
-        arguments: session,
+      final opened = await launchUrl(
+        session.url,
+        mode: LaunchMode.inAppBrowserView,
+        webViewConfiguration: const WebViewConfiguration(
+          enableJavaScript: true,
+          enableDomStorage: true,
+        ),
       );
+
+      if (!opened) {
+        AppSnackbar.error(
+          title: 'Não foi possível abrir o portal',
+          message:
+              'Tivemos um problema ao abrir a página de gerenciamento da assinatura. Tente novamente em instantes.',
+        );
+      }
     } on BillingException catch (error) {
       AppSnackbar.error(
         title: 'Não foi possível abrir o portal',

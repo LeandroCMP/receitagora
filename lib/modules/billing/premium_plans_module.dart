@@ -5,7 +5,6 @@ import 'package:receitagora/application/routes/app_routes.dart';
 
 import 'premium_plans_bindings.dart';
 import 'premium_plans_page.dart';
-import 'billing_portal_page.dart';
 
 class PremiumPlansModule implements Module {
   @override
@@ -14,10 +13,6 @@ class PremiumPlansModule implements Module {
           name: AppRoutes.premiumPlans,
           page: () => const PremiumPlansPage(),
           binding: PremiumPlansBindings(),
-        ),
-        GetPage(
-          name: AppRoutes.billingPortal,
-          page: () => const BillingPortalPage(),
         ),
       ];
 }

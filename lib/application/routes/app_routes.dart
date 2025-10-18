@@ -7,5 +7,4 @@ abstract class AppRoutes {
   static const userProfile = '/profile';
   static const favorites = '/favorites';
   static const premiumPlans = '/billing/plans';
-  static const billingPortal = '/billing/portal';
 }
