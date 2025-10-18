@@ -25,10 +25,34 @@ O Laboratório de Ingredientes seria um espaço interativo onde o assinante comb
 - **Integração com IA:** permitir perguntas em linguagem natural (“posso trocar creme de leite por iogurte grego?”) e gerar respostas contextualizadas.
 - **Alertas inteligentes:** identificar conflitos (ex.: alergias, reações químicas indesejadas) e sugerir correções.
 
+## Laboratório de Clientes
+Voltado para quem prepara refeições para outras pessoas (clientes, familiares ou eventos), o Laboratório de Clientes expande o
+conceito do laboratório de ingredientes para uma dimensão de relacionamento:
+
+- **Personas culinárias:** o usuário cadastra perfis de clientes com preferências, restrições, metas nutricionais e feedbacks
+  históricos.
+- **Painel de satisfação:** cada entrega recebe notas e comentários que alimentam indicadores como recorrência, afinidade de
+  sabores e destaque de pratos.
+- **Assistente de planejamento:** ao montar um cardápio, o sistema recomenda receitas e variações que atendam simultaneamente
+  aos gostos dos clientes selecionados, apontando conflitos e sugerindo ajustes.
+- **Relatórios inteligentes:** gráficos mensais destacam tendências (ex.: quem aprecia pratos picantes, pedidos frequentes,
+  sazonalidades), ajudando a criar experiências personalizadas e promoções segmentadas.
+
+### Fluxo resumido
+1. Cadastrar ou importar clientes com dados de preferências alimentares.
+2. Gerar cardápios ou propostas usando o assistente, validando restrições automaticamente.
+3. Registrar feedback pós-entrega e anexar observações no histórico do cliente.
+4. Consultar relatórios para decidir próximos lançamentos ou ofertas direcionadas.
+
 ## Outras ideias premium
 - **Rotina gastronômica personalizada:** planos semanais com listas de compras inteligentes e preparo antecipado.
 - **Aulas rápidas com chefs convidados:** conteúdo em vídeo exclusivo alinhado às preferências do usuário.
 - **Modo desafio surpresa:** desafios culinários com conquistas e recompensas digitais.
 - **Integração com dispositivos de cozinha:** sincronização de timers e modos de preparo com aparelhos conectados.
 - **Pairing avançado:** harmonizações de bebidas e acompanhamentos baseadas no perfil de sabor.
+- **Consultor de eventos:** criar orçamentos, cronogramas e listas de compras para jantares temáticos, com integração ao
+  Laboratório de Clientes.
+- **Mercado premium:** acesso a ingredientes especiais com descontos, sugerindo fornecedores parceiros conforme o cardápio.
+- **Rede de feedback colaborativo:** clientes podem responder pesquisas rápidas via link, alimentando automaticamente o painel
+  de satisfação do Laboratório de Clientes.
 
