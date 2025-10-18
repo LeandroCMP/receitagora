@@ -514,6 +514,7 @@ class _MacroSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final macros = plan.targets.macroGrams();
     return _PlanSectionCard(
       title: 'Metas diárias',
       description: plan.strategy,
@@ -527,21 +528,25 @@ class _MacroSummaryCard extends StatelessWidget {
               _MacroChip(
                 label: 'Calorias',
                 value: '${plan.targets.caloriesPerDay} kcal',
+                subtitle: 'Consumo total por dia',
                 color: theme.colorScheme.primary,
               ),
               _MacroChip(
                 label: 'Carboidratos',
                 value: '${plan.targets.carbsPercentage.toStringAsFixed(0)}%',
+                subtitle: '~${macros['carbs']} g / dia',
                 color: Colors.orangeAccent,
               ),
               _MacroChip(
                 label: 'Proteínas',
                 value: '${plan.targets.proteinPercentage.toStringAsFixed(0)}%',
+                subtitle: '~${macros['proteins']} g / dia',
                 color: Colors.green,
               ),
               _MacroChip(
                 label: 'Gorduras',
                 value: '${plan.targets.fatPercentage.toStringAsFixed(0)}%',
+                subtitle: '~${macros['fats']} g / dia',
                 color: Colors.purpleAccent,
               ),
             ],
@@ -564,11 +569,13 @@ class _MacroChip extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    this.subtitle,
   });
 
   final String label;
   final String value;
   final Color color;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -596,6 +603,15 @@ class _MacroChip extends StatelessWidget {
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
           ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              subtitle!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.55),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -615,7 +631,10 @@ class _PlanDaysView extends StatelessWidget {
       child: Column(
         children: plan.days
             .map(
-              (day) => _PlanDayTile(day: day),
+              (day) => _PlanDayTile(
+                day: day,
+                targets: plan.targets,
+              ),
             )
             .toList(),
       ),
@@ -624,13 +643,22 @@ class _PlanDaysView extends StatelessWidget {
 }
 
 class _PlanDayTile extends StatelessWidget {
-  const _PlanDayTile({required this.day});
+  const _PlanDayTile({
+    required this.day,
+    required this.targets,
+  });
 
   final DietPlanDay day;
+  final DietPlanTargets targets;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final totalCalories = day.totalCalories;
+    final targetCalories = targets.caloriesPerDay;
+    final difference = (totalCalories != null && targetCalories > 0)
+        ? totalCalories - targetCalories
+        : null;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -639,13 +667,37 @@ class _PlanDayTile extends StatelessWidget {
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         title: Text(day.label, style: theme.textTheme.titleMedium),
-        subtitle: Text(
-          day.focus,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              day.focus,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            if (totalCalories != null && targetCalories > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'Planejado: ${totalCalories} kcal · Meta: $targetCalories kcal',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: difference != null && difference.abs() > 80
+                        ? theme.colorScheme.error
+                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ),
+          ],
         ),
         children: [
+          if (totalCalories != null && targetCalories > 0) ...[
+            _DailyProgressBar(
+              totalCalories: totalCalories,
+              targetCalories: targetCalories,
+            ),
+            const SizedBox(height: 16),
+          ],
           for (var i = 0; i < day.meals.length; i++) ...[
             _PlanMealTile(day: day, meal: day.meals[i]),
             if (i < day.meals.length - 1) const Divider(height: 28),
@@ -784,6 +836,58 @@ class _PlanMealTile extends StatelessWidget {
       steps: steps,
       difficulty: sanitize(meal.difficulty, 'Dificuldade não informada'),
       duration: sanitize(meal.duration, 'Tempo não informado'),
+    );
+  }
+}
+
+class _DailyProgressBar extends StatelessWidget {
+  const _DailyProgressBar({
+    required this.totalCalories,
+    required this.targetCalories,
+  });
+
+  final int totalCalories;
+  final int targetCalories;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ratio = totalCalories / targetCalories;
+    final progress = ratio.clamp(0.0, 1.5);
+    final difference = totalCalories - targetCalories;
+    final differenceLabel = difference == 0
+        ? 'Meta atingida'
+        : difference > 0
+            ? '+${difference.abs()} kcal acima da meta'
+            : '${difference.abs()} kcal abaixo da meta';
+    final withinRange = difference.abs() <= 80;
+    final indicatorColor = withinRange
+        ? theme.colorScheme.primary
+        : (difference > 0 ? Colors.orangeAccent : Colors.teal);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            minHeight: 10,
+            value: progress > 1 ? 1 : progress,
+            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          differenceLabel,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: withinRange
+                ? theme.colorScheme.onSurface.withOpacity(0.7)
+                : indicatorColor,
+            fontWeight: withinRange ? FontWeight.w500 : FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

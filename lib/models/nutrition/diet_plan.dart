@@ -16,6 +16,55 @@ class DietPlanTargets {
   final double proteinPercentage;
   final double fatPercentage;
 
+  double get _totalPercentage =>
+      carbsPercentage + proteinPercentage + fatPercentage;
+
+  DietPlanTargets copyWith({
+    int? caloriesPerDay,
+    double? carbsPercentage,
+    double? proteinPercentage,
+    double? fatPercentage,
+  }) {
+    return DietPlanTargets(
+      caloriesPerDay: caloriesPerDay ?? this.caloriesPerDay,
+      carbsPercentage: carbsPercentage ?? this.carbsPercentage,
+      proteinPercentage: proteinPercentage ?? this.proteinPercentage,
+      fatPercentage: fatPercentage ?? this.fatPercentage,
+    );
+  }
+
+  DietPlanTargets normalized() {
+    if (_totalPercentage <= 0) {
+      return this;
+    }
+    final ratio = 100 / _totalPercentage;
+    return DietPlanTargets(
+      caloriesPerDay: caloriesPerDay,
+      carbsPercentage: double.parse((carbsPercentage * ratio).toStringAsFixed(1)),
+      proteinPercentage:
+          double.parse((proteinPercentage * ratio).toStringAsFixed(1)),
+      fatPercentage: double.parse((fatPercentage * ratio).toStringAsFixed(1)),
+    );
+  }
+
+  Map<String, double> macroGrams() {
+    if (caloriesPerDay <= 0) {
+      return const <String, double>{
+        'carbs': 0,
+        'proteins': 0,
+        'fats': 0,
+      };
+    }
+    final carbsCalories = caloriesPerDay * (carbsPercentage / 100);
+    final proteinCalories = caloriesPerDay * (proteinPercentage / 100);
+    final fatCalories = caloriesPerDay * (fatPercentage / 100);
+    return <String, double>{
+      'carbs': double.parse((carbsCalories / 4).toStringAsFixed(1)),
+      'proteins': double.parse((proteinCalories / 4).toStringAsFixed(1)),
+      'fats': double.parse((fatCalories / 9).toStringAsFixed(1)),
+    };
+  }
+
   factory DietPlanTargets.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
       return const DietPlanTargets(
@@ -97,6 +146,30 @@ class DietPlanMeal {
   final String? difficulty;
   final String? duration;
 
+  DietPlanMeal copyWith({
+    String? name,
+    String? description,
+    int? calories,
+    String? macroFocus,
+    String? prepNotes,
+    List<String>? ingredients,
+    List<String>? steps,
+    String? difficulty,
+    String? duration,
+  }) {
+    return DietPlanMeal(
+      name: name ?? this.name,
+      description: description ?? this.description,
+      calories: calories ?? this.calories,
+      macroFocus: macroFocus ?? this.macroFocus,
+      prepNotes: prepNotes ?? this.prepNotes,
+      ingredients: ingredients ?? this.ingredients,
+      steps: steps ?? this.steps,
+      difficulty: difficulty ?? this.difficulty,
+      duration: duration ?? this.duration,
+    );
+  }
+
   factory DietPlanMeal.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
       return const DietPlanMeal(
@@ -159,6 +232,31 @@ class DietPlanDay {
   final String label;
   final String focus;
   final List<DietPlanMeal> meals;
+
+  int? get totalCalories {
+    var total = 0;
+    var hasCalories = false;
+    for (final meal in meals) {
+      final value = meal.calories;
+      if (value != null) {
+        total += value;
+        hasCalories = true;
+      }
+    }
+    return hasCalories ? total : null;
+  }
+
+  DietPlanDay copyWith({
+    String? label,
+    String? focus,
+    List<DietPlanMeal>? meals,
+  }) {
+    return DietPlanDay(
+      label: label ?? this.label,
+      focus: focus ?? this.focus,
+      meals: meals ?? this.meals,
+    );
+  }
 
   factory DietPlanDay.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
@@ -253,6 +351,26 @@ class DietPlan {
   final List<DietPlanDay> days;
   final List<ShoppingListItem> shoppingList;
   final List<String> followUpTips;
+
+  DietPlan copyWith({
+    String? strategy,
+    DietPlanTargets? targets,
+    String? hydrationGoal,
+    List<String>? highlights,
+    List<DietPlanDay>? days,
+    List<ShoppingListItem>? shoppingList,
+    List<String>? followUpTips,
+  }) {
+    return DietPlan(
+      strategy: strategy ?? this.strategy,
+      targets: targets ?? this.targets,
+      hydrationGoal: hydrationGoal ?? this.hydrationGoal,
+      highlights: highlights ?? this.highlights,
+      days: days ?? this.days,
+      shoppingList: shoppingList ?? this.shoppingList,
+      followUpTips: followUpTips ?? this.followUpTips,
+    );
+  }
 
   factory DietPlan.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
