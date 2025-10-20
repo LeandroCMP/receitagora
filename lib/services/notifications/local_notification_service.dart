@@ -42,7 +42,7 @@ class LocalNotificationService extends GetxService {
 
     await _plugin
         .resolvePlatformSpecificImplementation<
-            DarwinFlutterLocalNotificationsPlugin>()
+            IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
 
     _initialized = true;
@@ -75,7 +75,7 @@ class LocalNotificationService extends GetxService {
       _details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+          DarwinNotificationDateInterpretation.absoluteTime,
       payload: 'nutrition-plan-checkin',
     );
   }
