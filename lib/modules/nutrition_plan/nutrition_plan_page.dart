@@ -209,7 +209,9 @@ class _PlanArea extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        _PlanStatusCard(plan: plan),
+        _PlanStatusCard(controller: controller, plan: plan),
+        const SizedBox(height: 16),
+        _DailyFocusCard(controller: controller, plan: plan),
         const SizedBox(height: 16),
         _MacroSummaryCard(plan: plan.plan),
         const SizedBox(height: 16),
@@ -517,8 +519,9 @@ class _WeightHistoryTile extends StatelessWidget {
 }
 
 class _PlanStatusCard extends StatelessWidget {
-  const _PlanStatusCard({required this.plan});
+  const _PlanStatusCard({required this.controller, required this.plan});
 
+  final NutritionPlanController controller;
   final NutritionPlan plan;
 
   @override
@@ -530,6 +533,38 @@ class _PlanStatusCard extends StatelessWidget {
     final statusText = plan.needsAdjustment
         ? 'Vamos ajustar o plano na próxima rodada para acelerar resultados.'
         : 'Continue seguindo o cardápio atual; os resultados estão no caminho certo.';
+
+    final info = controller.todayProgressInfo;
+    final daysUntil = controller.daysUntilNextCheckIn;
+    final streak = controller.adherenceStreakDays;
+    final chips = <Widget>[
+      _StatusChip(
+        icon: Icons.calendar_today_outlined,
+        label: daysUntil <= 0
+            ? 'Check-in disponível'
+            : '$daysUntil dia(s) até o check-in',
+        color: theme.colorScheme.primary,
+      ),
+      _StatusChip(
+        icon: Icons.local_fire_department_outlined,
+        label: streak <= 0
+            ? 'Construa sua sequência'
+            : '$streak dia(s) seguidos no plano',
+        color: theme.colorScheme.secondary,
+      ),
+    ];
+    if (info != null) {
+      final pending = info.pendingMeals;
+      chips.add(
+        _StatusChip(
+          icon: Icons.fastfood_outlined,
+          label: pending == 0
+              ? 'Refeições de hoje concluídas'
+              : '$pending refeição(ões) pendentes hoje',
+          color: pending == 0 ? theme.colorScheme.primary : Colors.orangeAccent,
+        ),
+      );
+    }
 
     return _PlanSectionCard(
       title: 'Situação do plano',
@@ -562,6 +597,12 @@ class _PlanStatusCard extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
             ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: chips,
           ),
         ],
       ),
@@ -619,6 +660,421 @@ class _MacroSummaryCard extends StatelessWidget {
             plan.hydrationGoal,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyFocusCard extends StatelessWidget {
+  const _DailyFocusCard({
+    required this.controller,
+    required this.plan,
+  });
+
+  final NutritionPlanController controller;
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final info = controller.todayProgressInfo;
+    if (info == null) {
+      return const SizedBox.shrink();
+    }
+    final coach = controller.dailyCoachMessage;
+    final completionPercent = (info.completionRatio * 100).clamp(0, 100).round();
+    final caloriesLabel = info.targetCalories <= 0
+        ? '${info.consumedCalories} kcal estimadas'
+        : '${info.consumedCalories} / ${info.targetCalories} kcal';
+    final caloriesRemaining = info.targetCalories <= 0
+        ? null
+        : info.targetCalories - info.consumedCalories;
+    final caloriesSubtitle = info.targetCalories <= 0
+        ? 'Ajuste o questionário para estimar sua meta calórica.'
+        : caloriesRemaining != null && caloriesRemaining <= 0
+            ? 'Meta diária atingida.'
+            : 'Faltam ${caloriesRemaining!.clamp(0, info.targetCalories)} kcal para a meta.';
+    final mealProgress = info.totalMeals == 0 ? 0.0 : info.completedMeals / info.totalMeals;
+    final pendingLabel = info.totalMeals == 0
+        ? 'Nenhuma refeição cadastrada hoje.'
+        : info.pendingMeals == 0
+            ? 'Dia concluído!'
+            : '${info.pendingMeals} refeição(ões) aguardando registro.';
+
+    final macroTargets = info.macroTargets;
+    final consumedMacros = info.consumedMacros;
+    final macroWidgets = <Widget>[];
+    const labels = <String, String>{
+      'carbs': 'Carboidratos',
+      'proteins': 'Proteínas',
+      'fats': 'Gorduras',
+    };
+    const colors = <String, Color>{
+      'carbs': Colors.orangeAccent,
+      'proteins': Colors.green,
+      'fats': Colors.purpleAccent,
+    };
+    macroTargets.forEach((key, target) {
+      final label = labels[key];
+      final color = colors[key];
+      if (label != null && color != null) {
+        macroWidgets.add(
+          _DailyMacroIndicator(
+            label: label,
+            consumed: consumedMacros[key] ?? 0,
+            target: target,
+            color: color,
+          ),
+        );
+      }
+    });
+
+    return _PlanSectionCard(
+      title: 'Resumo do dia',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Dia em andamento: ${info.dayLabel}',
+            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            info.dayFocus,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Progresso de hoje',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              minHeight: 12,
+              value: info.completionRatio.clamp(0.0, 1.0),
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$completionPercent% do dia concluído',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final children = <Widget>[
+                Expanded(
+                  child: _DailyMetricTile(
+                    label: 'Calorias estimadas',
+                    value: caloriesLabel,
+                    subtitle: caloriesSubtitle,
+                    progress: info.targetCalories <= 0
+                        ? 0
+                        : (info.consumedCalories / info.targetCalories).clamp(0.0, 1.2),
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _DailyMetricTile(
+                    label: 'Refeições do dia',
+                    value: '${info.completedMeals}/${info.totalMeals} concluídas',
+                    subtitle: pendingLabel,
+                    progress: info.totalMeals == 0 ? 0 : mealProgress.clamp(0.0, 1.0),
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+              ];
+              if (constraints.maxWidth < 600) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    children[0],
+                    const SizedBox(height: 12),
+                    children[2],
+                  ],
+                );
+              }
+              return Row(children: children);
+            },
+          ),
+          const SizedBox(height: 16),
+          _DailyCoachBanner(message: coach),
+          if (macroWidgets.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Distribuição estimada de macros',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: macroWidgets,
+            ),
+          ],
+          if (plan.plan.hydrationGoal.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              plan.plan.hydrationGoal,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyMetricTile extends StatelessWidget {
+  const _DailyMetricTile({
+    required this.label,
+    required this.value,
+    required this.progress,
+    required this.color,
+    this.subtitle,
+  });
+
+  final String label;
+  final String value;
+  final double progress;
+  final Color color;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ratio = progress.isNaN ? 0.0 : progress.clamp(0.0, 1.0);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: color.withOpacity(0.08),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.65),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.65),
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              minHeight: 10,
+              value: ratio,
+              backgroundColor: color.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyMacroIndicator extends StatelessWidget {
+  const _DailyMacroIndicator({
+    required this.label,
+    required this.consumed,
+    required this.target,
+    required this.color,
+  });
+
+  final String label;
+  final double consumed;
+  final double target;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasTarget = target > 0;
+    final ratio = hasTarget ? (consumed / target).clamp(0.0, 1.2) : 0.0;
+    final displayValue = hasTarget
+        ? '${consumed.toStringAsFixed(1)} / ${target.toStringAsFixed(1)} g'
+        : '${consumed.toStringAsFixed(1)} g';
+    return Container(
+      constraints: const BoxConstraints(minWidth: 160),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: color.withOpacity(0.08),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.local_dining_outlined, color: color),
+          const SizedBox(height: 8),
+          Text(
+            displayValue,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              minHeight: 10,
+              value: ratio.clamp(0.0, 1.0),
+              backgroundColor: color.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyCoachBanner extends StatelessWidget {
+  const _DailyCoachBanner({required this.message});
+
+  final DailyCoachMessage message;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    late final Color color;
+    late final IconData icon;
+    switch (message.tone) {
+      case DailyCoachTone.success:
+        color = Colors.green;
+        icon = Icons.celebration_outlined;
+        break;
+      case DailyCoachTone.caution:
+        color = Colors.orangeAccent;
+        icon = Icons.flag_outlined;
+        break;
+      case DailyCoachTone.info:
+        color = theme.colorScheme.primary;
+        icon = Icons.lightbulb_outline;
+        break;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  message.title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  message.subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  const _StatusChip({
+    required this.icon,
+    required this.label,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final baseColor = color ?? theme.colorScheme.primary;
+    final textColor = theme.colorScheme.onSurface.withOpacity(0.75);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: baseColor.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 18, color: baseColor),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],

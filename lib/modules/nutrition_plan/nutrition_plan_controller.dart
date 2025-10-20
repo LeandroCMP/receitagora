@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -99,6 +100,118 @@ class NutritionPlanController extends GetxController {
 
   bool get isPlanExpired => currentPlan.value?.isCheckInOverdue ?? false;
   bool get canRecordWeight => currentPlan.value?.isCheckInOverdue ?? false;
+
+  int get daysUntilNextCheckIn {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      return 0;
+    }
+    final diff = plan.nextCheckInAt.difference(DateTime.now()).inDays;
+    return diff < 0 ? 0 : diff;
+  }
+
+  int get adherenceStreakDays => currentPlan.value?.adherenceStreak() ?? 0;
+
+  DailyProgressInfo? get todayProgressInfo {
+    final plan = currentPlan.value;
+    if (plan == null || plan.plan.days.isEmpty) {
+      return null;
+    }
+    final dayIndex = plan.currentDayIndex();
+    if (dayIndex < 0 || dayIndex >= plan.plan.days.length) {
+      return null;
+    }
+    final day = plan.plan.days[dayIndex];
+    final totalMeals = plan.totalMealsForDay(dayIndex);
+    final completedMeals = plan.completedMealsForDay(dayIndex);
+    final ratio = plan.dayCompletionRatio(dayIndex).clamp(0.0, 1.0);
+    final targetCalories = plan.targetCaloriesForDay(dayIndex).round();
+    final consumedCalories = plan.consumedCaloriesForDay(dayIndex).round();
+    final macroTargets = Map<String, double>.from(plan.plan.targets.macroGrams());
+    final consumedMacros = Map<String, double>.from(plan.consumedMacroGramsForDay(dayIndex));
+    final hasProgress = plan.dayHasProgress(dayIndex);
+    return DailyProgressInfo(
+      dayIndex: dayIndex,
+      dayLabel: day.label,
+      dayFocus: day.focus,
+      totalMeals: totalMeals,
+      completedMeals: completedMeals,
+      pendingMeals: plan.pendingMealsForDay(dayIndex),
+      completionRatio: ratio,
+      consumedCalories: consumedCalories,
+      targetCalories: targetCalories,
+      macroTargets: macroTargets,
+      consumedMacros: consumedMacros,
+      hasProgress: hasProgress,
+    );
+  }
+
+  DailyCoachMessage get dailyCoachMessage {
+    final plan = currentPlan.value;
+    final info = todayProgressInfo;
+    if (plan == null || info == null) {
+      return const DailyCoachMessage(
+        title: 'Comece pelo questionário',
+        subtitle: 'Gere seu cardápio personalizado para receber orientações diárias e lista de compras inteligente.',
+        tone: DailyCoachTone.info,
+      );
+    }
+
+    if (plan.needsAdjustment) {
+      return const DailyCoachMessage(
+        title: 'Vamos ajustar o cardápio',
+        subtitle: 'O último check-in indicou que é hora de revisar metas. Continue registrando as refeições para personalizar a próxima versão.',
+        tone: DailyCoachTone.caution,
+      );
+    }
+
+    if (plan.isCheckInOverdue) {
+      return const DailyCoachMessage(
+        title: 'Registre o peso para seguir',
+        subtitle: 'Faça o check-in antes de gerar uma nova variação e liberar recomendações atualizadas.',
+        tone: DailyCoachTone.caution,
+      );
+    }
+
+    if (!info.hasProgress && info.pendingMeals >= info.totalMeals) {
+      return DailyCoachMessage(
+        title: 'Hora de começar o dia',
+        subtitle: 'Planeje a primeira refeição e registre o consumo para destravar dicas personalizadas ao longo do dia.',
+        tone: DailyCoachTone.caution,
+      );
+    }
+
+    if (info.completionRatio >= 0.9) {
+      return DailyCoachMessage(
+        title: 'Dia praticamente concluído',
+        subtitle: 'Excelente ritmo! Aproveite para revisar notas no diário e preparar o próximo dia com antecedência.',
+        tone: DailyCoachTone.success,
+      );
+    }
+
+    if (info.pendingMeals >= math.max(1, (info.totalMeals / 2).ceil())) {
+      return DailyCoachMessage(
+        title: 'Mantenha o foco nas refeições restantes',
+        subtitle: 'Ainda há refeições importantes para hoje. Use o botão de registro rápido para indicar ajustes de porção.',
+        tone: DailyCoachTone.caution,
+      );
+    }
+
+    final streakValue = plan.adherenceStreak();
+    if (streakValue >= 3) {
+      return DailyCoachMessage(
+        title: 'Sequência excelente',
+        subtitle: 'Você está há $streakValue dia(s) seguidos dentro das metas. Continue registrando para desbloquear variações ainda mais precisas.',
+        tone: DailyCoachTone.success,
+      );
+    }
+
+    return DailyCoachMessage(
+      title: 'Continue registrando o cardápio',
+      subtitle: 'Faltam ${info.pendingMeals} refeição(ões) hoje. Registre o consumo para ajustar macros e lista de compras automaticamente.',
+      tone: DailyCoachTone.info,
+    );
+  }
 
   Future<void> openForm({bool editing = false, bool replace = false}) async {
     if (_navigatingToForm) {
@@ -552,4 +665,48 @@ class NutritionPlanController extends GetxController {
     return closest;
   }
 
+}
+
+class DailyProgressInfo {
+  const DailyProgressInfo({
+    required this.dayIndex,
+    required this.dayLabel,
+    required this.dayFocus,
+    required this.totalMeals,
+    required this.completedMeals,
+    required this.pendingMeals,
+    required this.completionRatio,
+    required this.consumedCalories,
+    required this.targetCalories,
+    required this.macroTargets,
+    required this.consumedMacros,
+    required this.hasProgress,
+  });
+
+  final int dayIndex;
+  final String dayLabel;
+  final String dayFocus;
+  final int totalMeals;
+  final int completedMeals;
+  final int pendingMeals;
+  final double completionRatio;
+  final int consumedCalories;
+  final int targetCalories;
+  final Map<String, double> macroTargets;
+  final Map<String, double> consumedMacros;
+  final bool hasProgress;
+}
+
+enum DailyCoachTone { success, caution, info }
+
+class DailyCoachMessage {
+  const DailyCoachMessage({
+    required this.title,
+    required this.subtitle,
+    required this.tone,
+  });
+
+  final String title;
+  final String subtitle;
+  final DailyCoachTone tone;
 }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 
 import 'diet_profile.dart';
@@ -772,6 +774,16 @@ class NutritionPlan {
     return mealLogs[mealKey(dayIndex, mealIndex)];
   }
 
+  double _portionFactor(int dayIndex, int mealIndex, {double maxFactor = 1.5}) {
+    final key = mealKey(dayIndex, mealIndex);
+    final log = mealLogs[key];
+    if (log != null) {
+      final clamped = log.portionFactor.clamp(0.0, maxFactor);
+      return clamped is num ? clamped.toDouble() : maxFactor;
+    }
+    return completedMeals.contains(key) ? 1.0 : 0.0;
+  }
+
   bool isMealCompleted(int dayIndex, int mealIndex) {
     final key = mealKey(dayIndex, mealIndex);
     if (mealLogs.containsKey(key)) {
@@ -875,12 +887,7 @@ class NutritionPlan {
     }
     var sum = 0.0;
     for (var i = 0; i < total; i++) {
-      final log = mealLog(dayIndex, i);
-      if (log != null) {
-        sum += log.portionFactor.clamp(0.0, 1.0);
-      } else if (isMealCompleted(dayIndex, i)) {
-        sum += 1;
-      }
+      sum += _portionFactor(dayIndex, i, maxFactor: 1.0);
     }
     return total == 0 ? 0 : sum / total;
   }
@@ -895,18 +902,126 @@ class NutritionPlan {
       final meals = plan.days[dayIndex].meals.length;
       totalMeals += meals;
       for (var mealIndex = 0; mealIndex < meals; mealIndex++) {
-        final log = mealLog(dayIndex, mealIndex);
-        if (log != null) {
-          totalPortion += log.portionFactor.clamp(0.0, 1.0);
-        } else if (isMealCompleted(dayIndex, mealIndex)) {
-          totalPortion += 1;
-        }
+        totalPortion += _portionFactor(dayIndex, mealIndex, maxFactor: 1.0);
       }
     }
     if (totalMeals == 0) {
       return 0;
     }
     return totalPortion / totalMeals;
+  }
+
+  double targetCaloriesForDay(int dayIndex) {
+    if (dayIndex < 0 || dayIndex >= plan.days.length) {
+      return plan.targets.caloriesPerDay.toDouble();
+    }
+    final day = plan.days[dayIndex];
+    final fallback = plan.targets.caloriesPerDay;
+    final total = day.totalCalories;
+    return (total ?? fallback).toDouble();
+  }
+
+  double consumedCaloriesForDay(int dayIndex) {
+    if (dayIndex < 0 || dayIndex >= plan.days.length) {
+      return 0;
+    }
+    final day = plan.days[dayIndex];
+    final totalMeals = day.meals.length;
+    if (totalMeals == 0) {
+      return 0;
+    }
+    final target = targetCaloriesForDay(dayIndex);
+    final fallbackPerMeal = totalMeals == 0 ? 0 : target / totalMeals;
+    var total = 0.0;
+    for (var i = 0; i < totalMeals; i++) {
+      final meal = day.meals[i];
+      final baseCalories = (meal.calories != null && meal.calories! > 0)
+          ? meal.calories!.toDouble()
+          : fallbackPerMeal;
+      final portion = _portionFactor(dayIndex, i, maxFactor: 1.2);
+      total += baseCalories * portion;
+    }
+    return double.parse(total.toStringAsFixed(0));
+  }
+
+  Map<String, double> consumedMacroGramsForDay(int dayIndex) {
+    final ratio = dayCompletionRatio(dayIndex).clamp(0.0, 1.0);
+    final macros = plan.targets.macroGrams();
+    final result = <String, double>{};
+    macros.forEach((key, value) {
+      result[key] = double.parse((value * ratio).toStringAsFixed(1));
+    });
+    return result;
+  }
+
+  bool dayHasProgress(int dayIndex) {
+    if (dayIndex < 0 || dayIndex >= plan.days.length) {
+      return false;
+    }
+    final total = totalMealsForDay(dayIndex);
+    if (total == 0) {
+      return false;
+    }
+    for (var i = 0; i < total; i++) {
+      final key = mealKey(dayIndex, i);
+      if (completedMeals.contains(key)) {
+        return true;
+      }
+      final log = mealLogs[key];
+      if (log != null) {
+        if (log.portionFactor > 0.01) {
+          return true;
+        }
+        if ((log.note ?? '').trim().isNotEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  int pendingMealsForDay(int dayIndex) {
+    final total = totalMealsForDay(dayIndex);
+    if (total == 0) {
+      return 0;
+    }
+    final completed = completedMealsForDay(dayIndex);
+    return math.max(0, total - completed);
+  }
+
+  int currentDayIndex({DateTime? reference}) {
+    if (plan.days.isEmpty) {
+      return 0;
+    }
+    final base = DateTime(generatedAt.year, generatedAt.month, generatedAt.day);
+    final now = reference ?? DateTime.now();
+    final diffDays = now.difference(base).inDays;
+    if (diffDays <= 0) {
+      return 0;
+    }
+    final maxIndex = plan.days.length - 1;
+    final clamped = diffDays.clamp(0, maxIndex);
+    return clamped is num ? clamped.toInt() : 0;
+  }
+
+  int adherenceStreak({double threshold = 0.75, DateTime? reference}) {
+    if (plan.days.isEmpty) {
+      return 0;
+    }
+    final startIndex = currentDayIndex(reference: reference);
+    var streak = 0;
+    for (var dayIndex = startIndex; dayIndex >= 0; dayIndex--) {
+      if (!dayHasProgress(dayIndex)) {
+        break;
+      }
+      final ratio = dayCompletionRatio(dayIndex);
+      if (ratio >= threshold) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
   }
 }
 
