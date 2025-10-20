@@ -103,6 +103,16 @@ class DietProfile {
   bool get exercisesRegularly => activityLevel != DietActivityLevel.sedentary;
   bool get isBatchCooking => cookingStyle == DietCookingStyle.batchAndFreeze;
 
+  String get metabolicProfileLabel {
+    if (metabolicEase <= 1) {
+      return 'Metabolismo lento';
+    }
+    if (metabolicEase >= 5) {
+      return 'Metabolismo acelerado';
+    }
+    return 'Metabolismo equilibrado';
+  }
+
   DietProfile copyWith({
     double? heightCm,
     double? weightKg,

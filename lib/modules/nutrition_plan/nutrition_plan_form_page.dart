@@ -6,6 +6,36 @@ import 'package:receitagora/models/nutrition/diet_profile.dart';
 
 import 'nutrition_plan_controller.dart';
 
+class _MetabolismOption {
+  const _MetabolismOption({
+    required this.value,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final int value;
+  final String title;
+  final String subtitle;
+}
+
+const List<_MetabolismOption> _metabolismOptions = <_MetabolismOption>[
+  _MetabolismOption(
+    value: 1,
+    title: 'Tenho dificuldade para emagrecer',
+    subtitle: 'Perco peso lentamente mesmo ajustando alimentação e rotina.',
+  ),
+  _MetabolismOption(
+    value: 3,
+    title: 'Metabolismo equilibrado',
+    subtitle: 'Consigo manter ou alterar o peso com mudanças moderadas.',
+  ),
+  _MetabolismOption(
+    value: 5,
+    title: 'Metabolismo acelerado',
+    subtitle: 'Reajo rápido aos ajustes de dieta ou treino.',
+  ),
+];
+
 class NutritionPlanFormPage extends GetView<NutritionPlanController> {
   const NutritionPlanFormPage({super.key});
 
@@ -119,37 +149,7 @@ class _ProfileForm extends StatelessWidget {
                       enabled: !locked,
                     ),
                     const SizedBox(height: 20),
-                    Obx(
-                      () {
-                        final value = controller.metabolicEase.value;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Facilidade para emagrecer',
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Avalie seu metabolismo: 0 (muito difícil perder peso) a 5 (metabolismo acelerado).',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                            ),
-                            Slider(
-                              value: value,
-                              min: 0,
-                              max: 5,
-                              divisions: 5,
-                              label: value.round().toString(),
-                              onChanged: locked
-                                  ? null
-                                  : (newValue) => controller.metabolicEase.value = newValue,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                    _MetabolismSelector(controller: controller, locked: locked),
                     const SizedBox(height: 20),
                     _ChoiceSection<DietGoal>(
                       title: 'Objetivo principal',
@@ -180,57 +180,8 @@ class _ProfileForm extends StatelessWidget {
                       onSelected: controller.setCookingStyle,
                       enabled: !locked,
                     ),
-                    const SizedBox(height: 12),
-                    Obx(
-                      () => SwitchListTile.adaptive(
-                        value: controller.prefersBrazilianCuisine.value,
-                        onChanged: locked ? null : controller.toggleBrazilianCuisine,
-                        title: const Text('Priorizar sabores brasileiros'),
-                        subtitle: const Text('Ative para privilegiar temperos e preparos nacionais.'),
-                      ),
-                    ),
-                    Obx(
-                      () => SwitchListTile.adaptive(
-                        value: controller.prefersSeasonalProduce.value,
-                        onChanged: locked ? null : controller.toggleSeasonalProduce,
-                        title: const Text('Usar ingredientes sazonais'),
-                        subtitle: const Text('Sugestões alinhadas à safra para economizar e ganhar sabor.'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Frequência de lanches',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: NutritionPlanController.snackOptions
-                          .map(
-                            (option) => Obx(
-                              () => ChoiceChip(
-                                label: Text(option),
-                                selected: controller.snackFrequency.value == option,
-                                onSelected: locked
-                                    ? null
-                                    : (_) => controller.setSnackFrequency(option),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
                     const SizedBox(height: 20),
-                    TextField(
-                      controller: controller.notesController,
-                      maxLines: 4,
-                      enabled: !locked,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        labelText: 'Observações adicionais',
-                        hintText: 'Restrições médicas, utensílios disponíveis, preferências familiares...',
-                      ),
-                    ),
+                    _OptionalPreferences(controller: controller, locked: locked),
                     if (locked) ...[
                       const SizedBox(height: 16),
                       Row(
@@ -328,6 +279,156 @@ class _ChoiceSection<T> extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MetabolismSelector extends StatelessWidget {
+  const _MetabolismSelector({
+    required this.controller,
+    required this.locked,
+  });
+
+  final NutritionPlanController controller;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Ritmo do metabolismo',
+          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Escolha a opção que melhor descreve como seu corpo reage às dietas.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () {
+            final selected = controller.metabolicEase.value;
+            return Column(
+              children: _metabolismOptions
+                  .map(
+                    (option) => RadioListTile<int>(
+                      value: option.value,
+                      groupValue: selected,
+                      onChanged: locked
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                controller.metabolicEase.value = value;
+                              }
+                            },
+                      title: Text(option.title),
+                      subtitle: Text(
+                        option.subtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  )
+                  .toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _OptionalPreferences extends StatelessWidget {
+  const _OptionalPreferences({
+    required this.controller,
+    required this.locked,
+  });
+
+  final NutritionPlanController controller;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final expansionTheme = theme.copyWith(dividerColor: Colors.transparent);
+
+    return Theme(
+      data: expansionTheme,
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(top: 4, bottom: 4),
+        title: const Text('Preferências opcionais'),
+        subtitle: Text(
+          'Ajuste sabores, lanches e recados se quiser personalizar ainda mais.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+        children: [
+          Obx(
+            () => SwitchListTile.adaptive(
+              value: controller.prefersBrazilianCuisine.value,
+              onChanged: locked ? null : controller.toggleBrazilianCuisine,
+              title: const Text('Priorizar sabores brasileiros'),
+              subtitle: const Text('Prefira temperos e combinações nacionais sempre que possível.'),
+            ),
+          ),
+          Obx(
+            () => SwitchListTile.adaptive(
+              value: controller.prefersSeasonalProduce.value,
+              onChanged: locked ? null : controller.toggleSeasonalProduce,
+              title: const Text('Valorizar ingredientes sazonais'),
+              subtitle: const Text('Sugestões alinhadas à safra para economizar e ganhar sabor.'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Frequência de lanches',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: NutritionPlanController.snackOptions
+                .map(
+                  (option) => Obx(
+                    () => ChoiceChip(
+                      label: Text(option),
+                      selected: controller.snackFrequency.value == option,
+                      onSelected: locked
+                          ? null
+                          : (_) => controller.setSnackFrequency(option),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: controller.notesController,
+            maxLines: 4,
+            enabled: !locked,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Observações adicionais',
+              hintText: 'Restrições médicas, utensílios disponíveis, preferências familiares...',
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
     );
   }
 }

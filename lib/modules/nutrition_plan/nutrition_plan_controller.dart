@@ -33,7 +33,9 @@ class NutritionPlanController extends GetxController {
   final RxBool prefersBrazilianCuisine = true.obs;
   final RxBool prefersSeasonalProduce = false.obs;
   final RxString snackFrequency = 'Moderado'.obs;
-  final RxDouble metabolicEase = 2.0.obs;
+  final RxInt metabolicEase = 3.obs;
+
+  static const List<int> metabolicEasePresets = <int>[1, 3, 5];
 
   final RxBool isGenerating = false.obs;
   final RxBool isRecording = false.obs;
@@ -147,7 +149,7 @@ class NutritionPlanController extends GetxController {
       return;
     }
 
-    final easeScore = metabolicEase.value.round();
+    final easeScore = metabolicEase.value;
     final clampedEase = easeScore < 0
         ? 0
         : easeScore > 5
@@ -368,7 +370,7 @@ class NutritionPlanController extends GetxController {
     prefersBrazilianCuisine.value = profile.prefersBrazilianCuisine;
     prefersSeasonalProduce.value = profile.prefersSeasonalProduce;
     snackFrequency.value = profile.snackFrequency;
-    metabolicEase.value = profile.metabolicEase.toDouble();
+    metabolicEase.value = _closestMetabolicPreset(profile.metabolicEase);
   }
 
   double? _parseDouble(String value) {
@@ -377,6 +379,16 @@ class NutritionPlanController extends GetxController {
     }
     final sanitized = value.replaceAll(',', '.');
     return double.tryParse(sanitized);
+  }
+
+  int _closestMetabolicPreset(int value) {
+    var closest = metabolicEasePresets.first;
+    for (final preset in metabolicEasePresets) {
+      if ((preset - value).abs() < (closest - value).abs()) {
+        closest = preset;
+      }
+    }
+    return closest;
   }
 
 }

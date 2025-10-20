@@ -290,7 +290,8 @@ class NutritionPlanService extends GetxService {
     buffer.writeln('Monte um plano ${profile.interval.label.toLowerCase()} com foco em ${profile.goal.label.toLowerCase()}.');
     buffer.writeln('Dados biométricos: altura ${profile.heightCm.toStringAsFixed(1)} cm, peso ${profile.weightKg.toStringAsFixed(1)} kg, IMC ${profile.bmi}.');
     buffer.writeln('Nível de atividade: ${profile.activityLevel.label}.');
-    buffer.writeln('Facilidade para emagrecer (autoavaliação 0-5): ${profile.metabolicEase}.');
+    buffer.writeln(
+        'Autoavaliação do metabolismo: ${profile.metabolicProfileLabel} (nível ${profile.metabolicEase} de 5).');
     buffer.writeln('Estilo de preparo preferido: ${profile.cookingStyle.label}.');
     final expectedDays =
         profile.interval == DietPlanInterval.weekly ? 7 : 30;
