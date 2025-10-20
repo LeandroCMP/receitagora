@@ -24,12 +24,33 @@ class NutritionPlanPage extends GetView<NutritionPlanController> {
       final shoppingList = plan?.plan.shoppingList ?? const <ShoppingListItem>[];
 
       if (plan == null) {
-        controller.navigateToFormIfNoPlan();
+        final hasSnapshot = controller.hasLoadedInitialSnapshot;
         return Scaffold(
           appBar: AppBar(
             title: const Text('Plano nutricional premium'),
           ),
-          body: const Center(child: CircularProgressIndicator()),
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.alphaBlend(
+                    theme.colorScheme.primary.withOpacity(0.05),
+                    background,
+                  ),
+                  background,
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: hasSnapshot
+                    ? _EmptyPlanView(controller: controller)
+                    : const CircularProgressIndicator(),
+              ),
+            ),
+          ),
         );
       }
 
@@ -84,6 +105,69 @@ class NutritionPlanPage extends GetView<NutritionPlanController> {
   }
 }
 
+class _EmptyPlanView extends StatelessWidget {
+  const _EmptyPlanView({required this.controller});
+
+  final NutritionPlanController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
+    final cardColor = surfaces?.low ?? theme.colorScheme.surfaceVariant;
+    final onCard = theme.colorScheme.onSurface;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: Card(
+        color: cardColor,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Icon(
+                Icons.restaurant_menu_outlined,
+                size: 40,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Monte seu primeiro cardápio',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: onCard,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Responda um questionário rápido para que nossa IA calcule metas personalizadas e gere uma dieta completa com lista de compras.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: onCard.withOpacity(0.75),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: controller.requestFreshPlan,
+                  icon: const Icon(Icons.auto_fix_high_outlined),
+                  label: const Text('Preencher questionário'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PlanArea extends StatelessWidget {
   const _PlanArea({
     required this.controller,
@@ -102,37 +186,25 @@ class _PlanArea extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            SizedBox(
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: isGenerating ? null : controller.generateAlternativePlan,
-                icon: isGenerating
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      )
-                    : const Icon(Icons.auto_awesome_outlined),
-                label: Text(
-                  isGenerating
-                      ? 'Gerando variação...'
-                      : 'Nova variação do cardápio',
-                ),
-              ),
+        SizedBox(
+          height: 52,
+          child: ElevatedButton.icon(
+            onPressed: isGenerating
+                ? null
+                : () => _showUpdateOptions(context, controller),
+            icon: isGenerating
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2.5),
+                  )
+                : const Icon(Icons.refresh_outlined),
+            label: Text(
+              isGenerating
+                  ? 'Processando...'
+                  : 'Atualizar cardápio premium',
             ),
-            SizedBox(
-              height: 52,
-              child: OutlinedButton.icon(
-                onPressed: isGenerating ? null : controller.requestFreshPlan,
-                icon: const Icon(Icons.manage_search_outlined),
-                label: const Text('Gerar com novas informações'),
-              ),
-            ),
-          ],
+          ),
         ),
         const SizedBox(height: 24),
         _PlanStatusCard(plan: plan),
@@ -162,6 +234,90 @@ class _PlanArea extends StatelessWidget {
         const SizedBox(height: 16),
         _WeightHistoryCard(plan: plan),
       ],
+    );
+  }
+}
+
+Future<void> _showUpdateOptions(
+  BuildContext context,
+  NutritionPlanController controller,
+) async {
+  final action = await showModalBottomSheet<_PlanUpdateAction>(
+    context: context,
+    backgroundColor: Theme.of(context).colorScheme.surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) => _PlanUpdateSheet(),
+  );
+
+  switch (action) {
+    case _PlanUpdateAction.variation:
+      await controller.generateAlternativePlan();
+      break;
+    case _PlanUpdateAction.newProfile:
+      await controller.requestFreshPlan();
+      break;
+    case null:
+      break;
+  }
+}
+
+enum _PlanUpdateAction { variation, newProfile }
+
+class _PlanUpdateSheet extends StatelessWidget {
+  const _PlanUpdateSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Como deseja atualizar?',
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Escolha se prefere apenas variar as receitas mantendo as metas atuais ou se quer responder o questionário novamente.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.72),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              onTap: () => Navigator.of(context).pop(_PlanUpdateAction.variation),
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                Icons.auto_awesome_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              title: const Text('Gerar nova variação'),
+              subtitle: const Text('Mantém suas metas e preferências atuais, trocando as combinações do cardápio.'),
+            ),
+            ListTile(
+              onTap: () => Navigator.of(context).pop(_PlanUpdateAction.newProfile),
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(
+                Icons.manage_search_outlined,
+                color: theme.colorScheme.primary,
+              ),
+              title: const Text('Refazer questionário'),
+              subtitle: const Text('Atualize dados de altura, peso ou preferências antes de gerar um novo plano.'),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

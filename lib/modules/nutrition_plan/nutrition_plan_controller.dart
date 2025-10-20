@@ -49,7 +49,6 @@ class NutritionPlanController extends GetxController {
   StreamSubscription<NutritionPlan?>? _planSubscription;
 
   bool _navigatingToForm = false;
-  bool _redirectedDueToEmptyPlan = false;
   bool _hasReceivedPlanSnapshot = false;
   bool _hasShownOverdueReminder = false;
 
@@ -93,6 +92,8 @@ class NutritionPlanController extends GetxController {
   bool get isCheckInOverdue => currentPlan.value?.isCheckInOverdue ?? false;
   bool get needsAdjustment => currentPlan.value?.needsAdjustment ?? false;
 
+  bool get hasLoadedInitialSnapshot => _hasReceivedPlanSnapshot;
+
   String get intervalLabel => interval.value.label;
   String get cookingStyleLabel => cookingStyle.value.label;
 
@@ -116,21 +117,6 @@ class NutritionPlanController extends GetxController {
     } finally {
       _navigatingToForm = false;
     }
-  }
-
-  void navigateToFormIfNoPlan() {
-    if (!_hasReceivedPlanSnapshot ||
-        currentPlan.value != null ||
-        _redirectedDueToEmptyPlan) {
-      return;
-    }
-    _redirectedDueToEmptyPlan = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (isClosed) {
-        return;
-      }
-      unawaited(openForm(replace: true));
-    });
   }
 
   Future<void> requestProfileEdit() async {
@@ -187,7 +173,6 @@ class NutritionPlanController extends GetxController {
       final plan = await service.generatePlan(profile);
       _hasReceivedPlanSnapshot = true;
       _applyPlan(plan);
-      _redirectedDueToEmptyPlan = false;
       if (Get.currentRoute != AppRoutes.nutritionPlan) {
         await Get.offNamed(AppRoutes.nutritionPlan);
       }
@@ -291,7 +276,6 @@ class NutritionPlanController extends GetxController {
       _hasReceivedPlanSnapshot = true;
       _applyPlan(result.plan);
       checkInController.clear();
-      _redirectedDueToEmptyPlan = false;
       String message;
       switch (result.trigger) {
         case RegenerationTrigger.adjustment:
@@ -428,10 +412,6 @@ class NutritionPlanController extends GetxController {
       isFormLocked.value = false;
       _hasShownOverdueReminder = false;
       unawaited(notificationService.cancelCheckInReminder());
-      if (_hasReceivedPlanSnapshot &&
-          Get.currentRoute == AppRoutes.nutritionPlan) {
-        navigateToFormIfNoPlan();
-      }
       return;
     }
 
@@ -439,7 +419,6 @@ class NutritionPlanController extends GetxController {
       _hasReceivedPlanSnapshot = true;
     }
 
-    _redirectedDueToEmptyPlan = false;
     isFormLocked.value = !plan.isCheckInOverdue;
 
     unawaited(notificationService.cancelCheckInReminder());
