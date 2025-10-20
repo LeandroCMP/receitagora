@@ -74,8 +74,6 @@ class LocalNotificationService extends GetxService {
       scheduledDate,
       _details,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
       payload: 'nutrition-plan-checkin',
     );
   }
