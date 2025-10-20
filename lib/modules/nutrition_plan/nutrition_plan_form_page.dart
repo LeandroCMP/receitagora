@@ -181,6 +181,8 @@ class _ProfileForm extends StatelessWidget {
                       enabled: !locked,
                     ),
                     const SizedBox(height: 20),
+                    _DynamicRecommendationBanner(controller: controller, locked: locked),
+                    const SizedBox(height: 20),
                     _OptionalPreferences(controller: controller, locked: locked),
                     if (locked) ...[
                       const SizedBox(height: 16),
@@ -343,6 +345,129 @@ class _MetabolismSelector extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _DynamicRecommendationBanner extends StatelessWidget {
+  const _DynamicRecommendationBanner({
+    required this.controller,
+    required this.locked,
+  });
+
+  final NutritionPlanController controller;
+  final bool locked;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Obx(() {
+      final hints = <String>[];
+      final goal = controller.goal.value;
+      final activity = controller.activityLevel.value;
+      final cooking = controller.cookingStyle.value;
+      final metabolism = controller.metabolicEase.value;
+      final snacks = controller.snackFrequency.value;
+
+      switch (goal) {
+        case DietGoal.loseWeight:
+          hints.add('Priorize proteínas magras no almoço e jantar e evite grandes intervalos sem comer.');
+          break;
+        case DietGoal.gainMass:
+          hints.add('Inclua carboidratos complexos e um lanche calórico pós-treino para sustentar o ganho de massa.');
+          break;
+        case DietGoal.maintain:
+          hints.add('Equilibre porções e distribua as calorias ao longo do dia para manter o peso com conforto.');
+          break;
+        case DietGoal.reeducate:
+          hints.add('Varie texturas e cores no prato para facilitar a reeducação alimentar e aumentar saciedade.');
+          break;
+      }
+
+      switch (activity) {
+        case DietActivityLevel.sedentary:
+          hints.add('Inclua caminhadas leves ou alongamentos diários para ativar o metabolismo e melhorar o sono.');
+          break;
+        case DietActivityLevel.light:
+          hints.add('Combine exercícios leves com hidratação constante para aproveitar ao máximo o cardápio.');
+          break;
+        case DietActivityLevel.moderate:
+          hints.add('Planeje lanches ricos em proteínas nos dias de treino para evitar quedas de energia.');
+          break;
+        case DietActivityLevel.high:
+          hints.add('Garanta reposição de carboidratos complexos após treinos intensos para recuperar a musculatura.');
+          break;
+      }
+
+      if (metabolism <= 2) {
+        hints.add('Metabolismo mais lento: use fibras e proteínas em todas as refeições para controlar fome e açúcar.');
+      } else if (metabolism >= 4) {
+        hints.add('Metabolismo acelerado: programe lanches energéticos para não pular refeições sem perceber.');
+      }
+
+      if (cooking == DietCookingStyle.batchCook) {
+        hints.add('Reserve um dia da semana para preparar e congelar porções equilibradas, facilitando a adesão.');
+      } else {
+        hints.add('Mantenha ingredientes frescos por perto para montar pratos rápidos e variados diariamente.');
+      }
+
+      if (snacks.toLowerCase().contains('alta')) {
+        hints.add('Ajuste os lanches para opções ricas em fibras e gorduras boas, evitando picos de açúcar.');
+      }
+
+      if (hints.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      return AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: locked ? 0.6 : 1,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: theme.colorScheme.primary),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Sugestões do chef nutricional',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...hints.map(
+                (hint) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('• '),
+                      Expanded(
+                        child: Text(
+                          hint,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.75),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 

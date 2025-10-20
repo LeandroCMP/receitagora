@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -210,6 +212,8 @@ class _PlanArea extends StatelessWidget {
         _PlanStatusCard(plan: plan),
         const SizedBox(height: 16),
         _MacroSummaryCard(plan: plan.plan),
+        const SizedBox(height: 16),
+        _ProgressOverviewCard(controller: controller, plan: plan),
         const SizedBox(height: 16),
         _PlanDaysView(controller: controller, plan: plan),
         if (plan.plan.shoppingList.isNotEmpty) ...[
@@ -623,6 +627,298 @@ class _MacroSummaryCard extends StatelessWidget {
   }
 }
 
+class _ProgressOverviewCard extends StatelessWidget {
+  const _ProgressOverviewCard({
+    required this.controller,
+    required this.plan,
+  });
+
+  final NutritionPlanController controller;
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final ratio = controller.overallCompletionRatio().clamp(0.0, 1.0);
+    final ratioLabel = '${(ratio * 100).round()}% das refeições concluídas';
+    final elapsed = DateTime.now().difference(plan.generatedAt);
+    final total = plan.profile.interval.duration;
+    final cycleProgress = total.inMinutes == 0
+        ? 0.0
+        : (elapsed.inMinutes / total.inMinutes).clamp(0.0, 1.2);
+
+    final delta = plan.lastWeighInKg - plan.startingWeightKg;
+    String? alertTitle;
+    String? alertMessage;
+    Color? alertColor;
+
+    if (plan.needsAdjustment) {
+      alertTitle = 'Revisão necessária';
+      alertMessage =
+          'O último check-in indicou que o ritmo não está ideal. Vamos propor ajustes automáticos no próximo cardápio.';
+      alertColor = theme.colorScheme.error;
+    } else if (plan.profile.goal == DietGoal.loseWeight && delta >= 0.1) {
+      alertTitle = 'Olho no objetivo';
+      alertMessage =
+          'O peso ainda não começou a cair. Reforce hidratação, descanso e registre o consumo diário para que possamos adaptar o plano.';
+      alertColor = Colors.orangeAccent;
+    } else if (ratio < 0.45 && cycleProgress > 0.4) {
+      alertTitle = 'Que tal avançar um pouco mais?';
+      alertMessage =
+          'Estamos na metade do ciclo e menos da metade das refeições foram concluídas. Use o diário para registrar ajustes ou substituições.';
+      alertColor = Colors.orangeAccent;
+    } else if (ratio > 0.85 && cycleProgress < 0.5) {
+      alertTitle = 'Excelente ritmo!';
+      alertMessage =
+          'Você está adiantado no cardápio. Continue registrando o consumo para personalizarmos ainda mais as próximas semanas.';
+      alertColor = theme.colorScheme.secondary;
+    }
+
+    return _PlanSectionCard(
+      title: 'Acompanhamento em tempo real',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Progresso geral do ciclo',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              minHeight: 12,
+              value: ratio,
+              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            ratioLabel,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (alertTitle != null && alertMessage != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (alertColor ?? theme.colorScheme.primary)
+                    .withOpacity(alertColor == theme.colorScheme.error ? 0.12 : 0.15),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    alertColor == theme.colorScheme.error
+                        ? Icons.warning_amber_outlined
+                        : Icons.insights_outlined,
+                    color: alertColor ?? theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          alertTitle!,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: alertColor ?? theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          alertMessage!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withOpacity(0.72),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          _WeightTrendChart(plan: plan),
+        ],
+      ),
+    );
+  }
+}
+
+class _WeightTrendChart extends StatelessWidget {
+  const _WeightTrendChart({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final entries = plan.weightHistory.toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+
+    if (entries.length < 2) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          'Registre pelo menos dois pesos para visualizar a evolução.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    final start = entries.first;
+    final end = entries.last;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 170,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: CustomPaint(
+              painter: _WeightTrendPainter(
+                entries: entries,
+                color: theme.colorScheme.primary,
+                baseline: plan.startingWeightKg,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Início: ${start.weightKg.toStringAsFixed(1)} kg',
+              style: theme.textTheme.bodySmall,
+            ),
+            Text(
+              'Atual: ${end.weightKg.toStringAsFixed(1)} kg',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _WeightTrendPainter extends CustomPainter {
+  _WeightTrendPainter({
+    required this.entries,
+    required this.color,
+    required this.baseline,
+  });
+
+  final List<WeightEntry> entries;
+  final Color color;
+  final double baseline;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundPaint = Paint()
+      ..color = color.withOpacity(0.06)
+      ..style = PaintingStyle.fill;
+    canvas.drawRect(Offset.zero & size, backgroundPaint);
+
+    if (entries.isEmpty) {
+      return;
+    }
+
+    final weights = entries.map((e) => e.weightKg).toList();
+    var minWeight = weights.reduce(math.min);
+    var maxWeight = weights.reduce(math.max);
+    if ((maxWeight - minWeight).abs() < 0.1) {
+      maxWeight += 0.5;
+      minWeight -= 0.5;
+    }
+    final span = maxWeight - minWeight;
+    final verticalPadding = 16.0;
+    final chartHeight = size.height - verticalPadding * 2;
+
+    final points = <Offset>[];
+    for (var i = 0; i < entries.length; i++) {
+      final weight = entries[i].weightKg;
+      final x = entries.length == 1
+          ? size.width / 2
+          : (i / (entries.length - 1)) * size.width;
+      final normalized = (weight - minWeight) / span;
+      final y = size.height - verticalPadding - (normalized * chartHeight);
+      points.add(Offset(x, y));
+    }
+
+    final gridPaint = Paint()
+      ..color = color.withOpacity(0.18)
+      ..strokeWidth = 1;
+    canvas.drawLine(
+      Offset(0, size.height - verticalPadding),
+      Offset(size.width, size.height - verticalPadding),
+      gridPaint,
+    );
+
+    final baselineNormalized = ((baseline - minWeight) / span)
+        .clamp(0.0, 1.0);
+    final baselineY = size.height - verticalPadding - (baselineNormalized * chartHeight);
+    final baselinePaint = Paint()
+      ..color = color.withOpacity(0.25)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(
+      Offset(0, baselineY),
+      Offset(size.width, baselineY),
+      baselinePaint,
+    );
+
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    for (var i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
+    }
+
+    final linePaint = Paint()
+      ..color = color
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, linePaint);
+
+    final dotPaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    for (final point in points) {
+      canvas.drawCircle(point, 4, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _WeightTrendPainter oldDelegate) {
+    return oldDelegate.entries != entries ||
+        oldDelegate.color != color ||
+        oldDelegate.baseline != baseline;
+  }
+}
+
 class _MacroChip extends StatelessWidget {
   const _MacroChip({
     required this.label,
@@ -840,6 +1136,8 @@ class _PlanMealTile extends StatelessWidget {
     final isCompleted = controller.isMealCompleted(dayIndex, mealIndex);
     final isLoading = controller.isMealLoading(dayIndex, mealIndex);
     final contentOpacity = isCompleted ? 0.7 : 1.0;
+    final portion = controller.mealPortionFactor(dayIndex, mealIndex).clamp(0.0, 1.5);
+    final note = controller.mealNote(dayIndex, mealIndex);
 
     final metadata = <Widget>[];
     if (meal.calories != null) {
@@ -938,14 +1236,31 @@ class _PlanMealTile extends StatelessWidget {
             children: metadata,
           ),
         ],
+        if (portion > 0 || (note != null && note.trim().isNotEmpty)) ...[
+          const SizedBox(height: 12),
+          _MealProgressSummary(portion: portion, note: note, theme: theme),
+        ],
         const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: TextButton.icon(
-            onPressed: () => _openRecipe(day, meal),
-            icon: const Icon(Icons.menu_book_outlined),
-            label: const Text('Ver ingredientes e preparo completos'),
-          ),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            TextButton.icon(
+              onPressed: isLoading ? null : () => _openMealLogSheet(context),
+              icon: const Icon(Icons.fact_check_outlined),
+              label: const Text('Registrar consumo'),
+            ),
+            TextButton.icon(
+              onPressed: () => controller.openMealInLaboratory(day, meal),
+              icon: const Icon(Icons.biotech_outlined),
+              label: const Text('Explorar no laboratório'),
+            ),
+            TextButton.icon(
+              onPressed: () => _openRecipe(day, meal),
+              icon: const Icon(Icons.menu_book_outlined),
+              label: const Text('Ver receita completa'),
+            ),
+          ],
         ),
       ],
     );
@@ -981,6 +1296,213 @@ class _PlanMealTile extends StatelessWidget {
       steps: steps,
       difficulty: sanitize(meal.difficulty, 'Dificuldade não informada'),
       duration: sanitize(meal.duration, 'Tempo não informado'),
+    );
+  }
+
+  Future<void> _openMealLogSheet(BuildContext context) async {
+    final initialPortion = controller.mealPortionFactor(dayIndex, mealIndex).clamp(0.0, 1.5);
+    final initialNote = controller.mealNote(dayIndex, mealIndex) ?? '';
+    final portionNotifier = ValueNotifier<double>(initialPortion);
+    final noteController = TextEditingController(text: initialNote);
+
+    try {
+      final result = await showModalBottomSheet<_MealLogResult>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) => _MealLogSheet(
+          meal: meal,
+          portion: portionNotifier,
+          noteController: noteController,
+        ),
+      );
+
+      if (result != null) {
+        await controller.recordMealLog(
+          dayIndex: dayIndex,
+          mealIndex: mealIndex,
+          portion: result.portion,
+          notes: result.note,
+        );
+      }
+    } finally {
+      portionNotifier.dispose();
+      noteController.dispose();
+    }
+  }
+}
+
+class _MealProgressSummary extends StatelessWidget {
+  const _MealProgressSummary({
+    required this.portion,
+    required this.note,
+    required this.theme,
+  });
+
+  final double portion;
+  final String? note;
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = portion.clamp(0.0, 1.0);
+    final label = portion <= 0
+        ? 'Ainda não registrado'
+        : portion >= 1
+            ? 'Refeição concluída'
+            : 'Consumido ~${(portion * 100).round()}%';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: LinearProgressIndicator(
+            minHeight: 10,
+            value: ratio,
+            backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
+            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        if (note != null && note!.trim().isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            'Observação: ${note!.trim()}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.65),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _MealLogResult {
+  const _MealLogResult({required this.portion, required this.note});
+
+  final double portion;
+  final String? note;
+}
+
+class _MealLogSheet extends StatelessWidget {
+  const _MealLogSheet({
+    required this.meal,
+    required this.portion,
+    required this.noteController,
+  });
+
+  final DietPlanMeal meal;
+  final ValueNotifier<double> portion;
+  final TextEditingController noteController;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final media = MediaQuery.of(context);
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: media.viewInsets.bottom + 24,
+        left: 24,
+        right: 24,
+        top: 24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Registrar consumo',
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            meal.name,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+          const SizedBox(height: 20),
+          ValueListenableBuilder<double>(
+            valueListenable: portion,
+            builder: (context, value, _) {
+              final label = value <= 0
+                  ? 'Não consumida'
+                  : value >= 1
+                      ? '100% consumida'
+                      : '${(value * 100).round()}% consumidos';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quanto da refeição você consumiu?',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  Slider(
+                    value: value,
+                    min: 0,
+                    max: 1.5,
+                    divisions: 15,
+                    label: label,
+                    onChanged: (newValue) => portion.value = newValue,
+                  ),
+                  Text(
+                    label,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: noteController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Observações (opcional)',
+              hintText: 'Ex.: ajustei o tempero, substituí por outra fruta...',
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancelar'),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(
+                    _MealLogResult(
+                      portion: portion.value,
+                      note: noteController.text.trim().isEmpty
+                          ? null
+                          : noteController.text.trim(),
+                    ),
+                  );
+                },
+                child: const Text('Salvar'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

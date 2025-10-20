@@ -342,6 +342,26 @@ class NutritionPlanController extends GetxController {
     return updatingMeals.contains(NutritionPlan.mealKey(dayIndex, mealIndex));
   }
 
+  MealLogEntry? mealLogFor(int dayIndex, int mealIndex) {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      return null;
+    }
+    return plan.mealLog(dayIndex, mealIndex);
+  }
+
+  double mealPortionFactor(int dayIndex, int mealIndex) {
+    final log = mealLogFor(dayIndex, mealIndex);
+    if (log != null) {
+      return log.portionFactor;
+    }
+    return isMealCompleted(dayIndex, mealIndex) ? 1.0 : 0.0;
+  }
+
+  String? mealNote(int dayIndex, int mealIndex) {
+    return mealLogFor(dayIndex, mealIndex)?.note;
+  }
+
   Future<void> toggleMealCompletion(int dayIndex, int mealIndex) async {
     final plan = currentPlan.value;
     if (plan == null) {
@@ -386,12 +406,80 @@ class NutritionPlanController extends GetxController {
     }
   }
 
+  Future<void> recordMealLog({
+    required int dayIndex,
+    required int mealIndex,
+    required double portion,
+    String? notes,
+  }) async {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      AppSnackbar.info(
+        title: 'Plano indisponível',
+        message: 'Gere um cardápio antes de registrar o consumo.',
+      );
+      return;
+    }
+
+    final key = NutritionPlan.mealKey(dayIndex, mealIndex);
+    if (updatingMeals.contains(key)) {
+      return;
+    }
+    updatingMeals.add(key);
+    try {
+      final updated = await service.recordMealLog(
+        plan: plan,
+        dayIndex: dayIndex,
+        mealIndex: mealIndex,
+        portionFactor: portion,
+        notes: notes,
+      );
+      _applyPlan(updated);
+    } on AppException catch (error) {
+      AppSnackbar.error(
+        title: 'Não foi possível registrar o diário',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Erro ao salvar registro',
+        message: 'Tente novamente em instantes.',
+      );
+    } finally {
+      updatingMeals.remove(key);
+    }
+  }
+
   double dayCompletionRatio(int dayIndex) {
     final plan = currentPlan.value;
     if (plan == null) {
       return 0;
     }
     return plan.dayCompletionRatio(dayIndex);
+  }
+
+  double overallCompletionRatio() {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      return 0;
+    }
+    return plan.overallCompletionRatio();
+  }
+
+  Future<void> openMealInLaboratory(DietPlanDay day, DietPlanMeal meal) async {
+    final ingredient = meal.ingredients.isNotEmpty
+        ? meal.ingredients.first
+        : meal.name.split(' ').first;
+    final context = '${day.label}: ${meal.name}';
+    await Get.toNamed(
+      AppRoutes.ingredientLab,
+      arguments: <String, dynamic>{
+        'ingredient': ingredient,
+        'context': context,
+        'available': meal.ingredients,
+        'notes': meal.prepNotes ?? meal.description,
+      },
+    );
   }
 
   String dayCompletionLabel(int dayIndex) {

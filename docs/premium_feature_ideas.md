@@ -46,7 +46,6 @@ conceito do laboratório de ingredientes para uma dimensão de relacionamento:
 
 ## Outras ideias premium
 - **Rotina gastronômica personalizada:** planos semanais com listas de compras inteligentes e preparo antecipado.
-- **Aulas rápidas com chefs convidados:** conteúdo em vídeo exclusivo alinhado às preferências do usuário.
 - **Modo desafio surpresa:** desafios culinários com conquistas e recompensas digitais.
 - **Integração com dispositivos de cozinha:** sincronização de timers e modos de preparo com aparelhos conectados.
 - **Pairing avançado:** harmonizações de bebidas e acompanhamentos baseadas no perfil de sabor.
@@ -55,4 +54,7 @@ conceito do laboratório de ingredientes para uma dimensão de relacionamento:
 - **Mercado premium:** acesso a ingredientes especiais com descontos, sugerindo fornecedores parceiros conforme o cardápio.
 - **Rede de feedback colaborativo:** clientes podem responder pesquisas rápidas via link, alimentando automaticamente o painel
   de satisfação do Laboratório de Clientes.
+
+## Ideias estacionadas
+- **Central multimídia premium:** sessões em vídeo ao vivo ou gravadas com especialistas. A proposta foi arquivada por ora porque o app não dispõe de infraestrutura para produção e hospedagem de conteúdo audiovisual.
 

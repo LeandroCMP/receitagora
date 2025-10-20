@@ -43,6 +43,34 @@ class IngredientLabController extends GetxController {
     if (user?.allergies.isNotEmpty == true) {
       restrictedItems.assignAll(user!.allergies);
     }
+
+    final args = Get.arguments;
+    if (args is Map<String, dynamic>) {
+      final ingredient = args['ingredient']?.toString();
+      final context = args['context']?.toString();
+      final notes = args['notes']?.toString();
+      final available = args['available'];
+      if (ingredient != null && ingredient.isNotEmpty) {
+        ingredientController.text = ingredient;
+      }
+      if (context != null && context.isNotEmpty) {
+        contextController.text = context;
+      }
+      if (notes != null && notes.isNotEmpty) {
+        notesController.text = notes;
+      }
+      if (available is Iterable) {
+        final entries = available
+            .map((dynamic item) => item?.toString())
+            .whereType<String>()
+            .where((item) => item.trim().isNotEmpty)
+            .map(_normalizeEntry)
+            .toList();
+        if (entries.isNotEmpty) {
+          availableItems.assignAll(entries);
+        }
+      }
+    }
   }
 
   @override

@@ -520,6 +520,103 @@ class WeightEntry {
 }
 
 @immutable
+class MealLogEntry {
+  const MealLogEntry({
+    required this.consumed,
+    required this.portionFactor,
+    this.note,
+    required this.updatedAt,
+  });
+
+  final bool consumed;
+  final double portionFactor;
+  final String? note;
+  final DateTime updatedAt;
+
+  MealLogEntry copyWith({
+    bool? consumed,
+    double? portionFactor,
+    String? note,
+    DateTime? updatedAt,
+  }) {
+    return MealLogEntry(
+      consumed: consumed ?? this.consumed,
+      portionFactor: portionFactor ?? this.portionFactor,
+      note: note ?? this.note,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  factory MealLogEntry.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return MealLogEntry(
+        consumed: false,
+        portionFactor: 0,
+        note: null,
+        updatedAt: DateTime.now(),
+      );
+    }
+
+    DateTime _readDate(dynamic value) {
+      if (value is DateTime) {
+        return value;
+      }
+      try {
+        final dynamic candidate = value;
+        final result = candidate?.toDate();
+        if (result is DateTime) {
+          return result;
+        }
+      } catch (_) {
+        // ignored
+      }
+      if (value is int) {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      }
+      if (value is Map<String, dynamic>) {
+        final seconds = (value['seconds'] as num?)?.toInt();
+        final nanos = (value['nanoseconds'] as num?)?.toInt() ?? 0;
+        if (seconds != null) {
+          return DateTime.fromMillisecondsSinceEpoch(
+            seconds * 1000 + (nanos ~/ 1000000),
+          );
+        }
+      }
+      return DateTime.now();
+    }
+
+    double _readPortion(dynamic value) {
+      if (value is num) {
+        return value.toDouble();
+      }
+      if (value is String) {
+        final parsed = double.tryParse(value.replaceAll(',', '.'));
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      return 0;
+    }
+
+    return MealLogEntry(
+      consumed: map['consumed'] as bool? ?? false,
+      portionFactor: _readPortion(map['portionFactor']).clamp(0.0, 1.5),
+      note: _readString(map['note']),
+      updatedAt: _readDate(map['updatedAt']),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'consumed': consumed,
+      'portionFactor': portionFactor,
+      'note': note,
+      'updatedAt': updatedAt,
+    };
+  }
+}
+
+@immutable
 class NutritionPlan {
   NutritionPlan({
     required this.profile,
@@ -530,7 +627,11 @@ class NutritionPlan {
     required this.weightHistory,
     required this.needsAdjustment,
     required Set<String> completedMeals,
-  }) : completedMeals = Set<String>.unmodifiable(completedMeals);
+    Map<String, MealLogEntry>? mealLogs,
+  })  : completedMeals = Set<String>.unmodifiable(completedMeals),
+        mealLogs = Map<String, MealLogEntry>.unmodifiable(
+          mealLogs ?? const <String, MealLogEntry>{},
+        );
 
   final DietProfile profile;
   final DietPlan plan;
@@ -540,6 +641,7 @@ class NutritionPlan {
   final List<WeightEntry> weightHistory;
   final bool needsAdjustment;
   final Set<String> completedMeals;
+  final Map<String, MealLogEntry> mealLogs;
 
   double get startingWeightKg =>
       weightHistory.isNotEmpty ? weightHistory.first.weightKg : lastWeighInKg;
@@ -555,6 +657,7 @@ class NutritionPlan {
     List<WeightEntry>? weightHistory,
     bool? needsAdjustment,
     Set<String>? completedMeals,
+    Map<String, MealLogEntry>? mealLogs,
   }) {
     return NutritionPlan(
       profile: profile ?? this.profile,
@@ -566,6 +669,7 @@ class NutritionPlan {
       needsAdjustment: needsAdjustment ?? this.needsAdjustment,
       completedMeals:
           completedMeals != null ? Set<String>.unmodifiable(completedMeals) : this.completedMeals,
+      mealLogs: mealLogs ?? this.mealLogs,
     );
   }
 
@@ -623,6 +727,15 @@ class NutritionPlan {
         : <WeightEntry>[];
 
     final completedMeals = Set<String>.from(_readStringList(map['completedMeals']));
+    final logs = <String, MealLogEntry>{};
+    final rawLogs = map['mealLogs'];
+    if (rawLogs is Map<String, dynamic>) {
+      rawLogs.forEach((key, dynamic value) {
+        if (value is Map<String, dynamic>) {
+          logs[key] = MealLogEntry.fromMap(value);
+        }
+      });
+    }
 
     return NutritionPlan(
       profile: DietProfile.fromMap(map['profile'] as Map<String, dynamic>?),
@@ -633,6 +746,7 @@ class NutritionPlan {
       weightHistory: List<WeightEntry>.unmodifiable(history),
       needsAdjustment: map['needsAdjustment'] as bool? ?? false,
       completedMeals: completedMeals,
+      mealLogs: logs,
     );
   }
 
@@ -646,13 +760,24 @@ class NutritionPlan {
       'weightHistory': weightHistory.map((entry) => entry.toMap()).toList(),
       'needsAdjustment': needsAdjustment,
       'completedMeals': completedMeals.toList(),
+      'mealLogs': mealLogs.map(
+        (key, value) => MapEntry(key, value.toMap()),
+      ),
     };
   }
 
   static String mealKey(int dayIndex, int mealIndex) => 'd$dayIndex-m$mealIndex';
 
+  MealLogEntry? mealLog(int dayIndex, int mealIndex) {
+    return mealLogs[mealKey(dayIndex, mealIndex)];
+  }
+
   bool isMealCompleted(int dayIndex, int mealIndex) {
-    return completedMeals.contains(mealKey(dayIndex, mealIndex));
+    final key = mealKey(dayIndex, mealIndex);
+    if (mealLogs.containsKey(key)) {
+      return mealLogs[key]!.consumed;
+    }
+    return completedMeals.contains(key);
   }
 
   NutritionPlan updateMealCompletion({
@@ -667,7 +792,52 @@ class NutritionPlan {
     } else {
       updated.remove(key);
     }
-    return copyWith(completedMeals: updated);
+    final updatedLogs = Map<String, MealLogEntry>.from(mealLogs);
+    updatedLogs[key] = (updatedLogs[key] ??
+            MealLogEntry(
+              consumed: completed,
+              portionFactor: completed ? 1 : 0,
+              note: null,
+              updatedAt: DateTime.now(),
+            ))
+        .copyWith(
+      consumed: completed,
+      portionFactor: completed ? 1 : 0,
+      updatedAt: DateTime.now(),
+    );
+    if (!completed) {
+      updatedLogs[key] = updatedLogs[key]!.copyWith(portionFactor: 0, note: null);
+    }
+    return copyWith(completedMeals: updated, mealLogs: updatedLogs);
+  }
+
+  NutritionPlan updateMealLog({
+    required int dayIndex,
+    required int mealIndex,
+    required double portionFactor,
+    String? note,
+  }) {
+    final key = mealKey(dayIndex, mealIndex);
+    final clampedPortion = portionFactor.clamp(0.0, 1.5);
+    final consumed = clampedPortion >= 0.5;
+    final updatedCompleted = Set<String>.from(completedMeals);
+    if (consumed) {
+      updatedCompleted.add(key);
+    } else {
+      updatedCompleted.remove(key);
+    }
+    final cleanedNote = note?.trim();
+    final previousNote = mealLogs[key]?.note;
+    final effectiveNote =
+        cleanedNote == null || cleanedNote.isEmpty ? previousNote : cleanedNote;
+    final updatedLogs = Map<String, MealLogEntry>.from(mealLogs)
+      ..[key] = MealLogEntry(
+        consumed: consumed,
+        portionFactor: clampedPortion,
+        note: clampedPortion <= 0.05 ? null : effectiveNote,
+        updatedAt: DateTime.now(),
+      );
+    return copyWith(completedMeals: updatedCompleted, mealLogs: updatedLogs);
   }
 
   int totalMealsForDay(int dayIndex) {
@@ -684,6 +854,13 @@ class NutritionPlan {
     }
     var count = 0;
     for (var i = 0; i < total; i++) {
+      final log = mealLog(dayIndex, i);
+      if (log != null) {
+        if (log.consumed && log.portionFactor >= 0.5) {
+          count++;
+        }
+        continue;
+      }
       if (isMealCompleted(dayIndex, i)) {
         count++;
       }
@@ -696,7 +873,40 @@ class NutritionPlan {
     if (total == 0) {
       return 0;
     }
-    return completedMealsForDay(dayIndex) / total;
+    var sum = 0.0;
+    for (var i = 0; i < total; i++) {
+      final log = mealLog(dayIndex, i);
+      if (log != null) {
+        sum += log.portionFactor.clamp(0.0, 1.0);
+      } else if (isMealCompleted(dayIndex, i)) {
+        sum += 1;
+      }
+    }
+    return total == 0 ? 0 : sum / total;
+  }
+
+  double overallCompletionRatio() {
+    if (plan.days.isEmpty) {
+      return 0;
+    }
+    var totalMeals = 0;
+    var totalPortion = 0.0;
+    for (var dayIndex = 0; dayIndex < plan.days.length; dayIndex++) {
+      final meals = plan.days[dayIndex].meals.length;
+      totalMeals += meals;
+      for (var mealIndex = 0; mealIndex < meals; mealIndex++) {
+        final log = mealLog(dayIndex, mealIndex);
+        if (log != null) {
+          totalPortion += log.portionFactor.clamp(0.0, 1.0);
+        } else if (isMealCompleted(dayIndex, mealIndex)) {
+          totalPortion += 1;
+        }
+      }
+    }
+    if (totalMeals == 0) {
+      return 0;
+    }
+    return totalPortion / totalMeals;
   }
 }
 

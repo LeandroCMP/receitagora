@@ -118,6 +118,7 @@ class NutritionPlanService extends GetxService {
       weightHistory: List<WeightEntry>.unmodifiable(initialHistory),
       needsAdjustment: false,
       completedMeals: const <String>{},
+      mealLogs: const <String, MealLogEntry>{},
     );
 
     await doc.set(_serializePlan(nutritionPlan));
@@ -173,6 +174,7 @@ class NutritionPlanService extends GetxService {
       nextCheckInAt: now.add(current.profile.interval.duration),
       needsAdjustment: false,
       completedMeals: const <String>{},
+      mealLogs: const <String, MealLogEntry>{},
     );
 
     await doc.set(_serializePlan(updatedPlan), SetOptions(merge: true));
@@ -198,7 +200,45 @@ class NutritionPlanService extends GetxService {
     );
 
     await doc.set(
-      <String, dynamic>{'completedMeals': updated.completedMeals.toList()},
+      <String, dynamic>{
+        'completedMeals': updated.completedMeals.toList(),
+        'mealLogs': updated.mealLogs.map(
+          (key, value) => MapEntry(key, value.toMap()),
+        ),
+      },
+      SetOptions(merge: true),
+    );
+
+    return updated;
+  }
+
+  Future<NutritionPlan> recordMealLog({
+    required NutritionPlan plan,
+    required int dayIndex,
+    required int mealIndex,
+    required double portionFactor,
+    String? notes,
+  }) async {
+    await sessionService.ensureInitialized();
+    final doc = _planDocument();
+    if (doc == null) {
+      throw const AppException('É necessário estar autenticado para atualizar o diário alimentar.');
+    }
+
+    final updated = plan.updateMealLog(
+      dayIndex: dayIndex,
+      mealIndex: mealIndex,
+      portionFactor: portionFactor,
+      note: notes,
+    );
+
+    await doc.set(
+      <String, dynamic>{
+        'completedMeals': updated.completedMeals.toList(),
+        'mealLogs': updated.mealLogs.map(
+          (key, value) => MapEntry(key, value.toMap()),
+        ),
+      },
       SetOptions(merge: true),
     );
 
@@ -263,6 +303,9 @@ class NutritionPlanService extends GetxService {
                 'weightKg': entry.weightKg,
               })
           .toList(),
+      'mealLogs': plan.mealLogs.map(
+        (key, value) => MapEntry(key, value.toMap()),
+      ),
     };
   }
 
