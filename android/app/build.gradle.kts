@@ -14,6 +14,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -52,5 +53,6 @@ kotlin {
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
     implementation("com.google.firebase:firebase-analytics-ktx")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     // Add additional Firebase dependencies here as needed, they will inherit the BoM version.
 }
