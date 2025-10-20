@@ -117,6 +117,7 @@ class NutritionPlanService extends GetxService {
       lastWeighInKg: profile.weightKg,
       weightHistory: List<WeightEntry>.unmodifiable(initialHistory),
       needsAdjustment: false,
+      completedMeals: const <String>{},
     );
 
     await doc.set(_serializePlan(nutritionPlan));
@@ -171,10 +172,37 @@ class NutritionPlanService extends GetxService {
       generatedAt: now,
       nextCheckInAt: now.add(current.profile.interval.duration),
       needsAdjustment: false,
+      completedMeals: const <String>{},
     );
 
     await doc.set(_serializePlan(updatedPlan), SetOptions(merge: true));
     return updatedPlan;
+  }
+
+  Future<NutritionPlan> setMealCompletion({
+    required NutritionPlan plan,
+    required int dayIndex,
+    required int mealIndex,
+    required bool completed,
+  }) async {
+    await sessionService.ensureInitialized();
+    final doc = _planDocument();
+    if (doc == null) {
+      throw const AppException('É necessário estar autenticado para atualizar o progresso do cardápio.');
+    }
+
+    final updated = plan.updateMealCompletion(
+      dayIndex: dayIndex,
+      mealIndex: mealIndex,
+      completed: completed,
+    );
+
+    await doc.set(
+      <String, dynamic>{'completedMeals': updated.completedMeals.toList()},
+      SetOptions(merge: true),
+    );
+
+    return updated;
   }
 
   Future<NutritionPlanRegenerationResult> recordWeighIn(double weightKg) async {
@@ -228,6 +256,7 @@ class NutritionPlanService extends GetxService {
       'nextCheckInAt': Timestamp.fromDate(plan.nextCheckInAt),
       'lastWeighInKg': plan.lastWeighInKg,
       'needsAdjustment': plan.needsAdjustment,
+      'completedMeals': plan.completedMeals.toList(),
       'weightHistory': plan.weightHistory
           .map((entry) => <String, dynamic>{
                 'date': Timestamp.fromDate(entry.date),

@@ -10,16 +10,19 @@ import 'package:receitagora/core/errors/app_exception.dart';
 import 'package:receitagora/models/nutrition/diet_plan.dart';
 import 'package:receitagora/models/nutrition/diet_profile.dart';
 import 'package:receitagora/services/nutrition/nutrition_plan_service.dart';
+import 'package:receitagora/services/notifications/local_notification_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
 class NutritionPlanController extends GetxController {
   NutritionPlanController({
     required this.service,
     required this.sessionService,
+    required this.notificationService,
   });
 
   final NutritionPlanService service;
   final SessionService sessionService;
+  final LocalNotificationService notificationService;
 
   late final TextEditingController heightController;
   late final TextEditingController weightController;
@@ -41,12 +44,14 @@ class NutritionPlanController extends GetxController {
   final RxBool isRecording = false.obs;
   final Rxn<NutritionPlan> currentPlan = Rxn<NutritionPlan>();
   final RxBool isFormLocked = false.obs;
+  final RxSet<String> updatingMeals = <String>{}.obs;
 
   StreamSubscription<NutritionPlan?>? _planSubscription;
 
   bool _navigatingToForm = false;
   bool _redirectedDueToEmptyPlan = false;
   bool _hasReceivedPlanSnapshot = false;
+  bool _hasShownOverdueReminder = false;
 
   static const List<String> snackOptions = <String>[
     'Baixa',
@@ -341,10 +346,88 @@ class NutritionPlanController extends GetxController {
   void toggleSeasonalProduce(bool value) => prefersSeasonalProduce.value = value;
   void setSnackFrequency(String value) => snackFrequency.value = value;
 
+  bool isMealCompleted(int dayIndex, int mealIndex) {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      return false;
+    }
+    return plan.isMealCompleted(dayIndex, mealIndex);
+  }
+
+  bool isMealLoading(int dayIndex, int mealIndex) {
+    return updatingMeals.contains(NutritionPlan.mealKey(dayIndex, mealIndex));
+  }
+
+  Future<void> toggleMealCompletion(int dayIndex, int mealIndex) async {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      AppSnackbar.info(
+        title: 'Plano indisponível',
+        message: 'Gere um cardápio antes de registrar o consumo.',
+      );
+      return;
+    }
+
+    if (dayIndex < 0 || dayIndex >= plan.plan.days.length) {
+      return;
+    }
+
+    final key = NutritionPlan.mealKey(dayIndex, mealIndex);
+    if (updatingMeals.contains(key)) {
+      return;
+    }
+
+    updatingMeals.add(key);
+    final targetState = !plan.isMealCompleted(dayIndex, mealIndex);
+    try {
+      final updated = await service.setMealCompletion(
+        plan: plan,
+        dayIndex: dayIndex,
+        mealIndex: mealIndex,
+        completed: targetState,
+      );
+      _applyPlan(updated);
+    } on AppException catch (error) {
+      AppSnackbar.error(
+        title: 'Não foi possível atualizar a refeição',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Erro ao salvar progresso',
+        message: 'Tente novamente em instantes.',
+      );
+    } finally {
+      updatingMeals.remove(key);
+    }
+  }
+
+  double dayCompletionRatio(int dayIndex) {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      return 0;
+    }
+    return plan.dayCompletionRatio(dayIndex);
+  }
+
+  String dayCompletionLabel(int dayIndex) {
+    final plan = currentPlan.value;
+    if (plan == null) {
+      return '0 de 0 refeições concluídas';
+    }
+    final completed = plan.completedMealsForDay(dayIndex);
+    final total = plan.totalMealsForDay(dayIndex);
+    return '$completed de $total refeições concluídas';
+  }
+
   void _applyPlan(NutritionPlan? plan) {
     currentPlan.value = plan;
+    updatingMeals.clear();
+    updatingMeals.refresh();
     if (plan == null) {
       isFormLocked.value = false;
+      _hasShownOverdueReminder = false;
+      unawaited(notificationService.cancelCheckInReminder());
       if (_hasReceivedPlanSnapshot &&
           Get.currentRoute == AppRoutes.nutritionPlan) {
         navigateToFormIfNoPlan();
@@ -358,6 +441,17 @@ class NutritionPlanController extends GetxController {
 
     _redirectedDueToEmptyPlan = false;
     isFormLocked.value = !plan.isCheckInOverdue;
+
+    unawaited(notificationService.cancelCheckInReminder());
+    if (plan.isCheckInOverdue) {
+      if (!_hasShownOverdueReminder) {
+        _hasShownOverdueReminder = true;
+        unawaited(notificationService.notifyCheckInAvailable());
+      }
+    } else {
+      _hasShownOverdueReminder = false;
+      unawaited(notificationService.scheduleCheckInReminder(plan.nextCheckInAt));
+    }
 
     final profile = plan.profile;
     heightController.text = profile.heightCm.toStringAsFixed(1);

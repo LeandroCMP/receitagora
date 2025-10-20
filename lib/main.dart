@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:receitagora/application/app.dart';
 import 'package:receitagora/core/services/firebase_initializer.dart';
+import 'package:receitagora/services/notifications/local_notification_service.dart';
 import 'package:receitagora/services/config/usage_config_service.dart';
 import 'package:receitagora/services/config/usage_config_service_impl.dart';
 import 'package:receitagora/services/session/session_service.dart';
@@ -23,6 +24,10 @@ Future<void> main() async {
 
   final sharedPreferences = await SharedPreferences.getInstance();
   Get.put<SharedPreferences>(sharedPreferences, permanent: true);
+
+  final notificationService = LocalNotificationService();
+  await notificationService.init();
+  Get.put<LocalNotificationService>(notificationService, permanent: true);
 
   final firebaseAuth = FirebaseAuth.instance;
   final firestore = FirebaseFirestore.instance;

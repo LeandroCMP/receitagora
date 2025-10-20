@@ -521,7 +521,7 @@ class WeightEntry {
 
 @immutable
 class NutritionPlan {
-  const NutritionPlan({
+  NutritionPlan({
     required this.profile,
     required this.plan,
     required this.generatedAt,
@@ -529,7 +529,8 @@ class NutritionPlan {
     required this.lastWeighInKg,
     required this.weightHistory,
     required this.needsAdjustment,
-  });
+    required Set<String> completedMeals,
+  }) : completedMeals = Set<String>.unmodifiable(completedMeals);
 
   final DietProfile profile;
   final DietPlan plan;
@@ -538,6 +539,7 @@ class NutritionPlan {
   final double lastWeighInKg;
   final List<WeightEntry> weightHistory;
   final bool needsAdjustment;
+  final Set<String> completedMeals;
 
   double get startingWeightKg =>
       weightHistory.isNotEmpty ? weightHistory.first.weightKg : lastWeighInKg;
@@ -552,6 +554,7 @@ class NutritionPlan {
     double? lastWeighInKg,
     List<WeightEntry>? weightHistory,
     bool? needsAdjustment,
+    Set<String>? completedMeals,
   }) {
     return NutritionPlan(
       profile: profile ?? this.profile,
@@ -561,6 +564,8 @@ class NutritionPlan {
       lastWeighInKg: lastWeighInKg ?? this.lastWeighInKg,
       weightHistory: weightHistory ?? this.weightHistory,
       needsAdjustment: needsAdjustment ?? this.needsAdjustment,
+      completedMeals:
+          completedMeals != null ? Set<String>.unmodifiable(completedMeals) : this.completedMeals,
     );
   }
 
@@ -617,6 +622,8 @@ class NutritionPlan {
             .toList()
         : <WeightEntry>[];
 
+    final completedMeals = Set<String>.from(_readStringList(map['completedMeals']));
+
     return NutritionPlan(
       profile: DietProfile.fromMap(map['profile'] as Map<String, dynamic>?),
       plan: DietPlan.fromMap(map['plan'] as Map<String, dynamic>?),
@@ -625,6 +632,7 @@ class NutritionPlan {
       lastWeighInKg: (map['lastWeighInKg'] as num?)?.toDouble() ?? 0,
       weightHistory: List<WeightEntry>.unmodifiable(history),
       needsAdjustment: map['needsAdjustment'] as bool? ?? false,
+      completedMeals: completedMeals,
     );
   }
 
@@ -637,7 +645,58 @@ class NutritionPlan {
       'lastWeighInKg': lastWeighInKg,
       'weightHistory': weightHistory.map((entry) => entry.toMap()).toList(),
       'needsAdjustment': needsAdjustment,
+      'completedMeals': completedMeals.toList(),
     };
+  }
+
+  static String mealKey(int dayIndex, int mealIndex) => 'd$dayIndex-m$mealIndex';
+
+  bool isMealCompleted(int dayIndex, int mealIndex) {
+    return completedMeals.contains(mealKey(dayIndex, mealIndex));
+  }
+
+  NutritionPlan updateMealCompletion({
+    required int dayIndex,
+    required int mealIndex,
+    required bool completed,
+  }) {
+    final updated = Set<String>.from(completedMeals);
+    final key = mealKey(dayIndex, mealIndex);
+    if (completed) {
+      updated.add(key);
+    } else {
+      updated.remove(key);
+    }
+    return copyWith(completedMeals: updated);
+  }
+
+  int totalMealsForDay(int dayIndex) {
+    if (dayIndex < 0 || dayIndex >= plan.days.length) {
+      return 0;
+    }
+    return plan.days[dayIndex].meals.length;
+  }
+
+  int completedMealsForDay(int dayIndex) {
+    final total = totalMealsForDay(dayIndex);
+    if (total == 0) {
+      return 0;
+    }
+    var count = 0;
+    for (var i = 0; i < total; i++) {
+      if (isMealCompleted(dayIndex, i)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  double dayCompletionRatio(int dayIndex) {
+    final total = totalMealsForDay(dayIndex);
+    if (total == 0) {
+      return 0;
+    }
+    return completedMealsForDay(dayIndex) / total;
   }
 }
 

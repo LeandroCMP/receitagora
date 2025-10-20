@@ -139,7 +139,7 @@ class _PlanArea extends StatelessWidget {
         const SizedBox(height: 16),
         _MacroSummaryCard(plan: plan.plan),
         const SizedBox(height: 16),
-        _PlanDaysView(plan: plan.plan),
+        _PlanDaysView(controller: controller, plan: plan),
         if (plan.plan.shoppingList.isNotEmpty) ...[
           const SizedBox(height: 16),
           SizedBox(
@@ -522,9 +522,13 @@ class _MacroChip extends StatelessWidget {
 }
 
 class _PlanDaysView extends StatelessWidget {
-  const _PlanDaysView({required this.plan});
+  const _PlanDaysView({
+    required this.controller,
+    required this.plan,
+  });
 
-  final DietPlan plan;
+  final NutritionPlanController controller;
+  final NutritionPlan plan;
 
   @override
   Widget build(BuildContext context) {
@@ -532,11 +536,16 @@ class _PlanDaysView extends StatelessWidget {
     return _PlanSectionCard(
       title: 'Agenda de refeições',
       child: Column(
-        children: plan.days
+        children: plan.plan.days
+            .asMap()
+            .entries
             .map(
-              (day) => _PlanDayTile(
-                day: day,
-                targets: plan.targets,
+              (entry) => _PlanDayTile(
+                controller: controller,
+                plan: plan,
+                dayIndex: entry.key,
+                day: entry.value,
+                targets: plan.plan.targets,
               ),
             )
             .toList(),
@@ -547,16 +556,25 @@ class _PlanDaysView extends StatelessWidget {
 
 class _PlanDayTile extends StatelessWidget {
   const _PlanDayTile({
+    required this.controller,
+    required this.plan,
+    required this.dayIndex,
     required this.day,
     required this.targets,
   });
 
+  final NutritionPlanController controller;
+  final NutritionPlan plan;
+  final int dayIndex;
   final DietPlanDay day;
   final DietPlanTargets targets;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final totalMeals = day.meals.length;
+    final completionRatio = controller.dayCompletionRatio(dayIndex).clamp(0.0, 1.0);
+    final completionLabel = controller.dayCompletionLabel(dayIndex);
     final totalCalories = day.totalCalories;
     final targetCalories = targets.caloriesPerDay;
     final difference = (totalCalories != null && targetCalories > 0)
@@ -591,6 +609,34 @@ class _PlanDayTile extends StatelessWidget {
                   ),
                 ),
               ),
+            if (totalMeals > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      completionLabel,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: completionRatio,
+                        minHeight: 6,
+                        backgroundColor:
+                            theme.colorScheme.primary.withOpacity(0.12),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
         children: [
@@ -602,7 +648,13 @@ class _PlanDayTile extends StatelessWidget {
             const SizedBox(height: 16),
           ],
           for (var i = 0; i < day.meals.length; i++) ...[
-            _PlanMealTile(day: day, meal: day.meals[i]),
+            _PlanMealTile(
+              controller: controller,
+              dayIndex: dayIndex,
+              mealIndex: i,
+              day: day,
+              meal: day.meals[i],
+            ),
             if (i < day.meals.length - 1) const Divider(height: 28),
           ],
         ],
@@ -613,16 +665,25 @@ class _PlanDayTile extends StatelessWidget {
 
 class _PlanMealTile extends StatelessWidget {
   const _PlanMealTile({
+    required this.controller,
+    required this.dayIndex,
+    required this.mealIndex,
     required this.day,
     required this.meal,
   });
 
+  final NutritionPlanController controller;
+  final int dayIndex;
+  final int mealIndex;
   final DietPlanDay day;
   final DietPlanMeal meal;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isCompleted = controller.isMealCompleted(dayIndex, mealIndex);
+    final isLoading = controller.isMealLoading(dayIndex, mealIndex);
+    final contentOpacity = isCompleted ? 0.7 : 1.0;
 
     final metadata = <Widget>[];
     if (meal.calories != null) {
@@ -650,40 +711,65 @@ class _PlanMealTile extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            SizedBox(
+              width: 36,
+              child: Center(
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Checkbox(
+                        value: isCompleted,
+                        visualDensity: VisualDensity.compact,
+                        onChanged: (_) =>
+                            controller.toggleMealCompletion(dayIndex, mealIndex),
+                      ),
+              ),
+            ),
+            const SizedBox(width: 4),
             Icon(
               Icons.restaurant_menu,
               color: theme.colorScheme.primary.withOpacity(0.8),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meal.name,
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(meal.description),
-                  if (meal.macroFocus != null && meal.macroFocus!.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 250),
+                opacity: contentOpacity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      meal.macroFocus!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.65),
+                      meal.name,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        decoration: isCompleted ? TextDecoration.lineThrough : null,
                       ),
                     ),
-                  ],
-                  if (meal.prepNotes != null && meal.prepNotes!.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      'Dica: ${meal.prepNotes!}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.primary,
+                    const SizedBox(height: 4),
+                    Text(meal.description),
+                    if (meal.macroFocus != null && meal.macroFocus!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        meal.macroFocus!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.65),
+                        ),
                       ),
-                    ),
+                    ],
+                    if (meal.prepNotes != null && meal.prepNotes!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Dica: ${meal.prepNotes!}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ],
