@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -67,15 +68,31 @@ class LocalNotificationService extends GetxService {
 
     final scheduledDate = tz.TZDateTime.from(reminderTime.toUtc(), tz.UTC);
 
-    await _plugin.zonedSchedule(
-      _checkInNotificationId,
-      'Hora de registrar seu peso',
-      'Conclua o check-in para liberar o próximo cardápio premium.',
-      scheduledDate,
-      _details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      payload: 'nutrition-plan-checkin',
-    );
+    try {
+      await _plugin.zonedSchedule(
+        _checkInNotificationId,
+        'Hora de registrar seu peso',
+        'Conclua o check-in para liberar o próximo cardápio premium.',
+        scheduledDate,
+        _details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'nutrition-plan-checkin',
+      );
+    } on PlatformException catch (error) {
+      if (error.code == 'exact_alarms_not_permitted') {
+        await _plugin.zonedSchedule(
+          _checkInNotificationId,
+          'Hora de registrar seu peso',
+          'Conclua o check-in para liberar o próximo cardápio premium.',
+          scheduledDate,
+          _details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          payload: 'nutrition-plan-checkin',
+        );
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<void> notifyCheckInAvailable() async {
