@@ -139,6 +139,45 @@ class _ShoppingItemTile extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (item.alternatives.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Alternativas do laboratório:',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  ...item.alternatives.map(
+                    (alternative) => Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('• '),
+                          Expanded(
+                            child: Text(
+                              alternative,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                if (item.substitutionNote != null && item.substitutionNote!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    item.substitutionNote!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.65),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

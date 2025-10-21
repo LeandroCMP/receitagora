@@ -393,7 +393,7 @@ class _DynamicRecommendationBanner extends StatelessWidget {
         case DietActivityLevel.moderate:
           hints.add('Planeje lanches ricos em proteínas nos dias de treino para evitar quedas de energia.');
           break;
-        case DietActivityLevel.high:
+        case DietActivityLevel.intense:
           hints.add('Garanta reposição de carboidratos complexos após treinos intensos para recuperar a musculatura.');
           break;
       }
@@ -404,7 +404,7 @@ class _DynamicRecommendationBanner extends StatelessWidget {
         hints.add('Metabolismo acelerado: programe lanches energéticos para não pular refeições sem perceber.');
       }
 
-      if (cooking == DietCookingStyle.batchCook) {
+      if (cooking == DietCookingStyle.batchAndFreeze) {
         hints.add('Reserve um dia da semana para preparar e congelar porções equilibradas, facilitando a adesão.');
       } else {
         hints.add('Mantenha ingredientes frescos por perto para montar pratos rápidos e variados diariamente.');

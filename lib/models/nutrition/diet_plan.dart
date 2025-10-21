@@ -831,12 +831,16 @@ class ShoppingListItem {
     required this.item,
     required this.quantity,
     this.notes,
+    this.alternatives = const <String>[],
+    this.substitutionNote,
   });
 
   final String category;
   final String item;
   final String quantity;
   final String? notes;
+  final List<String> alternatives;
+  final String? substitutionNote;
 
   factory ShoppingListItem.fromMap(Map<String, dynamic>? map) {
     if (map == null) {
@@ -847,11 +851,22 @@ class ShoppingListItem {
       );
     }
 
+    final rawAlternatives = map['alternatives'];
+    final alternatives = rawAlternatives is Iterable
+        ? rawAlternatives
+            .map((dynamic value) => _readString(value) ?? '')
+            .where((value) => value.trim().isNotEmpty)
+            .map((value) => value.trim())
+            .toList()
+        : const <String>[];
+
     return ShoppingListItem(
       category: _readString(map['category']) ?? 'Diversos',
       item: _readString(map['item']) ?? 'Ingrediente não especificado',
       quantity: _readString(map['quantity']) ?? '1 unidade',
       notes: _readString(map['notes']),
+      alternatives: List<String>.unmodifiable(alternatives),
+      substitutionNote: _readString(map['substitutionNote']),
     );
   }
 
@@ -861,7 +876,27 @@ class ShoppingListItem {
       'item': item,
       'quantity': quantity,
       'notes': notes,
+      'alternatives': alternatives,
+      'substitutionNote': substitutionNote,
     };
+  }
+
+  ShoppingListItem copyWith({
+    String? category,
+    String? item,
+    String? quantity,
+    String? notes,
+    List<String>? alternatives,
+    String? substitutionNote,
+  }) {
+    return ShoppingListItem(
+      category: category ?? this.category,
+      item: item ?? this.item,
+      quantity: quantity ?? this.quantity,
+      notes: notes ?? this.notes,
+      alternatives: alternatives ?? this.alternatives,
+      substitutionNote: substitutionNote ?? this.substitutionNote,
+    );
   }
 }
 

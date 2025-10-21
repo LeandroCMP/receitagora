@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/models/nutrition/diet_plan.dart';
+import 'package:receitagora/models/nutrition/diet_profile.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/modules/recipe_finder/recipe_detail_page.dart';
 

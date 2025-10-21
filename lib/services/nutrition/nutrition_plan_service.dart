@@ -102,8 +102,12 @@ class NutritionPlanService extends GetxService {
       temperature: 0.55,
     );
 
-    final plan =
-        _normalizePlan(DietPlan.fromMap(response), profile, recommendedTargets);
+    final plan = _normalizePlan(
+      DietPlan.fromMap(response),
+      profile,
+      recommendedTargets,
+      previousPlan: null,
+    );
     final now = DateTime.now();
     final nextCheckIn = now.add(profile.interval.duration);
     final initialHistory = <WeightEntry>[
@@ -166,6 +170,7 @@ class NutritionPlanService extends GetxService {
       DietPlan.fromMap(response),
       current.profile,
       recommendedTargets,
+      previousPlan: current,
     );
     final now = DateTime.now();
     final updatedPlan = current.copyWith(
@@ -442,7 +447,8 @@ class NutritionPlanService extends GetxService {
     buffer.writeln('    }');
     buffer.writeln('  ],');
     buffer.writeln('  "shoppingList": [');
-    buffer.writeln('    {"category": "string", "item": "string", "quantity": "string", "notes": "string"}');
+    buffer.writeln(
+        '    {"category": "string", "item": "string", "quantity": "string", "notes": "string", "alternatives": ["string"...], "substitutionNote": "string"}');
     buffer.writeln('  ],');
     buffer.writeln('  "followUpTips": ["string"...]');
     buffer.writeln('}');
@@ -450,6 +456,7 @@ class NutritionPlanService extends GetxService {
     buffer.writeln('Garanta que cada dia contenha exatamente as quatro refeições principais com os nomes informados acima e inclua lanches extras somente se estiverem no mesmo formato JSON.');
     buffer.writeln('Inclua variações coerentes com o objetivo ${profile.goal.promptKeyword} e utilize ingredientes acessíveis no Brasil.');
     buffer.writeln('Para cada refeição forneça ingredientes detalhados e um modo de preparo passo a passo claro, com duração média e nível de dificuldade compatíveis com o perfil informado.');
+    buffer.writeln('Na lista de compras, descreva até duas alternativas inteligentes inspiradas no laboratório de ingredientes, explicando rapidamente o uso em "alternatives" e trazendo um resumo em "substitutionNote" quando houver orientações extras.');
 
     return buffer.toString();
   }
@@ -567,8 +574,9 @@ class NutritionPlanService extends GetxService {
   DietPlan _normalizePlan(
     DietPlan raw,
     DietProfile profile,
-    DietPlanTargets recommendedTargets,
-  ) {
+    DietPlanTargets recommendedTargets, {
+    NutritionPlan? previousPlan,
+  }) {
     final sanitizedTargets = _mergeTargets(raw.targets, recommendedTargets);
     final expectedDays =
         profile.interval == DietPlanInterval.weekly ? 7 : 30;
@@ -586,7 +594,8 @@ class NutritionPlanService extends GetxService {
       );
     }
 
-    final hydrationCoach = _buildHydrationPlan(profile);
+    final hydrationCoach =
+        _buildHydrationPlan(profile, previousPlan: previousPlan);
     final mindfulBreak = _buildMindfulBreak(profile);
     final sleepRoutine = _buildSleepRoutine(profile);
     final wellnessDigest = _buildWellnessDigest(
@@ -595,9 +604,17 @@ class NutritionPlanService extends GetxService {
       hydration: hydrationCoach,
       mindful: mindfulBreak,
       days: normalizedDays,
+      previousPlan: previousPlan,
     );
-    final movementRoutine = _buildMovementRoutine(profile);
-    final sunlightRoutine = _buildSunlightRoutine(profile);
+    final movementRoutine =
+        _buildMovementRoutine(profile, previousPlan: previousPlan);
+    final sunlightRoutine =
+        _buildSunlightRoutine(profile, previousPlan: previousPlan);
+    final shoppingList = _enrichShoppingList(
+      raw.shoppingList,
+      profile,
+      previousPlan: previousPlan,
+    );
 
     return raw.copyWith(
       targets: sanitizedTargets,
@@ -611,6 +628,7 @@ class NutritionPlanService extends GetxService {
       wellnessDigest: wellnessDigest,
       movementRoutine: movementRoutine,
       sunlightRoutine: sunlightRoutine,
+      shoppingList: shoppingList,
     );
   }
 
@@ -790,6 +808,186 @@ class NutritionPlanService extends GetxService {
     return normalized.trim();
   }
 
+  List<ShoppingListItem> _enrichShoppingList(
+    List<ShoppingListItem> items,
+    DietProfile profile, {
+    NutritionPlan? previousPlan,
+  }) {
+    if (items.isEmpty) {
+      return const <ShoppingListItem>[];
+    }
+
+    final adherence = previousPlan?.overallCompletionRatio() ?? 0.0;
+    final seasonal = profile.prefersSeasonalProduce;
+
+    return List<ShoppingListItem>.unmodifiable(
+      items.map((item) {
+        final normalizedExisting = item.alternatives
+            .map((alt) => alt.trim())
+            .where((alt) => alt.isNotEmpty)
+            .toSet();
+        normalizedExisting
+            .addAll(_suggestShoppingAlternatives(item, profile, previousPlan));
+
+        final orderedAlternatives = normalizedExisting
+            .where((alt) => alt.isNotEmpty)
+            .toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+        var substitutionNote = item.substitutionNote;
+        if ((substitutionNote == null || substitutionNote.trim().isEmpty) &&
+            orderedAlternatives.isNotEmpty) {
+          substitutionNote = _defaultSubstitutionNote(
+            itemName: item.item,
+            alternative: orderedAlternatives.first,
+            adherence: adherence,
+            seasonal: seasonal,
+          );
+        }
+
+        return item.copyWith(
+          alternatives: List<String>.unmodifiable(orderedAlternatives),
+          substitutionNote: substitutionNote,
+        );
+      }),
+    );
+  }
+
+  Iterable<String> _suggestShoppingAlternatives(
+    ShoppingListItem item,
+    DietProfile profile,
+    NutritionPlan? previousPlan,
+  ) {
+    final name = item.item.toLowerCase();
+    final category = item.category.toLowerCase();
+    final suggestions = <String>{};
+
+    void addAll(List<String> values) {
+      for (final value in values) {
+        final trimmed = value.trim();
+        if (trimmed.isNotEmpty && !trimmed.toLowerCase().contains(name)) {
+          suggestions.add(trimmed);
+        }
+      }
+    }
+
+    final rules = <String, List<String>>{
+      'frango': [
+        'Peito de peru desfiado temperado com ervas',
+        'Tofu firme grelhado com limão e páprica',
+      ],
+      'carne moída': [
+        'Proteína de soja texturizada hidratada no molho de tomate',
+        'Lentilha cozida com especiarias',
+      ],
+      'ovo': [
+        'Grão-de-bico cozido temperado com azeite e cúrcuma',
+        'Tofu mexido com cebola e páprica',
+      ],
+      'peixe': [
+        'Filé de tilápia assado com ervas frescas',
+        'Merluza cozida no vapor com limão siciliano',
+      ],
+      'leite': [
+        'Bebida vegetal de aveia sem açúcar',
+        'Leite de amêndoas enriquecido com cálcio',
+      ],
+      'iogurte': [
+        'Kefir natural',
+        'Iogurte vegetal sem açúcar',
+      ],
+      'queijo': [
+        'Queijo minas frescal light',
+        'Ricota temperada com ervas frescas',
+      ],
+      'arroz integral': [
+        'Quinoa em grãos cozida',
+        'Arroz cateto integral',
+      ],
+      'feijão': [
+        'Grão-de-bico cozido',
+        'Feijão carioca já cozido e congelado em porções',
+      ],
+      'batata doce': [
+        'Mandioquinha cozida',
+        'Inhame assado com ervas',
+      ],
+      'banana': [
+        'Mamão em cubos',
+        'Maçã assada com canela',
+      ],
+      'alface': [
+        'Mix de folhas baby',
+        'Rúcula fresca',
+      ],
+      'tomate': [
+        'Pimentão vermelho assado',
+        'Abobrinha grelhada',
+      ],
+      'farinha de aveia': [
+        'Farelo de aveia',
+        'Semente de chia hidratada',
+      ],
+    };
+
+    rules.forEach((keyword, values) {
+      if (name.contains(keyword)) {
+        addAll(values);
+      }
+    });
+
+    if (category.contains('verdura') ||
+        category.contains('hortaliça') ||
+        category.contains('legume')) {
+      addAll(<String>[
+        'Brócolis no vapor com alho crocante',
+        'Couve-flor assada com açafrão-da-terra',
+      ]);
+    }
+
+    if (profile.cookingStyle == DietCookingStyle.batchAndFreeze) {
+      addAll(<String>[
+        'Legumes congelados pré-cortados',
+        'Preparações prontas caseiras congeladas em porções',
+      ]);
+    }
+
+    if (profile.prefersSeasonalProduce) {
+      addAll(<String>['Legumes frescos da estação disponíveis na feira']);
+    }
+
+    final adherence = previousPlan?.overallCompletionRatio() ?? 0.0;
+    if (adherence < 0.45) {
+      addAll(<String>['Versão pronta congelada sem conservantes para dias corridos']);
+    }
+
+    return suggestions;
+  }
+
+  String _defaultSubstitutionNote({
+    required String itemName,
+    required String alternative,
+    required double adherence,
+    required bool seasonal,
+  }) {
+    final cleanedItem = itemName.trim();
+    final buffer = StringBuffer(
+      'Se não encontrar $cleanedItem, utilize $alternative mantendo o tempero sugerido.',
+    );
+
+    if (seasonal) {
+      buffer.write(' Aproveite para priorizar ingredientes frescos da estação.');
+    }
+
+    if (adherence < 0.45) {
+      buffer.write(' Essa alternativa reduz o tempo de preparo e ajuda a manter a rotina.');
+    } else if (adherence > 0.8) {
+      buffer.write(' Use quando quiser variar sem comprometer as metas do cardápio.');
+    }
+
+    return buffer.toString();
+  }
+
   double _calculateWeeklyTrend(List<WeightEntry> history) {
     if (history.length < 2) {
       return 0;
@@ -810,7 +1008,10 @@ class NutritionPlanService extends GetxService {
     return (delta / days) * 7;
   }
 
-  HydrationPlanInfo _buildHydrationPlan(DietProfile profile) {
+  HydrationPlanInfo _buildHydrationPlan(
+    DietProfile profile, {
+    NutritionPlan? previousPlan,
+  }) {
     final weightKg = profile.weightKg <= 0 ? 60 : profile.weightKg;
     var totalMl = (weightKg * 35).round();
 
@@ -844,9 +1045,16 @@ class NutritionPlanService extends GetxService {
         break;
     }
 
+    final adherence = previousPlan?.overallCompletionRatio() ?? 0.0;
+    if (adherence < 0.45) {
+      totalMl += 250;
+    } else if (adherence > 0.85) {
+      totalMl -= 120;
+    }
+
     totalMl = totalMl.clamp(1500, 4500);
 
-    final reminderCount = () {
+    var reminderCount = () {
       switch (profile.activityLevel) {
         case DietActivityLevel.sedentary:
           return 4;
@@ -858,6 +1066,13 @@ class NutritionPlanService extends GetxService {
           return 6;
       }
     }();
+
+    final previousReminders = previousPlan?.plan.hydrationPlan.reminders.length ?? 0;
+    if (adherence < 0.45) {
+      reminderCount = math.min(reminderCount + 1, 7);
+    } else if (adherence > 0.85 && reminderCount > 4 && previousReminders > 0) {
+      reminderCount = math.max(reminderCount - 1, 4);
+    }
 
     final baseSlots = <List<int>>[
       <int>[7, 30],
@@ -881,16 +1096,16 @@ class NutritionPlanService extends GetxService {
       } else {
         amount = (remaining / slotsRemaining).round();
         amount = (amount / 50).round() * 50;
-        if (amount < 150) {
-          amount = 150;
+        if (amount < 180 && remaining > 200) {
+          amount = 180;
         }
         if (amount > remaining) {
           amount = remaining;
         }
-        if (amount < 100 && remaining > 0) {
-          amount = math.min(remaining, 100);
+        if (amount < 120 && remaining > 0) {
+          amount = math.min(remaining, 120);
         }
-        amount = amount.clamp(100, 1200);
+        amount = amount.clamp(120, 700);
       }
       remaining -= amount;
       amounts.add(amount);
@@ -1068,6 +1283,7 @@ class NutritionPlanService extends GetxService {
     required HydrationPlanInfo hydration,
     required _MindfulBreakSchedule mindful,
     required List<DietPlanDay> days,
+    NutritionPlan? previousPlan,
   }) {
     final normalizedGoal = profile.goal.label.toLowerCase();
     final summary =
@@ -1111,8 +1327,19 @@ class NutritionPlanService extends GetxService {
     final hoursBefore =
         profile.interval == DietPlanInterval.weekly ? 12 : 24;
 
-    final callToAction =
-        'Revise o resumo na véspera do check-in para decidir se mantém ou ajusta a estratégia.';
+    final callToAction = () {
+      if (previousPlan?.needsAdjustment ?? false) {
+        return 'Faça o check-in programado e aceite as sugestões de ajuste antes de seguir para o próximo ciclo.';
+      }
+      final adherence = previousPlan?.overallCompletionRatio() ?? 0.0;
+      if (adherence > 0.85) {
+        return 'Mantenha o registro das refeições para preservar a sequência atual e celebrar os avanços no próximo check-in.';
+      }
+      if (adherence < 0.45) {
+        return 'Use o resumo para planejar os próximos dias e recuperar o ritmo antes da pesagem.';
+      }
+      return 'Revise o resumo na véspera do check-in para decidir se mantém ou ajusta a estratégia.';
+    }();
 
     return WellnessDigestInfo(
       enabled: profile.wellnessDigestEnabled,
@@ -1123,7 +1350,10 @@ class NutritionPlanService extends GetxService {
     );
   }
 
-  MovementBreakInfo _buildMovementRoutine(DietProfile profile) {
+  MovementBreakInfo _buildMovementRoutine(
+    DietProfile profile, {
+    NutritionPlan? previousPlan,
+  }) {
     if (!profile.movementCoachEnabled) {
       return const MovementBreakInfo(
         enabled: false,
@@ -1132,6 +1362,9 @@ class NutritionPlanService extends GetxService {
         tips: <String>[],
       );
     }
+
+    final adherence = previousPlan?.overallCompletionRatio() ?? 0.0;
+    final streak = previousPlan?.adherenceStreak() ?? 0;
 
     final templates = <Map<String, dynamic>>[
       <String, dynamic>{
@@ -1151,19 +1384,31 @@ class NutritionPlanService extends GetxService {
       },
     ];
 
-    final slotCount = switch (profile.activityLevel) {
+    var slotCount = switch (profile.activityLevel) {
       DietActivityLevel.sedentary => 3,
       DietActivityLevel.light => 3,
       DietActivityLevel.moderate => 2,
       DietActivityLevel.intense => 2,
     };
 
-    final baseDuration = switch (profile.activityLevel) {
+    if (adherence < 0.45) {
+      slotCount = math.min(slotCount + 1, templates.length);
+    } else if (adherence > 0.85) {
+      slotCount = math.max(slotCount - 1, 2);
+    }
+
+    var baseDuration = switch (profile.activityLevel) {
       DietActivityLevel.sedentary => 7,
       DietActivityLevel.light => 6,
       DietActivityLevel.moderate => 5,
       DietActivityLevel.intense => 4,
     };
+
+    if (adherence < 0.45) {
+      baseDuration += 2;
+    } else if (adherence > 0.85 && streak >= 4) {
+      baseDuration = math.max(4, baseDuration - 1);
+    }
 
     final slots = <MovementBreakSlot>[];
     for (var i = 0; i < slotCount && i < templates.length; i++) {
@@ -1192,17 +1437,24 @@ class NutritionPlanService extends GetxService {
         'Use movimentos que elevem levemente a frequência cardíaca para estimular o gasto calórico.',
       if (profile.goal == DietGoal.gainMass)
         'Inclua exercícios isométricos rápidos (como prancha ou agachamento isométrico) para ativar musculatura.',
+      if (adherence < 0.45)
+        'Mantenha lembretes visuais e aplique pausas curtinhas: o objetivo é ganhar consistência primeiro.',
+      if (adherence > 0.85)
+        'Varie os exercícios com circuitos rápidos para evitar monotonia e continuar evoluindo.',
     ].where((tip) => tip.isNotEmpty).toList(growable: false);
 
     return MovementBreakInfo(
       enabled: true,
       summary: summary,
       slots: List<MovementBreakSlot>.unmodifiable(slots),
-      tips: tips,
+      tips: List<String>.unmodifiable(tips),
     );
   }
 
-  SunlightExposureInfo _buildSunlightRoutine(DietProfile profile) {
+  SunlightExposureInfo _buildSunlightRoutine(
+    DietProfile profile, {
+    NutritionPlan? previousPlan,
+  }) {
     if (!profile.sunlightCoachEnabled) {
       return const SunlightExposureInfo(
         enabled: false,
@@ -1215,12 +1467,18 @@ class NutritionPlanService extends GetxService {
       );
     }
 
+    final adherence = previousPlan?.overallCompletionRatio() ?? 0.0;
+    final previousDuration = previousPlan?.plan.sunlightRoutine.durationMinutes;
+
     var reminderHour = switch (profile.sleepWindow) {
       DietSleepWindow.early => 8,
       DietSleepWindow.regular => 9,
       DietSleepWindow.late => 10,
     };
     if (profile.activityLevel == DietActivityLevel.intense) {
+      reminderHour = math.max(7, reminderHour - 1);
+    }
+    if (adherence < 0.45) {
       reminderHour = math.max(7, reminderHour - 1);
     }
 
@@ -1238,6 +1496,11 @@ class NutritionPlanService extends GetxService {
     if (profile.activityLevel == DietActivityLevel.intense) {
       duration = math.max(12, duration - 4);
     }
+    if (adherence > 0.85 && (previousDuration != null && previousDuration >= 15)) {
+      duration = math.max(12, duration - 2);
+    } else if (adherence < 0.45) {
+      duration += 3;
+    }
     duration = duration.clamp(12, 30);
 
     final benefits = <String>[
@@ -1253,6 +1516,9 @@ class NutritionPlanService extends GetxService {
       'Use protetor solar nas áreas expostas se ultrapassar 15 minutos.',
       'Evite a faixa de maior índice UV (12h às 15h) e busque sombra parcial se necessário.',
     ];
+    if (adherence < 0.45) {
+      cautions.add('Caso esteja começando, divida o tempo em duas exposições menores no mesmo período.');
+    }
 
     final message =
         'Momento de receber sol leve por $duration minuto(s). Busque uma área ventilada e mantenha-se hidratado.';
@@ -1262,8 +1528,8 @@ class NutritionPlanService extends GetxService {
       reminderMinute: reminderMinute,
       durationMinutes: duration,
       message: message,
-      benefits: benefits,
-      cautions: cautions,
+      benefits: List<String>.unmodifiable(benefits),
+      cautions: List<String>.unmodifiable(cautions),
     );
   }
 
