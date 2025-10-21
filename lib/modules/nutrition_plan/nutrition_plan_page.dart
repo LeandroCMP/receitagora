@@ -1415,40 +1415,41 @@ class _DailyFocusCard extends StatelessWidget {
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (context, constraints) {
-              final children = <Widget>[
-                Expanded(
-                  child: _DailyMetricTile(
-                    label: 'Calorias estimadas',
-                    value: caloriesLabel,
-                    subtitle: caloriesSubtitle,
-                    progress: info.targetCalories <= 0
-                        ? 0
-                        : (info.consumedCalories / info.targetCalories).clamp(0.0, 1.2),
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _DailyMetricTile(
-                    label: 'Refeições do dia',
-                    value: '${info.completedMeals}/${info.totalMeals} concluídas',
-                    subtitle: pendingLabel,
-                    progress: info.totalMeals == 0 ? 0 : mealProgress.clamp(0.0, 1.0),
-                    color: theme.colorScheme.secondary,
-                  ),
-                ),
-              ];
+              final caloriesTile = _DailyMetricTile(
+                label: 'Calorias estimadas',
+                value: caloriesLabel,
+                subtitle: caloriesSubtitle,
+                progress: info.targetCalories <= 0
+                    ? 0
+                    : (info.consumedCalories / info.targetCalories).clamp(0.0, 1.2),
+                color: theme.colorScheme.primary,
+              );
+              final mealsTile = _DailyMetricTile(
+                label: 'Refeições do dia',
+                value: '${info.completedMeals}/${info.totalMeals} concluídas',
+                subtitle: pendingLabel,
+                progress: info.totalMeals == 0 ? 0 : mealProgress.clamp(0.0, 1.0),
+                color: theme.colorScheme.secondary,
+              );
+
               if (constraints.maxWidth < 600) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    children[0],
+                    caloriesTile,
                     const SizedBox(height: 12),
-                    children[2],
+                    mealsTile,
                   ],
                 );
               }
-              return Row(children: children);
+
+              return Row(
+                children: [
+                  Expanded(child: caloriesTile),
+                  const SizedBox(width: 12),
+                  Expanded(child: mealsTile),
+                ],
+              );
             },
           ),
           const SizedBox(height: 16),
