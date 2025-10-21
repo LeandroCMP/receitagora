@@ -1,11 +1,11 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:get/get.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'package:receitagora/models/nutrition/diet_plan.dart';
+import 'package:receitagora/services/notifications/device_timezone.dart';
 
 class LocalNotificationService extends GetxService {
   LocalNotificationService();
@@ -61,9 +61,14 @@ class LocalNotificationService extends GetxService {
 
     tz.initializeTimeZones();
     try {
-      final timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
-      _localLocation = tz.getLocation(timeZoneName);
-      tz.setLocalLocation(_localLocation);
+      final timeZoneName = await DeviceTimezone.getLocalTimezone();
+      if (timeZoneName != null && timeZoneName.isNotEmpty) {
+        _localLocation = tz.getLocation(timeZoneName);
+        tz.setLocalLocation(_localLocation);
+      } else {
+        _localLocation = tz.local;
+        tz.setLocalLocation(_localLocation);
+      }
     } catch (_) {
       _localLocation = tz.local;
       tz.setLocalLocation(_localLocation);

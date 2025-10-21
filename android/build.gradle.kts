@@ -1,6 +1,3 @@
-import com.android.build.gradle.LibraryExtension
-import org.gradle.kotlin.dsl.configure
-
 allprojects {
     repositories {
         google()
@@ -17,16 +14,6 @@ subprojects {
 }
 subprojects {
     project.evaluationDependsOn(":app")
-}
-
-subprojects {
-    if (name == "flutter_native_timezone") {
-        plugins.withId("com.android.library") {
-            extensions.configure<LibraryExtension> {
-                namespace = "com.github.datetime.flutter_native_timezone"
-            }
-        }
-    }
 }
 
 tasks.register<Delete>("clean") {
