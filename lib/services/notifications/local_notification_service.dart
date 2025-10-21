@@ -52,7 +52,7 @@ class LocalNotificationService extends GetxService {
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
-  tz.Location _localLocation = tz.local;
+  late tz.Location _localLocation;
 
   Future<LocalNotificationService> init() async {
     if (_initialized) {
@@ -64,15 +64,14 @@ class LocalNotificationService extends GetxService {
       final timeZoneName = await DeviceTimezone.getLocalTimezone();
       if (timeZoneName != null && timeZoneName.isNotEmpty) {
         _localLocation = tz.getLocation(timeZoneName);
-        tz.setLocalLocation(_localLocation);
       } else {
-        _localLocation = tz.local;
-        tz.setLocalLocation(_localLocation);
+        _localLocation = tz.getLocation('UTC');
       }
     } catch (_) {
-      _localLocation = tz.local;
-      tz.setLocalLocation(_localLocation);
+      _localLocation = tz.getLocation('UTC');
     }
+
+    tz.setLocalLocation(_localLocation);
 
     const initializationSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
