@@ -63,6 +63,45 @@ extension DietCookingStyleLabel on DietCookingStyle {
       this == DietCookingStyle.cookDaily ? 'Cozinhar todos os dias' : 'Produzir e congelar';
 }
 
+enum DietSleepWindow { early, regular, late }
+
+extension DietSleepWindowLabel on DietSleepWindow {
+  String get label {
+    switch (this) {
+      case DietSleepWindow.early:
+        return 'Dormir cedo (21h30)';
+      case DietSleepWindow.regular:
+        return 'Dormir no horário padrão (22h30)';
+      case DietSleepWindow.late:
+        return 'Dormir mais tarde (23h30)';
+    }
+  }
+
+  int get targetHour {
+    switch (this) {
+      case DietSleepWindow.early:
+        return 21;
+      case DietSleepWindow.regular:
+        return 22;
+      case DietSleepWindow.late:
+        return 23;
+    }
+  }
+
+  int get targetMinute => 30;
+
+  String get summary {
+    switch (this) {
+      case DietSleepWindow.early:
+        return 'Ideal para quem prefere acordar cedo e ter uma rotina matinal produtiva.';
+      case DietSleepWindow.regular:
+        return 'Mantém um ciclo equilibrado com cerca de 7-8 horas de sono.';
+      case DietSleepWindow.late:
+        return 'Respeita rotinas noturnas sem comprometer a recuperação.';
+    }
+  }
+}
+
 @immutable
 class DietProfile {
   const DietProfile({
@@ -77,6 +116,13 @@ class DietProfile {
     this.additionalNotes,
     this.prefersSeasonalProduce = false,
     this.snackFrequency = 'Moderado',
+    this.hydrationCoachEnabled = true,
+    this.mindfulBreaksEnabled = true,
+    this.movementCoachEnabled = true,
+    this.sunlightCoachEnabled = true,
+    this.sleepCoachEnabled = true,
+    this.sleepWindow = DietSleepWindow.regular,
+    this.wellnessDigestEnabled = true,
   });
 
   final double heightCm;
@@ -91,6 +137,13 @@ class DietProfile {
   final String? additionalNotes;
   final bool prefersSeasonalProduce;
   final String snackFrequency;
+  final bool hydrationCoachEnabled;
+  final bool mindfulBreaksEnabled;
+  final bool movementCoachEnabled;
+  final bool sunlightCoachEnabled;
+  final bool sleepCoachEnabled;
+  final DietSleepWindow sleepWindow;
+  final bool wellnessDigestEnabled;
 
   double get bmi {
     final meters = heightCm / 100;
@@ -125,6 +178,13 @@ class DietProfile {
     String? additionalNotes,
     bool? prefersSeasonalProduce,
     String? snackFrequency,
+    bool? hydrationCoachEnabled,
+    bool? mindfulBreaksEnabled,
+    bool? movementCoachEnabled,
+    bool? sunlightCoachEnabled,
+    bool? sleepCoachEnabled,
+    DietSleepWindow? sleepWindow,
+    bool? wellnessDigestEnabled,
   }) {
     return DietProfile(
       heightCm: heightCm ?? this.heightCm,
@@ -140,6 +200,18 @@ class DietProfile {
       prefersSeasonalProduce:
           prefersSeasonalProduce ?? this.prefersSeasonalProduce,
       snackFrequency: snackFrequency ?? this.snackFrequency,
+      hydrationCoachEnabled:
+          hydrationCoachEnabled ?? this.hydrationCoachEnabled,
+      mindfulBreaksEnabled:
+          mindfulBreaksEnabled ?? this.mindfulBreaksEnabled,
+      movementCoachEnabled:
+          movementCoachEnabled ?? this.movementCoachEnabled,
+      sunlightCoachEnabled:
+          sunlightCoachEnabled ?? this.sunlightCoachEnabled,
+      sleepCoachEnabled: sleepCoachEnabled ?? this.sleepCoachEnabled,
+      sleepWindow: sleepWindow ?? this.sleepWindow,
+      wellnessDigestEnabled:
+          wellnessDigestEnabled ?? this.wellnessDigestEnabled,
     );
   }
 
@@ -156,6 +228,13 @@ class DietProfile {
       'additionalNotes': additionalNotes,
       'prefersSeasonalProduce': prefersSeasonalProduce,
       'snackFrequency': snackFrequency,
+      'hydrationCoachEnabled': hydrationCoachEnabled,
+      'mindfulBreaksEnabled': mindfulBreaksEnabled,
+      'movementCoachEnabled': movementCoachEnabled,
+      'sunlightCoachEnabled': sunlightCoachEnabled,
+      'sleepCoachEnabled': sleepCoachEnabled,
+      'sleepWindow': sleepWindow.name,
+      'wellnessDigestEnabled': wellnessDigestEnabled,
     };
   }
 
@@ -235,6 +314,17 @@ class DietProfile {
       prefersSeasonalProduce:
           map['prefersSeasonalProduce'] as bool? ?? false,
       snackFrequency: map['snackFrequency'] as String? ?? 'Moderado',
+      hydrationCoachEnabled: map['hydrationCoachEnabled'] as bool? ?? true,
+      mindfulBreaksEnabled: map['mindfulBreaksEnabled'] as bool? ?? true,
+      movementCoachEnabled: map['movementCoachEnabled'] as bool? ?? true,
+      sunlightCoachEnabled: map['sunlightCoachEnabled'] as bool? ?? true,
+      sleepCoachEnabled: map['sleepCoachEnabled'] as bool? ?? true,
+      sleepWindow: _enumFromString(
+        DietSleepWindow.values,
+        map['sleepWindow'] as String?,
+        DietSleepWindow.regular,
+      ),
+      wellnessDigestEnabled: map['wellnessDigestEnabled'] as bool? ?? true,
     );
   }
 }

@@ -586,9 +586,31 @@ class NutritionPlanService extends GetxService {
       );
     }
 
+    final hydrationCoach = _buildHydrationPlan(profile);
+    final mindfulBreak = _buildMindfulBreak(profile);
+    final sleepRoutine = _buildSleepRoutine(profile);
+    final wellnessDigest = _buildWellnessDigest(
+      profile: profile,
+      targets: sanitizedTargets,
+      hydration: hydrationCoach,
+      mindful: mindfulBreak,
+      days: normalizedDays,
+    );
+    final movementRoutine = _buildMovementRoutine(profile);
+    final sunlightRoutine = _buildSunlightRoutine(profile);
+
     return raw.copyWith(
       targets: sanitizedTargets,
       days: List<DietPlanDay>.unmodifiable(normalizedDays),
+      hydrationGoal: hydrationCoach.tip,
+      hydrationPlan: hydrationCoach,
+      mindfulBreakMessage: mindfulBreak.message,
+      mindfulBreakHour: mindfulBreak.hour,
+      mindfulBreakMinute: mindfulBreak.minute,
+      sleepRoutine: sleepRoutine,
+      wellnessDigest: wellnessDigest,
+      movementRoutine: movementRoutine,
+      sunlightRoutine: sunlightRoutine,
     );
   }
 
@@ -787,4 +809,501 @@ class NutritionPlanService extends GetxService {
     }
     return (delta / days) * 7;
   }
+
+  HydrationPlanInfo _buildHydrationPlan(DietProfile profile) {
+    final weightKg = profile.weightKg <= 0 ? 60 : profile.weightKg;
+    var totalMl = (weightKg * 35).round();
+
+    switch (profile.activityLevel) {
+      case DietActivityLevel.sedentary:
+        totalMl += 150;
+        break;
+      case DietActivityLevel.light:
+        totalMl += 300;
+        break;
+      case DietActivityLevel.moderate:
+        totalMl += 450;
+        break;
+      case DietActivityLevel.intense:
+        totalMl += 650;
+        break;
+    }
+
+    switch (profile.goal) {
+      case DietGoal.loseWeight:
+        totalMl += 200;
+        break;
+      case DietGoal.gainMass:
+        totalMl += 250;
+        break;
+      case DietGoal.maintain:
+        totalMl += 150;
+        break;
+      case DietGoal.reeducate:
+        totalMl += 100;
+        break;
+    }
+
+    totalMl = totalMl.clamp(1500, 4500);
+
+    final reminderCount = () {
+      switch (profile.activityLevel) {
+        case DietActivityLevel.sedentary:
+          return 4;
+        case DietActivityLevel.light:
+          return 5;
+        case DietActivityLevel.moderate:
+          return 6;
+        case DietActivityLevel.intense:
+          return 6;
+      }
+    }();
+
+    final baseSlots = <List<int>>[
+      <int>[7, 30],
+      <int>[9, 45],
+      <int>[12, 0],
+      <int>[14, 30],
+      <int>[17, 0],
+      <int>[19, 30],
+      <int>[21, 0],
+    ];
+
+    final selectedSlots = baseSlots.take(reminderCount).toList(growable: false);
+
+    final amounts = <int>[];
+    var remaining = totalMl;
+    for (var index = 0; index < selectedSlots.length; index++) {
+      final slotsRemaining = selectedSlots.length - index;
+      int amount;
+      if (slotsRemaining == 1) {
+        amount = remaining;
+      } else {
+        amount = (remaining / slotsRemaining).round();
+        amount = (amount / 50).round() * 50;
+        if (amount < 150) {
+          amount = 150;
+        }
+        if (amount > remaining) {
+          amount = remaining;
+        }
+        if (amount < 100 && remaining > 0) {
+          amount = math.min(remaining, 100);
+        }
+        amount = amount.clamp(100, 1200);
+      }
+      remaining -= amount;
+      amounts.add(amount);
+    }
+
+    if (remaining > 0 && amounts.isNotEmpty) {
+      amounts[amounts.length - 1] += remaining;
+      remaining = 0;
+    }
+
+    _rebalanceHydrationDistribution(selectedSlots, amounts);
+
+    final reminders = <HydrationReminderSlot>[];
+    for (var index = 0; index < selectedSlots.length; index++) {
+      final slot = selectedSlots[index];
+      final amount = amounts[index];
+      final label =
+          '${slot[0].toString().padLeft(2, '0')}:${slot[1].toString().padLeft(2, '0')} - $amount ml';
+      reminders.add(
+        HydrationReminderSlot(
+          hour: slot[0],
+          minute: slot[1],
+          amountMl: amount,
+          label: label,
+        ),
+      );
+    }
+
+    final liters = totalMl / 1000;
+    final litersLabel = liters
+        .toStringAsFixed(liters >= 3 ? 1 : 2)
+        .replaceAll(RegExp(r'0+$'), '')
+        .replaceAll(RegExp(r'[\.,]$'), '')
+        .replaceAll('.', ',');
+
+    final activityMessage = () {
+      switch (profile.activityLevel) {
+        case DietActivityLevel.sedentary:
+          return 'Levante-se a cada duas horas para beber água e ativar a circulação.';
+        case DietActivityLevel.light:
+          return 'Aproveite as pausas entre tarefas para beber água e respirar fundo.';
+        case DietActivityLevel.moderate:
+          return 'Faça pequenas pausas pós-treino para repor líquidos gradualmente.';
+        case DietActivityLevel.intense:
+          return 'Hidrate-se antes e depois das sessões de treino para acelerar a recuperação.';
+      }
+    }();
+
+    final goalMessage = () {
+      switch (profile.goal) {
+        case DietGoal.loseWeight:
+          return 'A hidratação ajuda a controlar o apetite e manter o metabolismo ativo.';
+        case DietGoal.gainMass:
+          return 'Combinar água com refeições ricas em proteína apoia a recuperação muscular.';
+        case DietGoal.maintain:
+          return 'Manter o consumo estável garante energia e foco durante o dia.';
+        case DietGoal.reeducate:
+          return 'Beber água ao longo do dia reforça a saciedade e hábitos saudáveis.';
+      }
+    }();
+
+    final tip =
+        'Meta hídrica diária: ${litersLabel.isEmpty ? liters.toStringAsFixed(1).replaceAll('.', ',') : litersLabel} L (${totalMl} ml). '
+        '$activityMessage $goalMessage';
+
+    return HydrationPlanInfo(
+      totalMl: totalMl,
+      tip: tip,
+      reminders: List<HydrationReminderSlot>.unmodifiable(reminders),
+    );
+  }
+
+  void _rebalanceHydrationDistribution(
+    List<List<int>> slots,
+    List<int> amounts,
+  ) {
+    const minSlotMl = 120;
+    const donorReserve = 30;
+
+    if (amounts.isEmpty) {
+      return;
+    }
+
+    if (amounts.length == 1) {
+      amounts[0] = math.max(amounts[0], minSlotMl);
+      return;
+    }
+
+    for (var index = amounts.length - 1; index >= 0; index--) {
+      if (amounts[index] >= minSlotMl) {
+        continue;
+      }
+
+      var deficit = minSlotMl - amounts[index];
+      for (var donor = 0; donor < amounts.length && deficit > 0; donor++) {
+        if (donor == index) {
+          continue;
+        }
+
+        final available = amounts[donor] - (minSlotMl + donorReserve);
+        if (available <= 0) {
+          continue;
+        }
+
+        final transfer = math.min(available, deficit);
+        amounts[donor] -= transfer;
+        amounts[index] += transfer;
+        deficit -= transfer;
+      }
+
+      if (amounts[index] >= minSlotMl) {
+        continue;
+      }
+
+      if (amounts.length <= 1) {
+        break;
+      }
+
+      final fallbackIndex = index == 0 ? 1 : index - 1;
+      if (fallbackIndex < amounts.length) {
+        amounts[fallbackIndex] += amounts[index];
+      }
+      amounts.removeAt(index);
+      slots.removeAt(index);
+    }
+  }
+
+  SleepRoutineInfo _buildSleepRoutine(DietProfile profile) {
+    final bedtimeHour = profile.sleepWindow.targetHour;
+    final bedtimeMinute = profile.sleepWindow.targetMinute;
+    final bedtimeLabel =
+        '${bedtimeHour.toString().padLeft(2, '0')}:${bedtimeMinute.toString().padLeft(2, '0')}';
+
+    final reminderDate = DateTime(0, 1, 1, bedtimeHour, bedtimeMinute)
+        .subtract(const Duration(minutes: 30));
+    final reminderHour = reminderDate.hour;
+    final reminderMinute = reminderDate.minute;
+
+    final goalTip = () {
+      switch (profile.goal) {
+        case DietGoal.loseWeight:
+          return 'Prepare um copo de água e deixe o café da manhã planejado para evitar escolhas impulsivas.';
+        case DietGoal.gainMass:
+          return 'Garanta um lanche leve com proteína, caso faça parte do seu plano, e organize o treino do dia seguinte.';
+        case DietGoal.maintain:
+          return 'Revise a agenda do dia seguinte e mantenha o quarto ventilado para preservar a qualidade do sono.';
+        case DietGoal.reeducate:
+          return 'Separe frutas ou chás calmantes e registre rapidamente qualquer aprendizado do dia.';
+      }
+    }();
+
+    final tips = <String>[
+      'Reduza luzes e telas brilhantes 30 minutos antes de $bedtimeLabel.',
+      'Faça respirações profundas ou alongamentos leves para sinalizar o descanso ao corpo.',
+      goalTip,
+    ];
+
+    final message = profile.sleepCoachEnabled
+        ? 'Desacelere: ajuste o ambiente e hidrate-se para dormir às $bedtimeLabel com mais qualidade.'
+        : 'Ative o coach de sono para receber lembretes noturnos personalizados.';
+
+    return SleepRoutineInfo(
+      enabled: profile.sleepCoachEnabled,
+      reminderHour: reminderHour,
+      reminderMinute: reminderMinute,
+      message: message,
+      windDownSummary: profile.sleepWindow.summary,
+      windDownTips: List<String>.unmodifiable(tips),
+    );
+  }
+
+  WellnessDigestInfo _buildWellnessDigest({
+    required DietProfile profile,
+    required DietPlanTargets targets,
+    required HydrationPlanInfo hydration,
+    required _MindfulBreakSchedule mindful,
+    required List<DietPlanDay> days,
+  }) {
+    final normalizedGoal = profile.goal.label.toLowerCase();
+    final summary =
+        'Plano focado em $normalizedGoal respeitando um ${profile.metabolicProfileLabel.toLowerCase()}.';
+
+    final macroHighlight =
+        '${targets.caloriesPerDay} kcal • C ${targets.carbsPercentage}% • P ${targets.proteinPercentage}% • G ${targets.fatPercentage}%';
+
+    final hydrationHighlight = hydration.hasReminders
+        ? '${hydration.totalMl} ml distribuídos em ${hydration.reminders.length} lembretes.'
+        : '${hydration.totalMl} ml recomendados ao longo do dia.';
+
+    var totalMeals = 0;
+    var countedDays = 0;
+    for (final day in days) {
+      if (day.meals.isNotEmpty) {
+        totalMeals += day.meals.length;
+        countedDays++;
+      }
+    }
+    final avgMeals = countedDays == 0 ? 0.0 : totalMeals / countedDays;
+    final mealHighlight = countedDays == 0
+        ? 'As refeições serão definidas conforme o plano for atualizado.'
+        : '${days.length} dias com aproximadamente ${avgMeals.toStringAsFixed(1).replaceAll('.0', '')} refeições principais.';
+
+    final mindfulLabel =
+        '${mindful.hour.toString().padLeft(2, '0')}:${mindful.minute.toString().padLeft(2, '0')}';
+
+    final highlights = <String>[
+      'Metas diárias: $macroHighlight.',
+      'Hidratação orientada: $hydrationHighlight',
+      'Pausa de bem-estar às $mindfulLabel para manter postura e foco.',
+      mealHighlight,
+    ];
+
+    final cleanedHighlights = highlights
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList(growable: false);
+
+    final hoursBefore =
+        profile.interval == DietPlanInterval.weekly ? 12 : 24;
+
+    final callToAction =
+        'Revise o resumo na véspera do check-in para decidir se mantém ou ajusta a estratégia.';
+
+    return WellnessDigestInfo(
+      enabled: profile.wellnessDigestEnabled,
+      summary: summary,
+      highlights: List<String>.unmodifiable(cleanedHighlights),
+      callToAction: callToAction,
+      hoursBeforeCheckIn: hoursBefore,
+    );
+  }
+
+  MovementBreakInfo _buildMovementRoutine(DietProfile profile) {
+    if (!profile.movementCoachEnabled) {
+      return const MovementBreakInfo(
+        enabled: false,
+        summary: '',
+        slots: <MovementBreakSlot>[],
+        tips: <String>[],
+      );
+    }
+
+    final templates = <Map<String, dynamic>>[
+      <String, dynamic>{
+        'hour': 10,
+        'minute': 30,
+        'focus': 'Alongamento de cervical e ombros',
+      },
+      <String, dynamic>{
+        'hour': 14,
+        'minute': 45,
+        'focus': 'Mobilidade de quadril e coluna',
+      },
+      <String, dynamic>{
+        'hour': 17,
+        'minute': 30,
+        'focus': 'Caminhada leve ou subir escadas',
+      },
+    ];
+
+    final slotCount = switch (profile.activityLevel) {
+      DietActivityLevel.sedentary => 3,
+      DietActivityLevel.light => 3,
+      DietActivityLevel.moderate => 2,
+      DietActivityLevel.intense => 2,
+    };
+
+    final baseDuration = switch (profile.activityLevel) {
+      DietActivityLevel.sedentary => 7,
+      DietActivityLevel.light => 6,
+      DietActivityLevel.moderate => 5,
+      DietActivityLevel.intense => 4,
+    };
+
+    final slots = <MovementBreakSlot>[];
+    for (var i = 0; i < slotCount && i < templates.length; i++) {
+      final template = templates[i];
+      final hour = template['hour'] as int;
+      final minute = template['minute'] as int;
+      final focus = template['focus'] as String;
+      final extra = i == templates.length - 1 ? 1 : 0;
+      final duration = (baseDuration + extra).clamp(3, 12);
+      slots.add(
+        MovementBreakSlot(
+          hour: hour,
+          minute: minute,
+          durationMinutes: duration,
+          activity: '$focus por ${duration} minuto(s).',
+        ),
+      );
+    }
+
+    final summary =
+        'Inclua ${slotCount == 1 ? 'uma pausa ativa diária' : '$slotCount pausas ativas diárias'} para reduzir rigidez e manter energia.';
+    final tips = <String>[
+      'Programe um alarme e afaste-se da tela para realizar a pausa completa.',
+      'Associe a pausa a um copo de água para reforçar a hidratação.',
+      if (profile.goal == DietGoal.loseWeight)
+        'Use movimentos que elevem levemente a frequência cardíaca para estimular o gasto calórico.',
+      if (profile.goal == DietGoal.gainMass)
+        'Inclua exercícios isométricos rápidos (como prancha ou agachamento isométrico) para ativar musculatura.',
+    ].where((tip) => tip.isNotEmpty).toList(growable: false);
+
+    return MovementBreakInfo(
+      enabled: true,
+      summary: summary,
+      slots: List<MovementBreakSlot>.unmodifiable(slots),
+      tips: tips,
+    );
+  }
+
+  SunlightExposureInfo _buildSunlightRoutine(DietProfile profile) {
+    if (!profile.sunlightCoachEnabled) {
+      return const SunlightExposureInfo(
+        enabled: false,
+        reminderHour: 9,
+        reminderMinute: 0,
+        durationMinutes: 15,
+        message: '',
+        benefits: <String>[],
+        cautions: <String>[],
+      );
+    }
+
+    var reminderHour = switch (profile.sleepWindow) {
+      DietSleepWindow.early => 8,
+      DietSleepWindow.regular => 9,
+      DietSleepWindow.late => 10,
+    };
+    if (profile.activityLevel == DietActivityLevel.intense) {
+      reminderHour = math.max(7, reminderHour - 1);
+    }
+
+    final reminderMinute = 15;
+
+    var duration = switch (profile.goal) {
+      DietGoal.loseWeight => 22,
+      DietGoal.gainMass => 18,
+      DietGoal.maintain => 16,
+      DietGoal.reeducate => 20,
+    };
+    if (profile.activityLevel == DietActivityLevel.sedentary) {
+      duration += 3;
+    }
+    if (profile.activityLevel == DietActivityLevel.intense) {
+      duration = math.max(12, duration - 4);
+    }
+    duration = duration.clamp(12, 30);
+
+    final benefits = <String>[
+      'Estimula a produção de vitamina D e fortalece o sistema imune.',
+      'Regula o relógio biológico e melhora a qualidade do sono.',
+      if (profile.goal == DietGoal.loseWeight)
+        'Ajuda a controlar hormônios ligados ao apetite e saciedade.',
+      if (profile.goal == DietGoal.gainMass)
+        'Favorece a síntese proteica ao apoiar os ritmos hormonais.',
+    ];
+
+    final cautions = <String>[
+      'Use protetor solar nas áreas expostas se ultrapassar 15 minutos.',
+      'Evite a faixa de maior índice UV (12h às 15h) e busque sombra parcial se necessário.',
+    ];
+
+    final message =
+        'Momento de receber sol leve por $duration minuto(s). Busque uma área ventilada e mantenha-se hidratado.';
+    return SunlightExposureInfo(
+      enabled: true,
+      reminderHour: reminderHour,
+      reminderMinute: reminderMinute,
+      durationMinutes: duration,
+      message: message,
+      benefits: benefits,
+      cautions: cautions,
+    );
+  }
+
+  _MindfulBreakSchedule _buildMindfulBreak(DietProfile profile) {
+    var hour = 15;
+    var minute = 0;
+
+    if (profile.cookingStyle == DietCookingStyle.batchAndFreeze) {
+      hour = 11;
+      minute = 30;
+    } else if (profile.activityLevel == DietActivityLevel.intense) {
+      hour = 17;
+      minute = 0;
+    }
+
+    final message = () {
+      switch (profile.goal) {
+        case DietGoal.loseWeight:
+          return 'Alongue-se por 5 minutos, hidrate-se e faça três respirações profundas para retomar o foco.';
+        case DietGoal.gainMass:
+          return 'Use a pausa para mobilidade leve, alongamento e um copo de água para favorecer a recuperação.';
+        case DietGoal.maintain:
+          return 'Interrompa a rotina por alguns minutos, movimente o corpo e ajuste a postura antes de continuar.';
+        case DietGoal.reeducate:
+          return 'Respire fundo, alongue ombros e pescoço e aproveite para planejar a próxima refeição equilibrada.';
+      }
+    }();
+
+    return _MindfulBreakSchedule(hour: hour, minute: minute, message: message);
+  }
+}
+
+class _MindfulBreakSchedule {
+  const _MindfulBreakSchedule({
+    required this.hour,
+    required this.minute,
+    required this.message,
+  });
+
+  final int hour;
+  final int minute;
+  final String message;
 }

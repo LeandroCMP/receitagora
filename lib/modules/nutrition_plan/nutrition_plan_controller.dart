@@ -38,6 +38,13 @@ class NutritionPlanController extends GetxController {
   final RxBool prefersSeasonalProduce = false.obs;
   final RxString snackFrequency = 'Moderado'.obs;
   final RxInt metabolicEase = 3.obs;
+  final RxBool hydrationCoachEnabled = true.obs;
+  final RxBool mindfulBreaksEnabled = true.obs;
+  final RxBool movementCoachEnabled = true.obs;
+  final RxBool sunlightCoachEnabled = true.obs;
+  final RxBool sleepCoachEnabled = true.obs;
+  final Rx<DietSleepWindow> sleepWindow = DietSleepWindow.regular.obs;
+  final RxBool wellnessDigestEnabled = true.obs;
 
   static const List<int> metabolicEasePresets = <int>[1, 3, 5];
 
@@ -57,6 +64,12 @@ class NutritionPlanController extends GetxController {
     'Baixa',
     'Moderado',
     'Alta',
+  ];
+
+  static const List<DietSleepWindow> sleepOptions = <DietSleepWindow>[
+    DietSleepWindow.early,
+    DietSleepWindow.regular,
+    DietSleepWindow.late,
   ];
 
   @override
@@ -274,6 +287,13 @@ class NutritionPlanController extends GetxController {
           : notesController.text.trim(),
       prefersSeasonalProduce: prefersSeasonalProduce.value,
       snackFrequency: snackFrequency.value,
+      hydrationCoachEnabled: hydrationCoachEnabled.value,
+      mindfulBreaksEnabled: mindfulBreaksEnabled.value,
+      movementCoachEnabled: movementCoachEnabled.value,
+      sunlightCoachEnabled: sunlightCoachEnabled.value,
+      sleepCoachEnabled: sleepCoachEnabled.value,
+      sleepWindow: sleepWindow.value,
+      wellnessDigestEnabled: wellnessDigestEnabled.value,
     );
 
     if (isGenerating.value) {
@@ -441,6 +461,13 @@ class NutritionPlanController extends GetxController {
 
   void toggleBrazilianCuisine(bool value) => prefersBrazilianCuisine.value = value;
   void toggleSeasonalProduce(bool value) => prefersSeasonalProduce.value = value;
+  void toggleHydrationCoach(bool value) => hydrationCoachEnabled.value = value;
+  void toggleMindfulBreaks(bool value) => mindfulBreaksEnabled.value = value;
+  void toggleMovementCoach(bool value) => movementCoachEnabled.value = value;
+  void toggleSunlightCoach(bool value) => sunlightCoachEnabled.value = value;
+  void toggleSleepCoach(bool value) => sleepCoachEnabled.value = value;
+  void setSleepWindow(DietSleepWindow window) => sleepWindow.value = window;
+  void toggleWellnessDigest(bool value) => wellnessDigestEnabled.value = value;
   void setSnackFrequency(String value) => snackFrequency.value = value;
 
   bool isMealCompleted(int dayIndex, int mealIndex) {
@@ -613,6 +640,12 @@ class NutritionPlanController extends GetxController {
       isFormLocked.value = false;
       _hasShownOverdueReminder = false;
       unawaited(notificationService.cancelCheckInReminder());
+      unawaited(notificationService.cancelHydrationReminders());
+      unawaited(notificationService.cancelMindfulBreak());
+      unawaited(notificationService.cancelSleepRoutine());
+      unawaited(notificationService.cancelWellnessDigest());
+      unawaited(notificationService.cancelMovementBreaks());
+      unawaited(notificationService.cancelSunlightRoutine());
       return;
     }
 
@@ -633,6 +666,80 @@ class NutritionPlanController extends GetxController {
       unawaited(notificationService.scheduleCheckInReminder(plan.nextCheckInAt));
     }
 
+    if (plan.profile.hydrationCoachEnabled) {
+      unawaited(
+        notificationService.scheduleHydrationReminders(plan.plan.hydrationPlan),
+      );
+    } else {
+      unawaited(notificationService.cancelHydrationReminders());
+    }
+
+    if (plan.profile.mindfulBreaksEnabled) {
+      unawaited(
+        notificationService.scheduleMindfulBreak(
+          hour: plan.plan.mindfulBreakHour,
+          minute: plan.plan.mindfulBreakMinute,
+          message: plan.plan.mindfulBreakMessage,
+        ),
+      );
+    } else {
+      unawaited(notificationService.cancelMindfulBreak());
+    }
+
+    if (plan.profile.sleepCoachEnabled && plan.plan.sleepRoutine.hasReminder) {
+      final routine = plan.plan.sleepRoutine;
+      unawaited(
+        notificationService.scheduleSleepRoutine(
+          hour: routine.reminderHour,
+          minute: routine.reminderMinute,
+          message: routine.message,
+        ),
+      );
+    } else {
+      unawaited(notificationService.cancelSleepRoutine());
+    }
+
+    if (plan.profile.wellnessDigestEnabled && plan.plan.wellnessDigest.enabled) {
+      final digest = plan.plan.wellnessDigest;
+      final digestAt = plan.nextCheckInAt
+          .subtract(Duration(hours: digest.hoursBeforeCheckIn));
+      final digestMessageParts = <String>[
+        digest.summary,
+        digest.callToAction,
+      ]
+          .map((text) => text.trim())
+          .where((text) => text.isNotEmpty)
+          .toList(growable: false);
+      final digestMessage = digestMessageParts.isEmpty
+          ? 'Revise seus destaques antes do próximo check-in.'
+          : digestMessageParts.join(' ');
+      unawaited(
+        notificationService.scheduleWellnessDigest(
+          digestAt: digestAt,
+          title: 'Resumo de bem-estar disponível',
+          message: digestMessage,
+        ),
+      );
+    } else {
+      unawaited(notificationService.cancelWellnessDigest());
+    }
+
+    if (plan.profile.movementCoachEnabled && plan.plan.movementRoutine.hasReminders) {
+      unawaited(
+        notificationService.scheduleMovementBreaks(plan.plan.movementRoutine),
+      );
+    } else {
+      unawaited(notificationService.cancelMovementBreaks());
+    }
+
+    if (plan.profile.sunlightCoachEnabled && plan.plan.sunlightRoutine.hasReminder) {
+      unawaited(
+        notificationService.scheduleSunlightRoutine(plan.plan.sunlightRoutine),
+      );
+    } else {
+      unawaited(notificationService.cancelSunlightRoutine());
+    }
+
     final profile = plan.profile;
     heightController.text = profile.heightCm.toStringAsFixed(1);
     weightController.text = profile.weightKg.toStringAsFixed(1);
@@ -645,6 +752,13 @@ class NutritionPlanController extends GetxController {
     prefersSeasonalProduce.value = profile.prefersSeasonalProduce;
     snackFrequency.value = profile.snackFrequency;
     metabolicEase.value = _closestMetabolicPreset(profile.metabolicEase);
+    hydrationCoachEnabled.value = profile.hydrationCoachEnabled;
+    mindfulBreaksEnabled.value = profile.mindfulBreaksEnabled;
+    movementCoachEnabled.value = profile.movementCoachEnabled;
+    sunlightCoachEnabled.value = profile.sunlightCoachEnabled;
+    sleepCoachEnabled.value = profile.sleepCoachEnabled;
+    sleepWindow.value = profile.sleepWindow;
+    wellnessDigestEnabled.value = profile.wellnessDigestEnabled;
   }
 
   double? _parseDouble(String value) {

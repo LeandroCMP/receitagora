@@ -125,6 +125,537 @@ class DietPlanTargets {
 }
 
 @immutable
+class HydrationReminderSlot {
+  const HydrationReminderSlot({
+    required this.hour,
+    required this.minute,
+    required this.amountMl,
+    required this.label,
+  });
+
+  final int hour;
+  final int minute;
+  final int amountMl;
+  final String label;
+
+  String get formattedTime =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'hour': hour,
+      'minute': minute,
+      'amountMl': amountMl,
+      'label': label,
+    };
+  }
+
+  factory HydrationReminderSlot.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return const HydrationReminderSlot(
+        hour: 8,
+        minute: 0,
+        amountMl: 300,
+        label: '08:00 - 300 ml',
+      );
+    }
+
+    int _readInt(dynamic value, int fallback) {
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      return fallback;
+    }
+
+    return HydrationReminderSlot(
+      hour: _readInt(map['hour'], 8).clamp(0, 23),
+      minute: _readInt(map['minute'], 0).clamp(0, 59),
+      amountMl: _readInt(map['amountMl'], 300).clamp(50, 1000),
+      label: _readString(map['label']) ?? 'Hidrate-se',
+    );
+  }
+}
+
+@immutable
+class HydrationPlanInfo {
+  const HydrationPlanInfo({
+    required this.totalMl,
+    required this.tip,
+    required this.reminders,
+  });
+
+  final int totalMl;
+  final String tip;
+  final List<HydrationReminderSlot> reminders;
+
+  double get liters => double.parse((totalMl / 1000).toStringAsFixed(2));
+  bool get hasReminders => reminders.isNotEmpty;
+
+  HydrationPlanInfo copyWith({
+    int? totalMl,
+    String? tip,
+    List<HydrationReminderSlot>? reminders,
+  }) {
+    return HydrationPlanInfo(
+      totalMl: totalMl ?? this.totalMl,
+      tip: tip ?? this.tip,
+      reminders: reminders ?? this.reminders,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'totalMl': totalMl,
+      'tip': tip,
+      'reminders': reminders.map((slot) => slot.toMap()).toList(),
+    };
+  }
+
+  factory HydrationPlanInfo.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return const HydrationPlanInfo(
+        totalMl: 2000,
+        tip: 'Beba pelo menos oito copos de água ao longo do dia.',
+        reminders: <HydrationReminderSlot>[],
+      );
+    }
+
+    int _readInt(dynamic value, int fallback) {
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      return fallback;
+    }
+
+    final rawReminders = map['reminders'];
+    final reminders = rawReminders is Iterable
+        ? rawReminders
+            .map((dynamic item) =>
+                HydrationReminderSlot.fromMap(item as Map<String, dynamic>?))
+            .toList()
+        : <HydrationReminderSlot>[];
+
+    return HydrationPlanInfo(
+      totalMl: _readInt(map['totalMl'], 2000).clamp(1000, 5000),
+      tip: _readString(map['tip']) ??
+          'Hidrate-se de forma consistente durante o dia.',
+      reminders: List<HydrationReminderSlot>.unmodifiable(reminders),
+    );
+  }
+}
+
+class SleepRoutineInfo {
+  const SleepRoutineInfo({
+    required this.enabled,
+    required this.reminderHour,
+    required this.reminderMinute,
+    required this.message,
+    required this.windDownSummary,
+    required this.windDownTips,
+  });
+
+  final bool enabled;
+  final int reminderHour;
+  final int reminderMinute;
+  final String message;
+  final String windDownSummary;
+  final List<String> windDownTips;
+
+  bool get hasReminder => enabled && message.trim().isNotEmpty;
+
+  SleepRoutineInfo copyWith({
+    bool? enabled,
+    int? reminderHour,
+    int? reminderMinute,
+    String? message,
+    String? windDownSummary,
+    List<String>? windDownTips,
+  }) {
+    return SleepRoutineInfo(
+      enabled: enabled ?? this.enabled,
+      reminderHour: reminderHour ?? this.reminderHour,
+      reminderMinute: reminderMinute ?? this.reminderMinute,
+      message: message ?? this.message,
+      windDownSummary: windDownSummary ?? this.windDownSummary,
+      windDownTips: windDownTips ?? this.windDownTips,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'enabled': enabled,
+      'reminderHour': reminderHour,
+      'reminderMinute': reminderMinute,
+      'message': message,
+      'windDownSummary': windDownSummary,
+      'windDownTips': windDownTips,
+    };
+  }
+
+  factory SleepRoutineInfo.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return const SleepRoutineInfo(
+        enabled: false,
+        reminderHour: 22,
+        reminderMinute: 0,
+        message: '',
+        windDownSummary: '',
+        windDownTips: <String>[],
+      );
+    }
+
+    int _readInt(dynamic value, int fallback) {
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      return fallback;
+    }
+
+    return SleepRoutineInfo(
+      enabled: map['enabled'] as bool? ?? false,
+      reminderHour: _readInt(map['reminderHour'], 22).clamp(0, 23),
+      reminderMinute: _readInt(map['reminderMinute'], 0).clamp(0, 59),
+      message: _readString(map['message']) ?? '',
+      windDownSummary: _readString(map['windDownSummary']) ?? '',
+      windDownTips: _readStringList(map['windDownTips']),
+    );
+  }
+}
+
+class WellnessDigestInfo {
+  const WellnessDigestInfo({
+    required this.enabled,
+    required this.summary,
+    required this.highlights,
+    required this.callToAction,
+    required this.hoursBeforeCheckIn,
+  });
+
+  final bool enabled;
+  final String summary;
+  final List<String> highlights;
+  final String callToAction;
+  final int hoursBeforeCheckIn;
+
+  bool get hasHighlights => highlights.isNotEmpty;
+
+  WellnessDigestInfo copyWith({
+    bool? enabled,
+    String? summary,
+    List<String>? highlights,
+    String? callToAction,
+    int? hoursBeforeCheckIn,
+  }) {
+    return WellnessDigestInfo(
+      enabled: enabled ?? this.enabled,
+      summary: summary ?? this.summary,
+      highlights: highlights ?? this.highlights,
+      callToAction: callToAction ?? this.callToAction,
+      hoursBeforeCheckIn: hoursBeforeCheckIn ?? this.hoursBeforeCheckIn,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'enabled': enabled,
+      'summary': summary,
+      'highlights': highlights,
+      'callToAction': callToAction,
+      'hoursBeforeCheckIn': hoursBeforeCheckIn,
+    };
+  }
+
+  factory WellnessDigestInfo.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return const WellnessDigestInfo(
+        enabled: false,
+        summary: '',
+        highlights: <String>[],
+        callToAction: '',
+        hoursBeforeCheckIn: 12,
+      );
+    }
+
+    int _readInt(dynamic value, int fallback) {
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      return fallback;
+    }
+
+    return WellnessDigestInfo(
+      enabled: map['enabled'] as bool? ?? false,
+      summary: _readString(map['summary']) ?? '',
+      highlights: _readStringList(map['highlights']),
+      callToAction: _readString(map['callToAction']) ?? '',
+      hoursBeforeCheckIn:
+          _readInt(map['hoursBeforeCheckIn'], 12).clamp(1, 48),
+    );
+  }
+}
+
+@immutable
+class MovementBreakSlot {
+  const MovementBreakSlot({
+    required this.hour,
+    required this.minute,
+    required this.durationMinutes,
+    required this.activity,
+  });
+
+  final int hour;
+  final int minute;
+  final int durationMinutes;
+  final String activity;
+
+  String get formattedTime =>
+      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'hour': hour,
+      'minute': minute,
+      'durationMinutes': durationMinutes,
+      'activity': activity,
+    };
+  }
+
+  factory MovementBreakSlot.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return const MovementBreakSlot(
+        hour: 10,
+        minute: 30,
+        durationMinutes: 5,
+        activity: 'Alongamento leve para pescoço e ombros',
+      );
+    }
+
+    int _readInt(dynamic value, int fallback) {
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      return fallback;
+    }
+
+    return MovementBreakSlot(
+      hour: _readInt(map['hour'], 10).clamp(0, 23),
+      minute: _readInt(map['minute'], 30).clamp(0, 59),
+      durationMinutes:
+          _readInt(map['durationMinutes'], 5).clamp(2, 20),
+      activity: _readString(map['activity']) ??
+          'Pausa ativa para alongar e respirar conscientemente',
+    );
+  }
+}
+
+@immutable
+class MovementBreakInfo {
+  const MovementBreakInfo({
+    required this.enabled,
+    required this.summary,
+    required this.slots,
+    required this.tips,
+  });
+
+  final bool enabled;
+  final String summary;
+  final List<MovementBreakSlot> slots;
+  final List<String> tips;
+
+  bool get hasReminders => enabled && slots.isNotEmpty;
+
+  MovementBreakInfo copyWith({
+    bool? enabled,
+    String? summary,
+    List<MovementBreakSlot>? slots,
+    List<String>? tips,
+  }) {
+    return MovementBreakInfo(
+      enabled: enabled ?? this.enabled,
+      summary: summary ?? this.summary,
+      slots: slots ?? this.slots,
+      tips: tips ?? this.tips,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'enabled': enabled,
+      'summary': summary,
+      'slots': slots.map((slot) => slot.toMap()).toList(),
+      'tips': tips,
+    };
+  }
+
+  factory MovementBreakInfo.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return const MovementBreakInfo(
+        enabled: false,
+        summary: '',
+        slots: <MovementBreakSlot>[],
+        tips: <String>[],
+      );
+    }
+
+    final rawSlots = map['slots'];
+    final slots = rawSlots is Iterable
+        ? rawSlots
+            .map((dynamic item) =>
+                MovementBreakSlot.fromMap(item as Map<String, dynamic>?))
+            .toList()
+        : <MovementBreakSlot>[];
+
+    return MovementBreakInfo(
+      enabled: map['enabled'] as bool? ?? false,
+      summary: _readString(map['summary']) ?? '',
+      slots: List<MovementBreakSlot>.unmodifiable(slots),
+      tips: _readStringList(map['tips']),
+    );
+  }
+}
+
+@immutable
+class SunlightExposureInfo {
+  const SunlightExposureInfo({
+    required this.enabled,
+    required this.reminderHour,
+    required this.reminderMinute,
+    required this.durationMinutes,
+    required this.message,
+    required this.benefits,
+    required this.cautions,
+  });
+
+  final bool enabled;
+  final int reminderHour;
+  final int reminderMinute;
+  final int durationMinutes;
+  final String message;
+  final List<String> benefits;
+  final List<String> cautions;
+
+  bool get hasReminder => enabled && message.trim().isNotEmpty;
+
+  SunlightExposureInfo copyWith({
+    bool? enabled,
+    int? reminderHour,
+    int? reminderMinute,
+    int? durationMinutes,
+    String? message,
+    List<String>? benefits,
+    List<String>? cautions,
+  }) {
+    return SunlightExposureInfo(
+      enabled: enabled ?? this.enabled,
+      reminderHour: reminderHour ?? this.reminderHour,
+      reminderMinute: reminderMinute ?? this.reminderMinute,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
+      message: message ?? this.message,
+      benefits: benefits ?? this.benefits,
+      cautions: cautions ?? this.cautions,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'enabled': enabled,
+      'reminderHour': reminderHour,
+      'reminderMinute': reminderMinute,
+      'durationMinutes': durationMinutes,
+      'message': message,
+      'benefits': benefits,
+      'cautions': cautions,
+    };
+  }
+
+  factory SunlightExposureInfo.fromMap(Map<String, dynamic>? map) {
+    if (map == null) {
+      return const SunlightExposureInfo(
+        enabled: false,
+        reminderHour: 9,
+        reminderMinute: 0,
+        durationMinutes: 15,
+        message: '',
+        benefits: <String>[],
+        cautions: <String>[],
+      );
+    }
+
+    int _readInt(dynamic value, int fallback) {
+      if (value is int) {
+        return value;
+      }
+      if (value is num) {
+        return value.toInt();
+      }
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          return parsed;
+        }
+      }
+      return fallback;
+    }
+
+    return SunlightExposureInfo(
+      enabled: map['enabled'] as bool? ?? false,
+      reminderHour: _readInt(map['reminderHour'], 9).clamp(0, 23),
+      reminderMinute: _readInt(map['reminderMinute'], 0).clamp(0, 59),
+      durationMinutes:
+          _readInt(map['durationMinutes'], 15).clamp(5, 45),
+      message: _readString(map['message']) ?? '',
+      benefits: _readStringList(map['benefits']),
+      cautions: _readStringList(map['cautions']),
+    );
+  }
+}
+
+@immutable
 class DietPlanMeal {
   const DietPlanMeal({
     required this.name,
@@ -340,37 +871,70 @@ class DietPlan {
     required this.strategy,
     required this.targets,
     required this.hydrationGoal,
+    required this.hydrationPlan,
     required this.highlights,
     required this.days,
     required this.shoppingList,
     required this.followUpTips,
+    required this.mindfulBreakMessage,
+    required this.mindfulBreakHour,
+    required this.mindfulBreakMinute,
+    required this.sleepRoutine,
+    required this.wellnessDigest,
+    required this.movementRoutine,
+    required this.sunlightRoutine,
   });
 
   final String strategy;
   final DietPlanTargets targets;
   final String hydrationGoal;
+  final HydrationPlanInfo hydrationPlan;
   final List<String> highlights;
   final List<DietPlanDay> days;
   final List<ShoppingListItem> shoppingList;
   final List<String> followUpTips;
+  final String mindfulBreakMessage;
+  final int mindfulBreakHour;
+  final int mindfulBreakMinute;
+  final SleepRoutineInfo sleepRoutine;
+  final WellnessDigestInfo wellnessDigest;
+  final MovementBreakInfo movementRoutine;
+  final SunlightExposureInfo sunlightRoutine;
 
   DietPlan copyWith({
     String? strategy,
     DietPlanTargets? targets,
     String? hydrationGoal,
+    HydrationPlanInfo? hydrationPlan,
     List<String>? highlights,
     List<DietPlanDay>? days,
     List<ShoppingListItem>? shoppingList,
     List<String>? followUpTips,
+    String? mindfulBreakMessage,
+    int? mindfulBreakHour,
+    int? mindfulBreakMinute,
+    SleepRoutineInfo? sleepRoutine,
+    WellnessDigestInfo? wellnessDigest,
+    MovementBreakInfo? movementRoutine,
+    SunlightExposureInfo? sunlightRoutine,
   }) {
     return DietPlan(
       strategy: strategy ?? this.strategy,
       targets: targets ?? this.targets,
       hydrationGoal: hydrationGoal ?? this.hydrationGoal,
+      hydrationPlan: hydrationPlan ?? this.hydrationPlan,
       highlights: highlights ?? this.highlights,
       days: days ?? this.days,
       shoppingList: shoppingList ?? this.shoppingList,
       followUpTips: followUpTips ?? this.followUpTips,
+      mindfulBreakMessage:
+          mindfulBreakMessage ?? this.mindfulBreakMessage,
+      mindfulBreakHour: mindfulBreakHour ?? this.mindfulBreakHour,
+      mindfulBreakMinute: mindfulBreakMinute ?? this.mindfulBreakMinute,
+      sleepRoutine: sleepRoutine ?? this.sleepRoutine,
+      wellnessDigest: wellnessDigest ?? this.wellnessDigest,
+      movementRoutine: movementRoutine ?? this.movementRoutine,
+      sunlightRoutine: sunlightRoutine ?? this.sunlightRoutine,
     );
   }
 
@@ -386,10 +950,49 @@ class DietPlan {
           fatPercentage: 25,
         ),
         hydrationGoal: 'Beba ao menos 35 ml de água por quilo diariamente.',
+        hydrationPlan: const HydrationPlanInfo(
+          totalMl: 2000,
+          tip: 'Distribua a hidratação ao longo do dia para manter energia e foco.',
+          reminders: <HydrationReminderSlot>[],
+        ),
         highlights: const <String>[],
         days: const <DietPlanDay>[],
         shoppingList: const <ShoppingListItem>[],
         followUpTips: const <String>[],
+        mindfulBreakMessage:
+            'Separe alguns minutos para alongar, respirar fundo e beber água à tarde.',
+        mindfulBreakHour: 15,
+        mindfulBreakMinute: 0,
+        sleepRoutine: const SleepRoutineInfo(
+          enabled: false,
+          reminderHour: 22,
+          reminderMinute: 0,
+          message: '',
+          windDownSummary: '',
+          windDownTips: <String>[],
+        ),
+        wellnessDigest: const WellnessDigestInfo(
+          enabled: false,
+          summary: '',
+          highlights: <String>[],
+          callToAction: '',
+          hoursBeforeCheckIn: 12,
+        ),
+        movementRoutine: const MovementBreakInfo(
+          enabled: false,
+          summary: '',
+          slots: <MovementBreakSlot>[],
+          tips: <String>[],
+        ),
+        sunlightRoutine: const SunlightExposureInfo(
+          enabled: false,
+          reminderHour: 9,
+          reminderMinute: 0,
+          durationMinutes: 15,
+          message: '',
+          benefits: <String>[],
+          cautions: <String>[],
+        ),
       );
     }
 
@@ -415,10 +1018,26 @@ class DietPlan {
       targets: DietPlanTargets.fromMap(map['targets'] as Map<String, dynamic>?),
       hydrationGoal:
           _readString(map['hydrationGoal']) ?? 'Beba ao menos 2 litros de água por dia.',
+      hydrationPlan:
+          HydrationPlanInfo.fromMap(map['hydrationPlan'] as Map<String, dynamic>?),
       highlights: _readStringList(map['highlights']),
       days: List<DietPlanDay>.unmodifiable(days),
       shoppingList: List<ShoppingListItem>.unmodifiable(shopping),
       followUpTips: _readStringList(map['followUpTips']),
+      mindfulBreakMessage: _readString(map['mindfulBreakMessage']) ??
+          'Reserve uma pausa rápida para alongar o corpo e aliviar a mente.',
+      mindfulBreakHour: (map['mindfulBreakHour'] as num?)?.toInt().clamp(0, 23) ??
+          15,
+      mindfulBreakMinute:
+          (map['mindfulBreakMinute'] as num?)?.toInt().clamp(0, 59) ?? 0,
+      sleepRoutine:
+          SleepRoutineInfo.fromMap(map['sleepRoutine'] as Map<String, dynamic>?),
+      wellnessDigest:
+          WellnessDigestInfo.fromMap(map['wellnessDigest'] as Map<String, dynamic>?),
+      movementRoutine:
+          MovementBreakInfo.fromMap(map['movementRoutine'] as Map<String, dynamic>?),
+      sunlightRoutine:
+          SunlightExposureInfo.fromMap(map['sunlightRoutine'] as Map<String, dynamic>?),
     );
   }
 
@@ -427,10 +1046,18 @@ class DietPlan {
       'strategy': strategy,
       'targets': targets.toMap(),
       'hydrationGoal': hydrationGoal,
+      'hydrationPlan': hydrationPlan.toMap(),
       'highlights': highlights,
       'days': days.map((day) => day.toMap()).toList(),
       'shoppingList': shoppingList.map((item) => item.toMap()).toList(),
       'followUpTips': followUpTips,
+      'mindfulBreakMessage': mindfulBreakMessage,
+      'mindfulBreakHour': mindfulBreakHour,
+      'mindfulBreakMinute': mindfulBreakMinute,
+      'sleepRoutine': sleepRoutine.toMap(),
+      'wellnessDigest': wellnessDigest.toMap(),
+      'movementRoutine': movementRoutine.toMap(),
+      'sunlightRoutine': sunlightRoutine.toMap(),
     };
   }
 }

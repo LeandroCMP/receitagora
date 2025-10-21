@@ -514,6 +514,79 @@ class _OptionalPreferences extends StatelessWidget {
               subtitle: const Text('Sugestões alinhadas à safra para economizar e ganhar sabor.'),
             ),
           ),
+          Obx(
+            () => SwitchListTile.adaptive(
+              value: controller.hydrationCoachEnabled.value,
+              onChanged: locked ? null : controller.toggleHydrationCoach,
+              title: const Text('Lembretes automáticos de hidratação'),
+              subtitle: const Text('Receba metas calculadas e alertas ao longo do dia.'),
+            ),
+          ),
+          Obx(
+            () => SwitchListTile.adaptive(
+              value: controller.mindfulBreaksEnabled.value,
+              onChanged: locked ? null : controller.toggleMindfulBreaks,
+              title: const Text('Pausa de bem-estar guiada'),
+              subtitle: const Text('Um lembrete diário para alongar, respirar e cuidar da postura.'),
+            ),
+          ),
+          Obx(
+            () => SwitchListTile.adaptive(
+              value: controller.movementCoachEnabled.value,
+              onChanged: locked ? null : controller.toggleMovementCoach,
+              title: const Text('Pausas ativas automáticas'),
+              subtitle: const Text('Receba lembretes de alongamentos rápidos ao longo do dia.'),
+            ),
+          ),
+          Obx(
+            () => SwitchListTile.adaptive(
+              value: controller.sunlightCoachEnabled.value,
+              onChanged: locked ? null : controller.toggleSunlightCoach,
+              title: const Text('Rotina de luz natural'),
+              subtitle: const Text('Agenda um lembrete diário para tomar sol com segurança.'),
+            ),
+          ),
+          Obx(() {
+            final enabled = controller.sleepCoachEnabled.value;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SwitchListTile.adaptive(
+                  value: enabled,
+                  onChanged: locked ? null : controller.toggleSleepCoach,
+                  title: const Text('Aviso para desacelerar antes de dormir'),
+                  subtitle: const Text('Receba um lembrete 30 minutos antes do horário ideal de sono.'),
+                ),
+                if (enabled)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: NutritionPlanController.sleepOptions
+                          .map(
+                            (option) => ChoiceChip(
+                              label: Text(option.label),
+                              selected: controller.sleepWindow.value == option,
+                              onSelected: locked
+                                  ? null
+                                  : (_) => controller.setSleepWindow(option),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+              ],
+            );
+          }),
+          Obx(
+            () => SwitchListTile.adaptive(
+              value: controller.wellnessDigestEnabled.value,
+              onChanged: locked ? null : controller.toggleWellnessDigest,
+              title: const Text('Resumo automático de bem-estar'),
+              subtitle: const Text('Receba um lembrete antes do check-in com destaques da semana.'),
+            ),
+          ),
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerLeft,

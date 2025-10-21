@@ -215,6 +215,18 @@ class _PlanArea extends StatelessWidget {
         const SizedBox(height: 16),
         _MacroSummaryCard(plan: plan.plan),
         const SizedBox(height: 16),
+        _HydrationCoachCard(plan: plan),
+        const SizedBox(height: 16),
+        _MovementCoachCard(plan: plan),
+        const SizedBox(height: 16),
+        _SunlightCoachCard(plan: plan),
+        const SizedBox(height: 16),
+        _MindfulBreakCard(plan: plan),
+        const SizedBox(height: 16),
+        _SleepRoutineCard(plan: plan),
+        const SizedBox(height: 16),
+        _WellnessDigestCard(plan: plan),
+        const SizedBox(height: 16),
         _ProgressOverviewCard(controller: controller, plan: plan),
         const SizedBox(height: 16),
         _PlanDaysView(controller: controller, plan: plan),
@@ -660,6 +672,632 @@ class _MacroSummaryCard extends StatelessWidget {
             plan.hydrationGoal,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HydrationCoachCard extends StatelessWidget {
+  const _HydrationCoachCard({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hydrationPlan = plan.plan.hydrationPlan;
+    final enabled = plan.profile.hydrationCoachEnabled;
+
+    if (!enabled) {
+      return _PlanSectionCard(
+        title: 'Coach de hidratação automático',
+        child: Text(
+          'Ative os lembretes no questionário para receber metas calculadas e avisos de hidratação sem esforço.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    final reminders = hydrationPlan.reminders;
+    final litersLabel = hydrationPlan.liters
+        .toStringAsFixed(hydrationPlan.liters >= 3 ? 1 : 2)
+        .replaceAll('.', ',');
+
+    return _PlanSectionCard(
+      title: 'Coach de hidratação automático',
+      description:
+          'Lembretes distribuídos ao longo do dia para manter energia, foco e bem-estar.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _InfoChip(
+                icon: Icons.water_drop_outlined,
+                label: 'Meta diária',
+                value: '$litersLabel L (${hydrationPlan.totalMl} ml)',
+              ),
+              if (reminders.isNotEmpty)
+                _InfoChip(
+                  icon: Icons.alarm_outlined,
+                  label: 'Lembretes',
+                  value: '${reminders.length}x ao dia',
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            hydrationPlan.tip,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+          if (reminders.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...reminders
+                .map((slot) => _HydrationReminderTile(slot: slot))
+                .toList(),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MovementCoachCard extends StatelessWidget {
+  const _MovementCoachCard({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final info = plan.plan.movementRoutine;
+    final enabled = plan.profile.movementCoachEnabled && info.enabled;
+
+    if (!enabled) {
+      return _PlanSectionCard(
+        title: 'Pausas ativas guiadas',
+        child: Text(
+          'Ative as pausas ativas no questionário para receber lembretes automáticos de alongamentos e mobilidade.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    final slots = info.slots;
+
+    return _PlanSectionCard(
+      title: 'Pausas ativas guiadas',
+      description:
+          'Alertas discretos ao longo do dia ajudam a quebrar o sedentarismo sem demandar planejamento manual.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            info.summary,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+          if (slots.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: slots
+                  .map(
+                    (slot) => _InfoChip(
+                      icon: Icons.fitness_center_outlined,
+                      label: slot.formattedTime,
+                      value: '${slot.durationMinutes} min',
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            ...slots
+                .map(
+                  (slot) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.circle, size: 8),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            slot.activity,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ],
+          if (info.tips.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Dicas do coach',
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            ...info.tips
+                .map(
+                  (tip) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            tip,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SunlightCoachCard extends StatelessWidget {
+  const _SunlightCoachCard({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final info = plan.plan.sunlightRoutine;
+    final enabled = plan.profile.sunlightCoachEnabled && info.enabled;
+
+    if (!enabled) {
+      return _PlanSectionCard(
+        title: 'Rotina de luz natural',
+        child: Text(
+          'Ative o coach de luz natural no questionário para receber lembretes seguros de exposição ao sol.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    final timeLabel =
+        '${info.reminderHour.toString().padLeft(2, '0')}:${info.reminderMinute.toString().padLeft(2, '0')}';
+
+    return _PlanSectionCard(
+      title: 'Rotina de luz natural',
+      description: 'Um lembrete diário ajuda a sincronizar ritmos circadianos e reforçar vitamina D.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _InfoChip(
+                icon: Icons.wb_sunny_outlined,
+                label: 'Horário ideal',
+                value: timeLabel,
+              ),
+              _InfoChip(
+                icon: Icons.timer_outlined,
+                label: 'Duração sugerida',
+                value: '${info.durationMinutes} min',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            info.message,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+          if (info.benefits.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Benefícios esperados',
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            ...info.benefits
+                .map(
+                  (benefit) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.local_florist_outlined,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            benefit,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ],
+          if (info.cautions.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Cuidados rápidos',
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            ...info.cautions
+                .map(
+                  (caution) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.warning_amber_outlined,
+                          size: 16,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            caution,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MindfulBreakCard extends StatelessWidget {
+  const _MindfulBreakCard({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final enabled = plan.profile.mindfulBreaksEnabled;
+    final timeLabel =
+        '${plan.plan.mindfulBreakHour.toString().padLeft(2, '0')}:${plan.plan.mindfulBreakMinute.toString().padLeft(2, '0')}';
+
+    if (!enabled) {
+      return _PlanSectionCard(
+        title: 'Pausa de bem-estar',
+        child: Text(
+          'Quer receber um lembrete diário para alongar e respirar? Ative a pausa de bem-estar no questionário do plano.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    return _PlanSectionCard(
+      title: 'Pausa de bem-estar',
+      description:
+          'Uma notificação discreta ajuda você a desacelerar sem precisar lembrar sozinho.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _InfoChip(
+            icon: Icons.self_improvement_outlined,
+            label: 'Horário sugerido',
+            value: timeLabel,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            plan.plan.mindfulBreakMessage,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SleepRoutineCard extends StatelessWidget {
+  const _SleepRoutineCard({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final routine = plan.plan.sleepRoutine;
+    final enabled = plan.profile.sleepCoachEnabled && routine.hasReminder;
+    final bedtimeLabel = plan.profile.sleepWindow.label;
+    final reminderLabel =
+        '${routine.reminderHour.toString().padLeft(2, '0')}:${routine.reminderMinute.toString().padLeft(2, '0')}';
+
+    if (!enabled) {
+      return _PlanSectionCard(
+        title: 'Rotina do sono inteligente',
+        child: Text(
+          'Ative a rotina do sono no questionário para receber um aviso automático antes de dormir e sugestões de relaxamento.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    final tips = routine.windDownTips;
+    final summary = routine.windDownSummary.isEmpty
+        ? plan.profile.sleepWindow.summary
+        : routine.windDownSummary;
+
+    return _PlanSectionCard(
+      title: 'Rotina do sono inteligente',
+      description: 'Desacelere com dicas rápidas 30 minutos antes do horário ideal de descanso.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _InfoChip(
+                icon: Icons.nights_stay_outlined,
+                label: 'Lembrete diário',
+                value: reminderLabel,
+              ),
+              _InfoChip(
+                icon: Icons.bedtime_outlined,
+                label: 'Janela preferida',
+                value: bedtimeLabel,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            summary,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.75),
+            ),
+          ),
+          if (tips.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...tips.map(
+              (tip) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Icon(
+                        Icons.check_circle_outline,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        tip,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.75),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _WellnessDigestCard extends StatelessWidget {
+  const _WellnessDigestCard({required this.plan});
+
+  final NutritionPlan plan;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final digest = plan.plan.wellnessDigest;
+    final enabled = plan.profile.wellnessDigestEnabled && digest.enabled;
+
+    if (!enabled) {
+      return _PlanSectionCard(
+        title: 'Resumo automático de bem-estar',
+        child: Text(
+          'Ative o resumo automático para receber um lembrete com os principais destaques do plano antes do próximo check-in.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      );
+    }
+
+    final highlights = digest.highlights;
+    final reminderLabel = '${digest.hoursBeforeCheckIn}h antes do check-in';
+
+    return _PlanSectionCard(
+      title: 'Resumo automático de bem-estar',
+      description: 'Receba um aviso com metas, hidratação e recomendações antes de registrar o peso.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _InfoChip(
+                icon: Icons.notifications_active_outlined,
+                label: 'Próximo aviso',
+                value: reminderLabel,
+              ),
+              _InfoChip(
+                icon: Icons.flag_outlined,
+                label: 'Objetivo do ciclo',
+                value: plan.profile.goal.label,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (digest.summary.isNotEmpty)
+            Text(
+              digest.summary,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.8),
+              ),
+            ),
+          if (highlights.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ...highlights.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Icon(
+                        Icons.brightness_1,
+                        size: 10,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.75),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          if (digest.callToAction.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              digest.callToAction,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Chip(
+      avatar: Icon(icon, size: 18, color: theme.colorScheme.primary),
+      label: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.65),
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    );
+  }
+}
+
+class _HydrationReminderTile extends StatelessWidget {
+  const _HydrationReminderTile({required this.slot});
+
+  final HydrationReminderSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.schedule_outlined,
+              size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '${slot.formattedTime} · ${slot.amountMl} ml',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.8),
+              ),
             ),
           ),
         ],
