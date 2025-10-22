@@ -57,6 +57,7 @@ class AppLifecycleService extends GetxService with WidgetsBindingObserver {
         unawaited(_handleResumeEvent());
         break;
       case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
         break;
       case AppLifecycleState.paused:
