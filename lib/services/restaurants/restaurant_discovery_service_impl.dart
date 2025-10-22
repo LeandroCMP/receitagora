@@ -220,7 +220,7 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     required double latitude,
     required double longitude,
     RestaurantFocus? focus,
-    int limit = 12,
+    int limit = 20,
   }) async {
     final reference = LocationCoordinates(latitude: latitude, longitude: longitude);
     final rawResults = await _fetchRestaurantsByCoordinates(
@@ -252,7 +252,7 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
   Future<RestaurantSearchResult> searchByCity({
     required String city,
     RestaurantFocus? focus,
-    int limit = 12,
+    int limit = 20,
   }) async {
     final geocode = await _geocodeCity(city);
     if (geocode == null) {
@@ -291,7 +291,7 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     final radius = radiusOverride != null && radiusOverride > 0
         ? radiusOverride
         : searchRadiusMeters;
-    final sampleSize = math.max(limitHint * 4, 40);
+    final sampleSize = math.max(limitHint * 6, 120);
 
     final query = '''
 [out:json][timeout:25];
@@ -508,7 +508,7 @@ out center tags $sampleSize;
     required String fallbackCityLabel,
   }) {
     final tags = restaurant.tags;
-    final name = _stringTag(tags, 'name');
+    final name = _resolveDisplayName(tags);
     if (name == null || name.isEmpty) {
       return null;
     }
@@ -557,7 +557,7 @@ out center tags $sampleSize;
       ...cuisineKeywords,
       ..._normalizeKeywords(_stringTag(tags, 'amenity')),
       ..._normalizeKeywords(_stringTag(tags, 'cuisine:primary')),
-      ..._normalizeKeywords(name),
+      ..._collectNameKeywords(tags),
     };
 
     if (_boolTag(tags, 'diet:vegan')) {
@@ -587,6 +587,42 @@ out center tags $sampleSize;
       normalizedAddress: normalizedAddress,
       featureTags: featureTags,
     );
+  }
+
+  String? _resolveDisplayName(Map<String, dynamic> tags) {
+    final candidates = <String?>[
+      _stringTag(tags, 'name'),
+      _stringTag(tags, 'brand'),
+      _stringTag(tags, 'official_name'),
+      _stringTag(tags, 'alt_name'),
+      _stringTag(tags, 'operator'),
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate != null && candidate.trim().isNotEmpty) {
+        return candidate.trim();
+      }
+    }
+
+    return null;
+  }
+
+  Set<String> _collectNameKeywords(Map<String, dynamic> tags) {
+    final keys = <String>{
+      'name',
+      'brand',
+      'official_name',
+      'alt_name',
+      'operator',
+      'name:pt',
+      'name:en',
+    };
+
+    final keywords = <String>{};
+    for (final key in keys) {
+      keywords.addAll(_normalizeKeywords(_stringTag(tags, key)));
+    }
+    return keywords;
   }
 
   bool _matchesFocus(RestaurantFocus? focus, _SuggestionCandidate candidate) {
@@ -1114,8 +1150,8 @@ class _SuggestionCandidate {
   final Set<String> featureTags;
 
   String get key {
-    final latKey = raw.latitude.toStringAsFixed(3);
-    final lonKey = raw.longitude.toStringAsFixed(3);
+    final latKey = raw.latitude.toStringAsFixed(4);
+    final lonKey = raw.longitude.toStringAsFixed(4);
     return '$normalizedName|$normalizedAddress|$latKey|$lonKey';
   }
 

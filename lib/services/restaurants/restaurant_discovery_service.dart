@@ -87,12 +87,12 @@ abstract class RestaurantDiscoveryService {
     required double latitude,
     required double longitude,
     RestaurantFocus? focus,
-    int limit = 12,
+    int limit = 20,
   });
 
   Future<RestaurantSearchResult> searchByCity({
     required String city,
     RestaurantFocus? focus,
-    int limit = 12,
+    int limit = 20,
   });
 }

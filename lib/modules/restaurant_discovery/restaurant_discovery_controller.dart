@@ -15,6 +15,8 @@ class RestaurantDiscoveryController extends GetxController {
     required this.nutritionPlanService,
   });
 
+  static const int maxSuggestions = 20;
+
   final RestaurantDiscoveryService discoveryService;
   final LocationService locationService;
   final NutritionPlanService nutritionPlanService;
@@ -87,7 +89,7 @@ class RestaurantDiscoveryController extends GetxController {
         manualCityError.value = 'Informe a cidade para iniciar a busca.';
         return;
       }
-      await _searchByCity(city: city, focus: focus, limit: 12);
+      await _searchByCity(city: city, focus: focus, limit: maxSuggestions);
       return;
     }
 
@@ -149,6 +151,7 @@ class RestaurantDiscoveryController extends GetxController {
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
         focus: focus,
+        limit: maxSuggestions,
       );
 
       lastCoordinates.value = coordinates;
@@ -178,7 +181,7 @@ class RestaurantDiscoveryController extends GetxController {
   Future<void> _searchByCity({
     required String city,
     RestaurantFocus? focus,
-    int limit = 12,
+    int limit = maxSuggestions,
   }) async {
     isLoading.value = true;
     try {
