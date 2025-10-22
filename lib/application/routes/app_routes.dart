@@ -11,6 +11,7 @@ abstract class AppRoutes {
   static const favoritesNotebookDetail = '/favorites/notebooks/detail';
   static const shoppingLists = '/shopping/lists';
   static const shoppingListDetail = '/shopping/lists/detail';
+  static const restaurantDiscovery = '/restaurants/discovery';
   static const wellnessRoutines = '/wellness/routines';
   static const moodJournal = '/wellness/journal';
   static const skillJourneys = '/skills/journeys';

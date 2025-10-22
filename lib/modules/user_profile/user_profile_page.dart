@@ -10,6 +10,7 @@ import 'package:receitagora/services/usage/app_usage_service.dart';
 import 'package:receitagora/services/skill/skill_journey_service.dart';
 import 'package:receitagora/services/wellness/wellness_routine_service.dart';
 import 'package:receitagora/services/wellness/mood_journal_service.dart';
+import 'package:receitagora/services/restaurants/restaurant_discovery_service.dart';
 
 import 'user_profile_controller.dart';
 
@@ -125,6 +126,9 @@ class _ProfileContent extends StatelessWidget {
     final skillJourneyService = Get.isRegistered<SkillJourneyService>()
         ? Get.find<SkillJourneyService>()
         : null;
+    final restaurantService = Get.isRegistered<RestaurantDiscoveryService>()
+        ? Get.find<RestaurantDiscoveryService>()
+        : null;
 
     if (user == null) {
       return Center(
@@ -165,6 +169,10 @@ class _ProfileContent extends StatelessWidget {
         if (skillJourneyService != null) ...[
           const SizedBox(height: 24),
           _SkillJourneysCallout(theme: theme),
+        ],
+        if (restaurantService != null) ...[
+          const SizedBox(height: 24),
+          _RestaurantDiscoveryCallout(theme: theme),
         ],
         const SizedBox(height: 24),
         _AccountDetailsCard(theme: theme, user: user),
@@ -1163,6 +1171,58 @@ class _SkillJourneysCallout extends StatelessWidget {
               onPressed: () => Get.toNamed(AppRoutes.skillJourneys),
               icon: const Icon(Icons.map_outlined),
               label: const Text('Explorar trilhas'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RestaurantDiscoveryCallout extends StatelessWidget {
+  const _RestaurantDiscoveryCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.map_outlined, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Mapa de restaurantes recomendados',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Descubra restaurantes perto de você ou em outra cidade com cardápios alinhados ao seu plano ou à vontade do momento.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.restaurantDiscovery),
+              icon: const Icon(Icons.near_me_outlined),
+              label: const Text('Abrir mapa de restaurantes'),
             ),
           ],
         ),

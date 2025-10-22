@@ -30,6 +30,10 @@ import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service
 import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service_impl.dart';
 import 'package:receitagora/services/wellness/mood_journal_service.dart';
 import 'package:receitagora/services/wellness/mood_journal_service_impl.dart';
+import 'package:receitagora/services/location/location_service.dart';
+import 'package:receitagora/services/location/location_service_impl.dart';
+import 'package:receitagora/services/restaurants/restaurant_discovery_service.dart';
+import 'package:receitagora/services/restaurants/restaurant_discovery_service_impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +63,12 @@ Future<void> main() async {
   final notificationService = LocalNotificationService();
   await notificationService.init();
   Get.put<LocalNotificationService>(notificationService, permanent: true);
+
+  final locationService = LocationServiceImpl();
+  Get.put<LocationService>(locationService, permanent: true);
+
+  final restaurantDiscoveryService = RestaurantDiscoveryServiceImpl();
+  Get.put<RestaurantDiscoveryService>(restaurantDiscoveryService, permanent: true);
 
   final lifecycleService = AppLifecycleService(
     usageService: usageService,

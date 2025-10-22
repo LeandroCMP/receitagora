@@ -15,6 +15,7 @@ import 'package:receitagora/modules/user_profile/user_profile_module.dart';
 import 'package:receitagora/modules/billing/premium_plans_module.dart';
 import 'package:receitagora/modules/ingredient_lab/ingredient_lab_module.dart';
 import 'package:receitagora/modules/nutrition_plan/nutrition_plan_module.dart';
+import 'package:receitagora/modules/restaurant_discovery/restaurant_discovery_module.dart';
 
 import 'app_routes.dart';
 
@@ -30,6 +31,7 @@ class AppPages {
     FavoritesNotebooksModule(),
     MoodJournalModule(),
     ShoppingListModule(),
+    RestaurantDiscoveryModule(),
     SkillJourneysModule(),
     WellnessRoutinesModule(),
     UserProfileModule(),
