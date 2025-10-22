@@ -21,7 +21,7 @@ extension DietGoalLabel on DietGoal {
       case DietGoal.loseWeight:
         return 'cutting controlado';
       case DietGoal.gainMass:
-        return 'hipertrofia';
+        return 'ganho de massa muscular saudável';
       case DietGoal.maintain:
         return 'manutenção equilibrada';
       case DietGoal.reeducate:

@@ -396,6 +396,12 @@ class NutritionPlanService extends GetxService {
       }
     }
 
+    if (profile.goal == DietGoal.gainMass) {
+      buffer.writeln(
+        'Foque em ganho de massa muscular saudável priorizando alimentos naturais, descanso adequado e progressão segura, sem citar esteroides, hormônios ou suplementos proibidos.',
+      );
+    }
+
     if (previousPlan != null) {
       final history = previousPlan.weightHistory
           .map((entry) => '${entry.date.toIso8601String().split('T').first}: ${entry.weightKg.toStringAsFixed(1)} kg')
