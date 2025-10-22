@@ -1,20 +1,28 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/auth/auth_service.dart';
+import 'package:receitagora/services/billing/billing_exception.dart';
+import 'package:receitagora/services/billing/billing_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
 class UserProfileController extends GetxController {
   UserProfileController({
     required this.sessionService,
     required this.authService,
+    required this.billingService,
   });
 
   final SessionService sessionService;
   final AuthService authService;
+  final BillingService billingService;
 
   late final TextEditingController nameController;
   late final TextEditingController bioController;
@@ -23,13 +31,23 @@ class UserProfileController extends GetxController {
   final isSaving = false.obs;
   final isSigningOut = false.obs;
   final RxBool isOnboarding = false.obs;
+  final RxBool isPremiumUser = false.obs;
+  final RxBool isBillingBusy = false.obs;
 
   final RxList<String> dietaryPreferences = <String>[].obs;
   final RxList<String> favoriteCuisines = <String>[].obs;
   final RxList<String> cookingGoals = <String>[].obs;
   final RxList<String> allergies = <String>[].obs;
+  final Rxn<SubscriptionPlan> subscriptionPlan = Rxn<SubscriptionPlan>();
 
   UserModel? get user => sessionService.user;
+  String get premiumPriceDisplay {
+    final plan = subscriptionPlan.value;
+    if (plan?.formattedAmount != null && plan?.intervalLabel != null) {
+      return '${plan!.formattedAmount} / ${plan.intervalLabel}';
+    }
+    return 'R\$ 20,00 / mês';
+  }
 
   static const List<String> dietarySuggestions = <String>[
     'Vegetariano',
@@ -77,12 +95,21 @@ class UserProfileController extends GetxController {
     favoriteCuisines.assignAll(sessionService.user?.favoriteCuisines ?? const <String>[]);
     cookingGoals.assignAll(sessionService.user?.cookingGoals ?? const <String>[]);
     allergies.assignAll(sessionService.user?.allergies ?? const <String>[]);
+    subscriptionPlan.value = sessionService.plan;
+    isPremiumUser.value = sessionService.hasPremiumAccess;
+    _planSubscription = sessionService.planStream.listen((plan) {
+      subscriptionPlan.value = plan;
+      isPremiumUser.value = sessionService.hasPremiumAccess;
+    });
   }
+
+  late final StreamSubscription<SubscriptionPlan?> _planSubscription;
 
   @override
   void onClose() {
     nameController.dispose();
     bioController.dispose();
+    _planSubscription.cancel();
     super.onClose();
   }
 
@@ -131,6 +158,124 @@ class UserProfileController extends GetxController {
       );
     } finally {
       isSaving.value = false;
+    }
+  }
+
+  Future<void> refreshPlan() async {
+    await sessionService.refreshSubscriptionPlan();
+  }
+
+  Future<void> openPremiumPlans() async {
+    if (isPremiumUser.value) {
+      return;
+    }
+    await Get.toNamed(AppRoutes.premiumPlans);
+  }
+
+  Future<void> openIngredientLab() async {
+    if (!isPremiumUser.value) {
+      await openPremiumPlans();
+      return;
+    }
+    await Get.toNamed(AppRoutes.ingredientLab);
+  }
+
+  Future<void> openNutritionPlan() async {
+    if (!isPremiumUser.value) {
+      await openPremiumPlans();
+      return;
+    }
+    await Get.toNamed(AppRoutes.nutritionPlan);
+  }
+
+  Future<void> viewSubscriptionDetails() async {
+    final plan = subscriptionPlan.value;
+    if (plan == null || plan.subscriptionId == null) {
+      AppSnackbar.warning(
+        title: 'Plano não encontrado',
+        message:
+            'Não encontramos uma assinatura ativa para sua conta. Tente atualizar as informações.',
+      );
+      return;
+    }
+
+    if (isBillingBusy.value) {
+      return;
+    }
+
+    isBillingBusy.value = true;
+    try {
+      final session = await billingService.createPortalSession();
+      final opened = await launchUrl(
+        session.url,
+        mode: LaunchMode.inAppBrowserView,
+        webViewConfiguration: const WebViewConfiguration(
+          enableJavaScript: true,
+          enableDomStorage: true,
+        ),
+      );
+
+      if (!opened) {
+        AppSnackbar.error(
+          title: 'Não foi possível abrir o portal',
+          message:
+              'Tivemos um problema ao abrir a página de gerenciamento da assinatura. Tente novamente em instantes.',
+        );
+      }
+    } on BillingException catch (error) {
+      AppSnackbar.error(
+        title: 'Não foi possível abrir o portal',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Erro inesperado',
+        message:
+            'Não foi possível abrir o portal de assinaturas agora. Tente novamente mais tarde.',
+      );
+    } finally {
+      isBillingBusy.value = false;
+    }
+  }
+
+  Future<void> requestSubscriptionCancellation() async {
+    final plan = subscriptionPlan.value;
+    final subscriptionId = plan?.subscriptionId;
+    if (subscriptionId == null) {
+      AppSnackbar.warning(
+        title: 'Assinatura não localizada',
+        message:
+            'Não encontramos uma assinatura ativa para cancelar. Atualize as informações e tente novamente.',
+      );
+      return;
+    }
+
+    if (isBillingBusy.value) {
+      return;
+    }
+
+    isBillingBusy.value = true;
+    try {
+      await billingService.cancelSubscription(subscriptionId);
+      AppSnackbar.success(
+        title: 'Cancelamento solicitado',
+        message:
+            'Sua assinatura permanecerá ativa até o fim do ciclo atual e não será renovada automaticamente.',
+      );
+    } on BillingException catch (error) {
+      AppSnackbar.error(
+        title: 'Não foi possível cancelar',
+        message: error.message,
+      );
+    } catch (_) {
+      AppSnackbar.error(
+        title: 'Erro inesperado',
+        message:
+            'Não foi possível cancelar a assinatura agora. Tente novamente mais tarde.',
+      );
+    } finally {
+      isBillingBusy.value = false;
+      await refreshPlan();
     }
   }
 

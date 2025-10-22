@@ -4,11 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/application/routes/app_routes.dart';
+import 'package:receitagora/application/utils/app_loading.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/core/errors/app_exception.dart';
+import 'package:receitagora/models/nutrition/diet_plan.dart';
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/modules/recipe_finder/domain/entities/recipe_entity.dart';
 import 'package:receitagora/modules/recipe_finder/domain/usecases/generate_recipes_usecase.dart';
+import 'package:receitagora/services/nutrition/nutrition_plan_service.dart';
 import 'package:receitagora/services/recipe/recipe_history_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 import 'recipe_results_page.dart';
@@ -18,17 +22,20 @@ class RecipeFinderController extends GetxController {
     required this.generateRecipesUseCase,
     required this.sessionService,
     required this.recipeHistoryService,
+    required this.nutritionPlanService,
   });
 
   final GenerateRecipesUseCase generateRecipesUseCase;
   final SessionService sessionService;
   final RecipeHistoryService recipeHistoryService;
+  final NutritionPlanService nutritionPlanService;
 
   final ingredients = <String>[].obs;
   final recipes = <RecipeEntity>[].obs;
   final isLoading = false.obs;
   final errorMessage = RxnString();
   final isGuest = false.obs;
+  final hasPremiumAccess = false.obs;
   final guestSearchesRemaining = SessionService.defaultGuestDailyLimit.obs;
   final guestDailyLimit = SessionService.defaultGuestDailyLimit.obs;
   final guestRecipeLimit = SessionService.defaultGuestRecipeLimit.obs;
@@ -42,6 +49,7 @@ class RecipeFinderController extends GetxController {
   StreamSubscription<UserModel?>? _userSubscription;
   StreamSubscription<int>? _guestDailyLimitSubscription;
   StreamSubscription<int>? _guestRecipeLimitSubscription;
+  StreamSubscription<SubscriptionPlan?>? _planSubscription;
 
   @override
   void onInit() {
@@ -63,6 +71,10 @@ class RecipeFinderController extends GetxController {
     _guestRecipeLimitSubscription =
         sessionService.guestRecipeLimitStream.listen((value) {
       guestRecipeLimit.value = value;
+    });
+    hasPremiumAccess.value = sessionService.hasPremiumAccess;
+    _planSubscription = sessionService.planStream.listen((plan) {
+      hasPremiumAccess.value = plan?.isPremium ?? false;
     });
   }
 
@@ -206,12 +218,14 @@ class RecipeFinderController extends GetxController {
     _userSubscription?.cancel();
     _guestDailyLimitSubscription?.cancel();
     _guestRecipeLimitSubscription?.cancel();
+    _planSubscription?.cancel();
     super.onClose();
   }
 
   void _syncSessionState() {
     isGuest.value = sessionService.isGuest;
     currentUser.value = sessionService.user;
+    hasPremiumAccess.value = sessionService.hasPremiumAccess;
     _syncGuestQuota();
   }
 
@@ -236,5 +250,56 @@ class RecipeFinderController extends GetxController {
     final hour = local.hour.toString().padLeft(2, '0');
     final minute = local.minute.toString().padLeft(2, '0');
     return '$day/$month/${local.year} às $hour:$minute';
+  }
+
+  Future<void> openIngredientLab() async {
+    if (!sessionService.hasPremiumAccess) {
+      await Get.toNamed(AppRoutes.premiumPlans);
+      return;
+    }
+    await Get.toNamed(AppRoutes.ingredientLab);
+  }
+
+  Future<void> openNutritionPlan() async {
+    if (!sessionService.hasPremiumAccess) {
+      await Get.toNamed(AppRoutes.premiumPlans);
+      return;
+    }
+    AppLoading.show();
+    NutritionPlan? plan;
+    var failed = false;
+    try {
+      plan = await nutritionPlanService.fetchCurrentPlan();
+    } on AppException catch (error) {
+      failed = true;
+      AppSnackbar.error(
+        title: 'Não foi possível carregar o plano',
+        message: error.message,
+      );
+    } catch (_) {
+      failed = true;
+      AppSnackbar.error(
+        title: 'Erro inesperado',
+        message:
+            'Não conseguimos verificar o seu plano agora. Tente novamente em instantes.',
+      );
+    } finally {
+      AppLoading.hide();
+    }
+
+    if (failed) {
+      return;
+    }
+
+    if (plan != null) {
+      await Get.toNamed(AppRoutes.nutritionPlan);
+      return;
+    }
+
+    await Get.toNamed(AppRoutes.nutritionPlanForm, arguments: {'editing': false});
+  }
+
+  Future<void> openPremiumPlans() async {
+    await Get.toNamed(AppRoutes.premiumPlans);
   }
 }

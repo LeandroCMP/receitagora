@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 
 import 'user_profile_controller.dart';
@@ -133,7 +134,6 @@ class _ProfileContent extends StatelessWidget {
           controller: controller,
           isOnboarding: isOnboarding,
         ),
-        const SizedBox(height: 16),
         _AccountDetailsCard(theme: theme, user: user),
         const SizedBox(height: 24),
         _ProfileActions(theme: theme, controller: controller),
@@ -653,16 +653,94 @@ class _ProfileActions extends StatelessWidget {
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Caso queira usar outra conta, você pode encerrar esta sessão a qualquer momento.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+        Text(
+          'Caso queira usar outra conta, você pode encerrar esta sessão a qualquer momento.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Obx(() {
+          final isPremium = controller.isPremiumUser.value;
+          final plan = controller.subscriptionPlan.value;
+          final busy = controller.isBillingBusy.value;
+
+          String subtitle;
+          if (isPremium) {
+            final expires = plan?.expiresAt;
+            if (plan?.autoRenews == true && expires != null) {
+              subtitle = 'Renova em ${_formatDate(expires)}';
+            } else if (plan?.autoRenews == true) {
+              subtitle = 'Renovação automática ativa';
+            } else if (expires != null) {
+              subtitle = 'Expira em ${_formatDate(expires)}';
+            } else {
+              subtitle = 'Assinatura Premium ativa';
+            }
+          } else {
+            subtitle =
+                'Libere cardápios nutricionais e o laboratório de ingredientes com o Premium.';
+          }
+
+          final trailing = busy
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chevron_right);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                enabled: !busy,
+                leading: Icon(
+                  isPremium
+                      ? Icons.workspace_premium_outlined
+                      : Icons.lock_open_rounded,
+                  color: theme.colorScheme.primary,
+                ),
+                title: Text(
+                  'Receita Agora Premium',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Text(
+                  subtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+                trailing: trailing,
+                onTap: busy
+                    ? null
+                    : (isPremium
+                        ? controller.viewSubscriptionDetails
+                        : controller.openPremiumPlans),
               ),
-            ),
-            const SizedBox(height: 24),
-            Obx(
-              () => OutlinedButton.icon(
-                onPressed: controller.isSigningOut.value ? null : controller.signOut,
+              if (isPremium) ...[
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed:
+                        busy ? null : controller.requestSubscriptionCancellation,
+                    icon: const Icon(Icons.cancel_outlined),
+                    label: const Text('Solicitar cancelamento'),
+                  ),
+                ),
+              ],
+            ],
+          );
+        }),
+        const SizedBox(height: 16),
+        const Divider(height: 1),
+        const SizedBox(height: 16),
+        Obx(
+          () => OutlinedButton.icon(
+            onPressed: controller.isSigningOut.value ? null : controller.signOut,
                 icon: controller.isSigningOut.value
                     ? const SizedBox(
                         height: 18,
@@ -678,6 +756,14 @@ class _ProfileActions extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatDate(DateTime date) {
+  final local = date.toLocal();
+  final day = local.day.toString().padLeft(2, '0');
+  final month = local.month.toString().padLeft(2, '0');
+  final year = local.year.toString();
+  return '$day/$month/$year';
 }
 
 class _Avatar extends StatelessWidget {

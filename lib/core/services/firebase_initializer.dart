@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
+import 'package:receitagora/firebase_options.dart';
+
 /// Handles the one-time Firebase initialization for the application.
 class FirebaseInitializer {
   FirebaseInitializer._();
@@ -19,14 +21,26 @@ class FirebaseInitializer {
     }
 
     try {
-      await Firebase.initializeApp();
+      if (kIsWeb) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.web,
+        );
+      } else {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      }
       _initialized = true;
     } on FirebaseException catch (error, stackTrace) {
+      _initialized = false;
       debugPrint(
-        'Firebase initialization skipped: ${error.code} -> ${error.message}\n$stackTrace',
+        'Firebase initialization failed: ${error.code} -> ${error.message}\n$stackTrace',
       );
+      rethrow;
     } catch (error, stackTrace) {
+      _initialized = false;
       debugPrint('Firebase initialization error: $error\n$stackTrace');
+      rethrow;
     }
   }
 }

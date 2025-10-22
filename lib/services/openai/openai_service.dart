@@ -29,9 +29,11 @@ class OpenAIService {
     }
 
     try {
-      final content = await _requestRecipesFromOpenAI(
-        sanitized,
-        user: user,
+      final content = await _requestChatCompletion(
+        systemPrompt:
+            'Você é um assistente culinário especializado em sugerir receitas brasileiras rápidas. Sempre retorne um JSON seguindo o schema fornecido pelo usuário.',
+        userPrompt: _buildPrompt(sanitized, user),
+        temperature: 0.7,
       );
       if (content != null && content.trim().isNotEmpty) {
         return content;
@@ -47,9 +49,101 @@ class OpenAIService {
     }
   }
 
-  Future<String?> _requestRecipesFromOpenAI(
-    List<String> ingredients, {
-    UserModel? user,
+  Future<Map<String, dynamic>> requestStructuredJson({
+    required String systemPrompt,
+    required String userPrompt,
+    double temperature = 0.6,
+  }) async {
+    if (!config.hasValidCredentials) {
+      throw const AppException(
+        'Chave da OpenAI ausente ou inválida. Configure a variável OPENAI_API_KEY para usar os recursos de IA.',
+      );
+    }
+
+    try {
+      final content = await _requestChatCompletion(
+        systemPrompt: systemPrompt,
+        userPrompt: userPrompt,
+        temperature: temperature,
+      );
+      if (content == null || content.trim().isEmpty) {
+        throw const AppException('A OpenAI retornou uma resposta vazia.');
+      }
+
+      try {
+        return _decodeJsonMap(content.trim());
+      } on FormatException catch (error) {
+        final fallback = _extractJsonObject(content);
+        if (fallback != null) {
+          try {
+            return _decodeJsonMap(fallback.trim());
+          } on FormatException {
+            // Ignorado: a exceção será lançada logo abaixo com os detalhes originais.
+          }
+        }
+        throw AppException(
+          'A resposta da OpenAI veio em um formato inesperado. Tente novamente.',
+          details: error.message,
+        );
+      }
+    } on AppException {
+      rethrow;
+    } catch (error) {
+      throw AppException(
+        'Falha ao comunicar com a OpenAI. Tente novamente em instantes.',
+        details: error.toString(),
+      );
+    }
+  }
+
+  Map<String, dynamic> _decodeJsonMap(String content) {
+    final dynamic decoded = jsonDecode(content);
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+    if (decoded is Map) {
+      return decoded.map((key, value) => MapEntry(key.toString(), value));
+    }
+    throw const FormatException('JSON root is not an object.');
+  }
+
+  String? _extractJsonObject(String content) {
+    final start = content.indexOf('{');
+    if (start == -1) {
+      return null;
+    }
+
+    var depth = 0;
+    var inString = false;
+
+    for (var index = start; index < content.length; index++) {
+      final char = content[index];
+
+      if (char == '"' && (index == 0 || content[index - 1] != '\\')) {
+        inString = !inString;
+      }
+
+      if (inString) {
+        continue;
+      }
+
+      if (char == '{') {
+        depth++;
+      } else if (char == '}') {
+        depth--;
+        if (depth == 0) {
+          return content.substring(start, index + 1);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  Future<String?> _requestChatCompletion({
+    required String systemPrompt,
+    required String userPrompt,
+    double temperature = 0.7,
   }) async {
     final uri = Uri.parse('${config.openAIBaseUrl}/chat/completions');
     final headers = <String, String>{
@@ -59,19 +153,18 @@ class OpenAIService {
 
     final payload = jsonEncode({
       'model': config.model,
-      'temperature': 0.7,
+      'temperature': temperature,
       'response_format': {
         'type': 'json_object',
       },
       'messages': [
         {
           'role': 'system',
-          'content':
-              'Você é um assistente culinário especializado em sugerir receitas brasileiras rápidas. Sempre retorne um JSON seguindo o schema fornecido pelo usuário.',
+          'content': systemPrompt,
         },
         {
           'role': 'user',
-          'content': _buildPrompt(ingredients, user),
+          'content': userPrompt,
         },
       ],
     });
