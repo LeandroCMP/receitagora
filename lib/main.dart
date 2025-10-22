@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:receitagora/application/app.dart';
@@ -32,6 +33,7 @@ import 'package:receitagora/services/wellness/mood_journal_service_impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('pt_BR');
   await dotenv.load(fileName: '.env', isOptional: true);
   await FirebaseInitializer.ensureInitialized();
 

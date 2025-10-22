@@ -169,7 +169,7 @@ class _MoodEntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final formatter = DateFormat('dd/MM/yyyy', 'pt_BR');
+    final formatter = _moodJournalDateFormatter();
     final color = entry.mood.tone(colorScheme);
 
     return Card(
@@ -265,7 +265,7 @@ class _MoodEntrySheetState extends State<_MoodEntrySheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final formatter = DateFormat('dd/MM/yyyy', 'pt_BR');
+    final formatter = _moodJournalDateFormatter();
 
     return Padding(
       padding: EdgeInsets.only(
@@ -400,5 +400,13 @@ class _MoodEntrySheetState extends State<_MoodEntrySheet> {
         setState(() => isSaving = false);
       }
     }
+  }
+}
+
+DateFormat _moodJournalDateFormatter() {
+  try {
+    return DateFormat('dd/MM/yyyy', 'pt_BR');
+  } catch (_) {
+    return DateFormat('dd/MM/yyyy');
   }
 }
