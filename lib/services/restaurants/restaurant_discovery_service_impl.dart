@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:receitagora/models/nutrition/diet_plan.dart';
 import 'package:receitagora/models/nutrition/diet_profile.dart';
+import 'package:receitagora/services/location/location_service.dart';
 
 import 'restaurant_discovery_service.dart';
 

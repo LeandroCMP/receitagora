@@ -36,15 +36,11 @@ class LocationServiceImpl implements LocationService {
   @override
   Future<LocationCoordinates?> getCurrentPosition({bool forceFresh = false}) async {
     try {
-      Position? position;
-      if (!forceFresh) {
-        position = await _geolocator.getLastKnownPosition();
-      }
-      position ??=
-          await _geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.medium);
-      if (position == null) {
-        return null;
-      }
+      final lastKnown = forceFresh ? null : await _geolocator.getLastKnownPosition();
+      final position = lastKnown ??
+          await _geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium),
+          );
       return LocationCoordinates(
         latitude: position.latitude,
         longitude: position.longitude,
