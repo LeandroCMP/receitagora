@@ -6,6 +6,7 @@ import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
+import 'package:receitagora/modules/favorites/favorited_recipe_entity.dart';
 import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service.dart';
 
 import 'favorites_notebook_detail_controller.dart';
