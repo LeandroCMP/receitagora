@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'package:receitagora/services/config/usage_config.dart';
@@ -19,6 +21,7 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
       _subscription;
   bool _isInitializing = false;
+  bool _hasLoadedFallback = false;
 
   static const String _documentPath = 'config/app_usage';
 
@@ -45,8 +48,9 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
     _isInitializing = true;
 
     try {
-      await _loadInitialConfig();
+      await _ensureFallbackConfigLoaded(logOnSuccess: false);
       _listenForUpdates();
+      unawaited(_loadRemoteConfig());
     } finally {
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
@@ -55,7 +59,7 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
     }
   }
 
-  Future<void> _loadInitialConfig() async {
+  Future<void> _loadRemoteConfig() async {
     try {
       final snapshot = await _firestore.doc(_documentPath).get();
       if (snapshot.exists) {
@@ -64,11 +68,10 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
           _config.value = UsageConfig.fromMap(data, _config.value);
         }
       }
+    } on FirebaseException catch (error, stackTrace) {
+      await _handleRemoteLoadFailure(error, stackTrace);
     } catch (error, stackTrace) {
-      Get.log(
-        'Falha ao carregar configuração de uso: $error\n$stackTrace',
-        isError: true,
-      );
+      await _handleRemoteLoadFailure(error, stackTrace);
     }
   }
 
@@ -87,6 +90,46 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
     });
   }
 
+  Future<void> _handleRemoteLoadFailure(
+    Object error,
+    StackTrace stackTrace,
+  ) async {
+    Get.log(
+      'Falha ao carregar configuração de uso no Firestore: $error\n$stackTrace',
+      isError: true,
+    );
+    await _ensureFallbackConfigLoaded();
+  }
+
+  Future<void> _ensureFallbackConfigLoaded({bool logOnSuccess = true}) async {
+    if (_hasLoadedFallback) {
+      if (logOnSuccess) {
+        Get.log(
+          'Mantendo configuração de uso carregada do fallback local ($_fallbackAssetPath).',
+        );
+      }
+      return;
+    }
+
+    try {
+      final payload = await rootBundle.loadString(_fallbackAssetPath);
+      final Map<String, dynamic> data =
+          jsonDecode(payload) as Map<String, dynamic>;
+      _config.value = UsageConfig.fromMap(data, _config.value);
+      _hasLoadedFallback = true;
+      if (logOnSuccess) {
+        Get.log(
+          'Aplicando configuração de uso a partir do fallback local ($_fallbackAssetPath).',
+        );
+      }
+    } catch (assetError, assetStackTrace) {
+      Get.log(
+        'Falha ao carregar configuração de uso local: $assetError\n$assetStackTrace',
+        isError: true,
+      );
+    }
+  }
+
   @override
   void onClose() {
     _subscription?.cancel();
@@ -94,3 +137,5 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
   }
 
 }
+
+const String _fallbackAssetPath = 'assets/config/app_usage.json';
