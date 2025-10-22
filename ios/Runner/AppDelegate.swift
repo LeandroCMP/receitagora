@@ -1,6 +1,11 @@
 import FirebaseCore
 import Flutter
 import UIKit
+import Foundation
+
+private enum ChannelName {
+  static let deviceTimezone = "receitagora/device_timezone"
+}
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -17,6 +22,22 @@ import UIKit
       }
     }
     GeneratedPluginRegistrant.register(with: self)
+
+    if let controller = window?.rootViewController as? FlutterViewController {
+      let channel = FlutterMethodChannel(
+        name: ChannelName.deviceTimezone,
+        binaryMessenger: controller.binaryMessenger
+      )
+
+      channel.setMethodCallHandler { call, result in
+        switch call.method {
+        case "getLocalTimezone":
+          result(TimeZone.current.identifier)
+        default:
+          result(FlutterMethodNotImplemented)
+        }
+      }
+    }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

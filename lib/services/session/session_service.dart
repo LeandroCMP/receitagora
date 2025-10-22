@@ -1,3 +1,4 @@
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 
 enum UserMode { guest, authenticated }
@@ -14,7 +15,9 @@ abstract class SessionService {
   bool get isGuest;
   bool get isAuthenticated;
   UserModel? get user;
+  SubscriptionPlan? get plan;
   bool get hasCompletedProfileSetup;
+  bool get hasPremiumAccess;
   int get guestDailyLimit;
   int get guestRecipeLimit;
   int get shareDailyLimit;
@@ -25,6 +28,7 @@ abstract class SessionService {
 
   Stream<UserMode?> get modeStream;
   Stream<UserModel?> get userStream;
+  Stream<SubscriptionPlan?> get planStream;
   Stream<int> get guestSearchCountStream;
   Stream<int> get shareCountStream;
   Stream<int> get guestDailyLimitStream;
@@ -38,6 +42,7 @@ abstract class SessionService {
   Future<void> clearSession();
   Future<void> updateDisplayName(String displayName);
   Future<void> updateProfile(UserModel user);
+  Future<void> refreshSubscriptionPlan();
   bool canPerformGuestSearch();
   Future<void> registerGuestSearch();
   bool canShareRecipe();

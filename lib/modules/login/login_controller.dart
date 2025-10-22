@@ -30,6 +30,9 @@ class LoginController extends GetxController {
     try {
       await sessionService.ensureInitialized();
       final user = await authService.signInWithGoogle();
+
+      await sessionService.refreshSubscriptionPlan();
+
       googleErrorMessage.value = null;
       if (user.profileCompleted) {
         await Get.offAllNamed(AppRoutes.recipeFinder);

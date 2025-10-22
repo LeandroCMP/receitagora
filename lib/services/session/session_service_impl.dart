@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/config/usage_config.dart';
 import 'package:receitagora/services/config/usage_config_service.dart';
@@ -13,12 +15,15 @@ class SessionServiceImpl extends GetxService implements SessionService {
   SessionServiceImpl({
     required SharedPreferences preferences,
     required UsageConfigService usageConfigService,
+    required FirebaseFirestore firestore,
   })  : _preferences = preferences,
         _usageConfigService = usageConfigService,
+        _firestore = firestore,
         _readyCompleter = Completer<void>();
 
   final SharedPreferences _preferences;
   final UsageConfigService _usageConfigService;
+  final FirebaseFirestore _firestore;
 
   static const _modeKey = 'session.mode';
   static const _userJsonKey = 'session.user.data';
@@ -31,11 +36,14 @@ class SessionServiceImpl extends GetxService implements SessionService {
   static const _guestDateKey = 'session.guest.date';
   static const _shareCountKey = 'session.share.count';
   static const _shareDateKey = 'session.share.date';
+  static const _planCacheKey = 'session.plan.cache';
+  static const _testerEmail = 'ins4nehs@gmail.com';
 
   final Completer<void> _readyCompleter;
   bool _isInitializing = false;
   final Rxn<UserMode> _mode = Rxn<UserMode>();
   final Rxn<UserModel> _user = Rxn<UserModel>();
+  final Rxn<SubscriptionPlan> _plan = Rxn<SubscriptionPlan>();
   final RxInt _guestSearchCount = 0.obs;
   final RxInt _shareCount = 0.obs;
   final RxInt _guestDailyLimit =
@@ -45,6 +53,8 @@ class SessionServiceImpl extends GetxService implements SessionService {
   final RxInt _shareDailyLimit =
       SessionService.defaultShareDailyLimit.obs;
   StreamSubscription<UsageConfig>? _configSubscription;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _planSubscription;
+  String? _planUserId;
 
   @override
   Future<void> get ready => _readyCompleter.future;
@@ -65,7 +75,13 @@ class SessionServiceImpl extends GetxService implements SessionService {
   UserModel? get user => _user.value;
 
   @override
+  SubscriptionPlan? get plan => _plan.value;
+
+  @override
   bool get hasCompletedProfileSetup => _user.value?.profileCompleted ?? false;
+
+  @override
+  bool get hasPremiumAccess => _plan.value?.isPremium ?? false;
 
   @override
   int get guestDailyLimit => _guestDailyLimit.value;
@@ -99,6 +115,9 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
   @override
   Stream<UserModel?> get userStream => _user.stream;
+
+  @override
+  Stream<SubscriptionPlan?> get planStream => _plan.stream;
 
   @override
   Stream<int> get guestSearchCountStream => _guestSearchCount.stream;
@@ -140,6 +159,12 @@ class SessionServiceImpl extends GetxService implements SessionService {
       _ensureGuestQuotaFreshness();
       _ensureShareQuotaFreshness();
       await _initializeUsageConfig();
+      if (isAuthenticated && _user.value != null) {
+        await _ensureTesterPremiumAccessIfNeeded(_user.value!);
+        await _listenToPlanChanges(_user.value!.id);
+      } else {
+        await _stopPlanTracking(clearPlan: true);
+      }
 
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
@@ -160,6 +185,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_userAvatarKey);
     await _preferences.remove(_userJsonKey);
     await _preferences.remove(_profileCompletedKey);
+    await _stopPlanTracking(clearPlan: true);
     _ensureGuestQuotaFreshness();
     _ensureShareQuotaFreshness();
   }
@@ -173,6 +199,8 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_guestCountKey);
     await _preferences.remove(_guestDateKey);
     _ensureShareQuotaFreshness();
+    await _ensureTesterPremiumAccessIfNeeded(user);
+    await _listenToPlanChanges(user.id);
   }
 
   @override
@@ -190,6 +218,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
     await _preferences.remove(_guestDateKey);
     await _preferences.remove(_shareCountKey);
     await _preferences.remove(_shareDateKey);
+    await _stopPlanTracking(clearPlan: true);
     _guestSearchCount.value = 0;
     _shareCount.value = 0;
   }
@@ -227,6 +256,26 @@ class SessionServiceImpl extends GetxService implements SessionService {
     }
   }
 
+  @override
+  Future<void> refreshSubscriptionPlan() async {
+    if (!isAuthenticated) {
+      await _stopPlanTracking(clearPlan: true);
+      return;
+    }
+
+    final userId = _user.value?.id;
+    if (userId == null || userId.isEmpty) {
+      return;
+    }
+
+    final currentUser = _user.value;
+    if (currentUser != null) {
+      await _ensureTesterPremiumAccessIfNeeded(currentUser);
+    }
+    await _listenToPlanChanges(userId);
+  }
+
+  @override
   @override
   bool canPerformGuestSearch() {
     if (!isGuest) {
@@ -275,6 +324,7 @@ class SessionServiceImpl extends GetxService implements SessionService {
   @override
   void onClose() {
     _configSubscription?.cancel();
+    _planSubscription?.cancel();
     super.onClose();
   }
 
@@ -311,6 +361,16 @@ class SessionServiceImpl extends GetxService implements SessionService {
 
     _guestSearchCount.value = _preferences.getInt(_guestCountKey) ?? 0;
     _shareCount.value = _preferences.getInt(_shareCountKey) ?? 0;
+
+    final planJson = _preferences.getString(_planCacheKey);
+    if (planJson != null && planJson.isNotEmpty) {
+      try {
+        final cachedPlan = SubscriptionPlan.fromJson(planJson);
+        _plan.value = cachedPlan.isExpired ? null : cachedPlan;
+      } catch (_) {
+        await _preferences.remove(_planCacheKey);
+      }
+    }
   }
 
   void _ensureGuestQuotaFreshness() {
@@ -417,4 +477,151 @@ class SessionServiceImpl extends GetxService implements SessionService {
       }
     }
   }
+
+  Future<void> _listenToPlanChanges(String userId) async {
+    if (userId.isEmpty) {
+      await _stopPlanTracking(clearPlan: true);
+      return;
+    }
+
+    if (_planUserId == userId && _planSubscription != null) {
+      await _fetchPlanSnapshot(userId);
+      return;
+    }
+
+    await _planSubscription?.cancel();
+    _planUserId = userId;
+
+    final docRef =
+        _firestore.collection('users').doc(userId).collection('billing').doc('plan');
+
+    _planSubscription = docRef.snapshots().listen(
+      (snapshot) {
+        _applyPlanSnapshot(snapshot.data());
+      },
+      onError: (_) {},
+    );
+
+    await _fetchPlanSnapshot(userId);
+  }
+
+  Future<void> _fetchPlanSnapshot(String userId) async {
+    try {
+      final docRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('billing')
+          .doc('plan');
+      final doc = await docRef.get();
+      if (!doc.exists || doc.data() == null) {
+        final currentUser = _user.value;
+        if (currentUser != null) {
+          await _ensureTesterPremiumAccessIfNeeded(currentUser);
+          final refreshed = await docRef.get();
+          _applyPlanSnapshot(refreshed.data());
+          return;
+        }
+      }
+      _applyPlanSnapshot(doc.data());
+    } on FirebaseException {
+      // Ignore transient errors; cached plan remains.
+    }
+  }
+
+  SubscriptionPlan? _applyPlanSnapshot(Map<String, dynamic>? data) {
+    if (data == null) {
+      _plan.value = null;
+      unawaited(_preferences.remove(_planCacheKey));
+      return null;
+    }
+
+    try {
+      final parsed = SubscriptionPlan.fromMap(data);
+      if (parsed.isExpired) {
+        _plan.value = null;
+        unawaited(_preferences.remove(_planCacheKey));
+        return null;
+      } else {
+        _plan.value = parsed;
+        unawaited(_preferences.setString(_planCacheKey, parsed.toJson()));
+        return parsed;
+      }
+    } catch (_) {
+      // Ignore invalid payloads but clear cache to avoid stale data.
+      _plan.value = null;
+      unawaited(_preferences.remove(_planCacheKey));
+      return null;
+    }
+  }
+
+  Future<void> _stopPlanTracking({bool clearPlan = false}) async {
+    _planUserId = null;
+    await _planSubscription?.cancel();
+    _planSubscription = null;
+    if (clearPlan) {
+      _plan.value = null;
+      await _preferences.remove(_planCacheKey);
+    }
+  }
+
+  Future<void> _ensureTesterPremiumAccessIfNeeded(UserModel user) async {
+    final normalizedEmail = user.email.trim().toLowerCase();
+    if (normalizedEmail != _testerEmail) {
+      return;
+    }
+
+    final docRef = _firestore
+        .collection('users')
+        .doc(user.id)
+        .collection('billing')
+        .doc('plan');
+
+    try {
+      final snapshot = await docRef.get();
+      SubscriptionPlan? currentPlan;
+      final data = snapshot.data();
+      if (data != null) {
+        try {
+          currentPlan = SubscriptionPlan.fromMap(data);
+        } catch (_) {
+          currentPlan = null;
+        }
+      }
+
+      if (currentPlan != null && currentPlan.isPremium) {
+        return;
+      }
+
+      final now = DateTime.now();
+      final expiresAt = now.add(const Duration(days: 365));
+
+      final payload = <String, dynamic>{
+        'type': SubscriptionPlanType.premium.name,
+        'platform': 'tester',
+        'status': 'active',
+        'autoRenews': false,
+        'productId': 'premium_tester',
+        'priceId': 'premium_tester_monthly',
+        'transactionId': 'tester-${now.millisecondsSinceEpoch}',
+        'interval': 'month',
+        'amount': 2000,
+        'currency': 'BRL',
+        'subscriptionId': 'tester-${user.id}',
+        'customerId': user.id,
+        'cancelAtPeriodEnd': false,
+        'expiresAt': expiresAt.toIso8601String(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      final createdAt = data?['createdAt'];
+      if (createdAt == null) {
+        payload['createdAt'] = FieldValue.serverTimestamp();
+      }
+
+      await docRef.set(payload, SetOptions(merge: true));
+    } on FirebaseException {
+      // Ignore promotion failures; tester can be retried later.
+    }
+  }
+
 }
