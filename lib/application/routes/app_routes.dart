@@ -3,6 +3,7 @@ abstract class AppRoutes {
   static const login = '/login';
   static const recipeFinder = '/recipes';
   static const recipeResults = '/recipes/results';
+  static const recipeHistory = '/recipes/history';
   static const recipeDetail = '/recipes/detail';
   static const userProfile = '/profile';
   static const favorites = '/favorites';

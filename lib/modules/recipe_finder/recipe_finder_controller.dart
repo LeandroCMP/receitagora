@@ -302,4 +302,8 @@ class RecipeFinderController extends GetxController {
   Future<void> openPremiumPlans() async {
     await Get.toNamed(AppRoutes.premiumPlans);
   }
+
+  Future<void> openHistory() async {
+    await Get.toNamed(AppRoutes.recipeHistory);
+  }
 }

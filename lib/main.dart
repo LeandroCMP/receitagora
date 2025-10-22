@@ -16,6 +16,8 @@ import 'package:receitagora/services/session/session_service.dart';
 import 'package:receitagora/services/session/session_service_impl.dart';
 import 'package:receitagora/services/billing/billing_service.dart';
 import 'package:receitagora/services/billing/stripe_billing_service.dart';
+import 'package:receitagora/services/usage/app_usage_service.dart';
+import 'package:receitagora/services/usage/app_usage_service_impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +26,11 @@ Future<void> main() async {
 
   final sharedPreferences = await SharedPreferences.getInstance();
   Get.put<SharedPreferences>(sharedPreferences, permanent: true);
+
+  final usageService = AppUsageServiceImpl(preferences: sharedPreferences);
+  await usageService.ensureInitialized();
+  await usageService.registerAppOpen();
+  Get.put<AppUsageService>(usageService, permanent: true);
 
   final notificationService = LocalNotificationService();
   await notificationService.init();

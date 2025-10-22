@@ -5,6 +5,7 @@ import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
+import 'package:receitagora/services/usage/app_usage_service.dart';
 
 import 'user_profile_controller.dart';
 
@@ -109,6 +110,8 @@ class _ProfileContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = controller.user;
+    final usageService =
+        Get.isRegistered<AppUsageService>() ? Get.find<AppUsageService>() : null;
 
     if (user == null) {
       return Center(
@@ -134,6 +137,11 @@ class _ProfileContent extends StatelessWidget {
           controller: controller,
           isOnboarding: isOnboarding,
         ),
+        if (usageService != null) ...[
+          const SizedBox(height: 24),
+          _UsageInsightsCard(theme: theme, usageService: usageService),
+        ],
+        const SizedBox(height: 24),
         _AccountDetailsCard(theme: theme, user: user),
         const SizedBox(height: 24),
         _ProfileActions(theme: theme, controller: controller),
@@ -589,6 +597,209 @@ class _PreferenceSection extends StatelessWidget {
         ],
       );
     });
+  }
+}
+
+class _UsageInsightsCard extends StatelessWidget {
+  const _UsageInsightsCard({
+    required this.theme,
+    required this.usageService,
+  });
+
+  final ThemeData theme;
+  final AppUsageService usageService;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
+
+    return StreamBuilder<AppUsageMetrics>(
+      stream: usageService.metricsStream,
+      initialData: usageService.metrics,
+      builder: (context, snapshot) {
+        final metrics = snapshot.data ?? usageService.metrics;
+
+        final currentStreakText = _formatDayCount(metrics.currentStreak);
+        final longestStreakText = _formatDayCount(metrics.longestStreak);
+        final totalOpensText = _formatCount(metrics.totalOpens, 'abertura');
+        final lastOpenText = _formatLastOpen(metrics.lastOpenDate);
+
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          elevation: 0,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Seu ritmo no app',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Acompanhe sua sequência de dias ativos e veja quando foi a última vez que explorou receitas.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final maxWidth = constraints.maxWidth;
+                    final itemWidth = maxWidth >= 520 ? 240.0 : maxWidth;
+                    return Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.local_fire_department_outlined,
+                          title: currentStreakText,
+                          subtitle: 'Sequência atual',
+                          backgroundColor:
+                              (surfaces?.surface ?? colorScheme.surfaceVariant)
+                                  .withOpacity(0.6),
+                          width: itemWidth,
+                        ),
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.emoji_events_outlined,
+                          title: longestStreakText,
+                          subtitle: 'Recorde pessoal',
+                          backgroundColor:
+                              colorScheme.primaryContainer.withOpacity(0.45),
+                          width: itemWidth,
+                        ),
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.auto_graph_rounded,
+                          title: totalOpensText,
+                          subtitle: 'Aberturas totais',
+                          backgroundColor:
+                              colorScheme.secondaryContainer.withOpacity(0.4),
+                          width: itemWidth,
+                        ),
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.schedule_outlined,
+                          title: lastOpenText,
+                          subtitle: 'Último acesso',
+                          backgroundColor:
+                              colorScheme.tertiaryContainer.withOpacity(0.45),
+                          width: itemWidth,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDayCount(int value) {
+    final sanitized = value < 0 ? 0 : value;
+    if (sanitized == 1) {
+      return '1 dia';
+    }
+    return '$sanitized dias';
+  }
+
+  String _formatCount(int value, String noun) {
+    final sanitized = value < 0 ? 0 : value;
+    if (sanitized == 1) {
+      return '1 $noun';
+    }
+    return '$sanitized ${noun}s';
+  }
+
+  String _formatLastOpen(DateTime? date) {
+    if (date == null) {
+      return 'Ainda não registrado';
+    }
+    final local = date.toLocal();
+    final today = DateTime.now();
+    final normalizedToday = DateTime(today.year, today.month, today.day);
+    final normalizedDate =
+        DateTime(local.year, local.month, local.day);
+    final difference = normalizedToday.difference(normalizedDate).inDays;
+
+    if (difference == 0) {
+      return 'Hoje';
+    }
+    if (difference == 1) {
+      return 'Ontem';
+    }
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year.toString();
+    return '$day/$month/$year';
+  }
+}
+
+class _UsageMetricTile extends StatelessWidget {
+  const _UsageMetricTile({
+    required this.theme,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.backgroundColor,
+    required this.width,
+  });
+
+  final ThemeData theme;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color backgroundColor;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: width),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: colorScheme.onPrimaryContainer),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.7),
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

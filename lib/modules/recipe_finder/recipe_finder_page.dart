@@ -6,6 +6,7 @@ import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/services/recipe/recipe_favorites_service.dart';
+import 'package:receitagora/services/recipe/recipe_history_service.dart';
 import 'package:receitagora/services/session/session_service.dart';
 
 import 'recipe_finder_controller.dart';
@@ -130,6 +131,7 @@ class RecipeFinderPage extends GetView<RecipeFinderController> {
                           _IngredientComposer(controller: controller),
                           const SizedBox(height: 32),
                           _GenerateButton(controller: controller),
+                          _HistoryShortcut(controller: controller),
                           const SizedBox(height: 20),
                           _HelperFooter(theme: theme),
                         ],
@@ -814,5 +816,135 @@ class _HelperFooter extends StatelessWidget {
         height: 1.5,
       ),
     );
+  }
+}
+
+class _HistoryShortcut extends StatelessWidget {
+  const _HistoryShortcut({required this.controller});
+
+  final RecipeFinderController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final historyService = controller.recipeHistoryService;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return StreamBuilder<List<RecipeHistoryEntry>>(
+      stream: historyService.historyStream,
+      initialData: historyService.history,
+      builder: (context, snapshot) {
+        final entries = snapshot.data ?? historyService.history;
+        if (entries.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final latest = entries.first;
+        final ingredients = _formatIngredients(latest.ingredients);
+        final relativeTime = _formatRelativeTime(latest.timestamp);
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 20),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        height: 44,
+                        width: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: colorScheme.primary.withOpacity(0.12),
+                        ),
+                        child: Icon(
+                          Icons.history_toggle_off_rounded,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          'Retome combinações recentes',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Última busca: $ingredients',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '$relativeTime • ${latest.totalRecipes} receita${latest.totalRecipes == 1 ? '' : 's'} salvas',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: FilledButton.icon(
+                      onPressed: controller.openHistory,
+                      icon: const Icon(Icons.open_in_new_rounded),
+                      label: const Text('Ver histórico de buscas'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatIngredients(List<String> ingredients) {
+    if (ingredients.isEmpty) {
+      return 'Ingredientes não informados';
+    }
+    if (ingredients.length <= 3) {
+      return ingredients.join(', ');
+    }
+    final display = ingredients.take(3).join(', ');
+    final remaining = ingredients.length - 3;
+    return '$display +$remaining';
+  }
+
+  String _formatRelativeTime(DateTime timestamp) {
+    final now = DateTime.now();
+    final local = timestamp.toLocal();
+    final difference = now.difference(local);
+
+    if (difference.inDays >= 2) {
+      return 'Atualizado há ${difference.inDays} dias';
+    }
+    if (difference.inDays == 1) {
+      return 'Atualizado há 1 dia';
+    }
+    if (difference.inHours >= 2) {
+      return 'Atualizado há ${difference.inHours} horas';
+    }
+    if (difference.inHours == 1) {
+      return 'Atualizado há 1 hora';
+    }
+    if (difference.inMinutes >= 2) {
+      return 'Atualizado há ${difference.inMinutes} minutos';
+    }
+    if (difference.inMinutes == 1) {
+      return 'Atualizado há 1 minuto';
+    }
+
+    return 'Atualizado agora mesmo';
   }
 }
