@@ -20,10 +20,14 @@ import 'package:receitagora/services/usage/app_usage_service.dart';
 import 'package:receitagora/services/usage/app_usage_service_impl.dart';
 import 'package:receitagora/services/shopping_list/shopping_list_service.dart';
 import 'package:receitagora/services/shopping_list/shopping_list_service_impl.dart';
+import 'package:receitagora/services/skill/skill_journey_service.dart';
+import 'package:receitagora/services/skill/skill_journey_service_impl.dart';
 import 'package:receitagora/services/wellness/wellness_routine_service.dart';
 import 'package:receitagora/services/wellness/wellness_routine_service_impl.dart';
 import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service.dart';
 import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service_impl.dart';
+import 'package:receitagora/services/wellness/mood_journal_service.dart';
+import 'package:receitagora/services/wellness/mood_journal_service_impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +45,14 @@ Future<void> main() async {
   final shoppingListService =
       ShoppingListServiceImpl(preferences: sharedPreferences);
   Get.put<ShoppingListService>(shoppingListService, permanent: true);
+
+  final moodJournalService =
+      MoodJournalServiceImpl(preferences: sharedPreferences);
+  await moodJournalService.ensureInitialized();
+  Get.put<MoodJournalService>(moodJournalService, permanent: true);
+
+  final skillJourneyService = SkillJourneyServiceImpl();
+  Get.put<SkillJourneyService>(skillJourneyService, permanent: true);
 
   final notificationService = LocalNotificationService();
   await notificationService.init();

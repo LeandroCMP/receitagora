@@ -12,6 +12,9 @@ abstract class AppRoutes {
   static const shoppingLists = '/shopping/lists';
   static const shoppingListDetail = '/shopping/lists/detail';
   static const wellnessRoutines = '/wellness/routines';
+  static const moodJournal = '/wellness/journal';
+  static const skillJourneys = '/skills/journeys';
+  static const skillJourneyDetail = '/skills/journeys/detail';
   static const premiumPlans = '/billing/plans';
   static const ingredientLab = '/premium/ingredient-lab';
   static const nutritionPlan = '/premium/nutrition-plan';

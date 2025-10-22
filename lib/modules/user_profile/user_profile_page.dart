@@ -7,7 +7,9 @@ import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/usage/app_usage_service.dart';
+import 'package:receitagora/services/skill/skill_journey_service.dart';
 import 'package:receitagora/services/wellness/wellness_routine_service.dart';
+import 'package:receitagora/services/wellness/mood_journal_service.dart';
 
 import 'user_profile_controller.dart';
 
@@ -117,6 +119,12 @@ class _ProfileContent extends StatelessWidget {
     final wellnessService = Get.isRegistered<WellnessRoutineService>()
         ? Get.find<WellnessRoutineService>()
         : null;
+    final moodJournalService = Get.isRegistered<MoodJournalService>()
+        ? Get.find<MoodJournalService>()
+        : null;
+    final skillJourneyService = Get.isRegistered<SkillJourneyService>()
+        ? Get.find<SkillJourneyService>()
+        : null;
 
     if (user == null) {
       return Center(
@@ -149,6 +157,14 @@ class _ProfileContent extends StatelessWidget {
         if (wellnessService != null) ...[
           const SizedBox(height: 24),
           _WellnessRoutinesCallout(theme: theme),
+        ],
+        if (moodJournalService != null) ...[
+          const SizedBox(height: 24),
+          _MoodJournalCallout(theme: theme),
+        ],
+        if (skillJourneyService != null) ...[
+          const SizedBox(height: 24),
+          _SkillJourneysCallout(theme: theme),
         ],
         const SizedBox(height: 24),
         _AccountDetailsCard(theme: theme, user: user),
@@ -1043,6 +1059,110 @@ class _WellnessRoutinesCallout extends StatelessWidget {
               onPressed: () => Get.toNamed(AppRoutes.wellnessRoutines),
               icon: const Icon(Icons.tune_outlined),
               label: const Text('Configurar rotinas'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MoodJournalCallout extends StatelessWidget {
+  const _MoodJournalCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.favorite_border, color: colorScheme.secondary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Diário de bem-estar',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Registre como você se sente ao cozinhar e acompanhe sua energia ao longo da semana.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.75),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.tonalIcon(
+              onPressed: () => Get.toNamed(AppRoutes.moodJournal),
+              icon: const Icon(Icons.edit_note_outlined),
+              label: const Text('Abrir diário'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkillJourneysCallout extends StatelessWidget {
+  const _SkillJourneysCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.menu_book_outlined, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Trilhas de habilidades',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Siga sequências guiadas para evoluir técnicas, organizar rotinas e ganhar confiança na cozinha.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.75),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.skillJourneys),
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('Explorar trilhas'),
             ),
           ],
         ),
