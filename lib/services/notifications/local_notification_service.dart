@@ -15,6 +15,7 @@ class LocalNotificationService extends GetxService {
   static const String _channelDescription =
       'Alertas para check-ins e atualizações do plano premium.';
   static const int _checkInNotificationId = 7812;
+  static const int _appOpenNotificationId = 7813;
   static const String _hydrationChannelId = 'hydration-coach';
   static const String _hydrationChannelName = 'Coach de hidratação';
   static const String _hydrationChannelDescription =
@@ -155,6 +156,20 @@ class LocalNotificationService extends GetxService {
       'Informe seu peso para liberar a próxima fase do cardápio.',
       _details,
       payload: 'nutrition-plan-checkin',
+    );
+  }
+
+  Future<void> notifyAppOpened() async {
+    if (!_initialized) {
+      return;
+    }
+
+    await _plugin.show(
+      _appOpenNotificationId,
+      'Notificações habilitadas',
+      'Você abriu o Receitagora e esta é uma notificação de teste.',
+      _details,
+      payload: 'app-open',
     );
   }
 
