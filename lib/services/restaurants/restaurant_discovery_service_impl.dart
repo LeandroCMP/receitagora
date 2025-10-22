@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
+
+import 'package:http/http.dart' as http;
 
 import 'package:receitagora/models/nutrition/diet_plan.dart';
 import 'package:receitagora/models/nutrition/diet_profile.dart';
@@ -8,7 +11,25 @@ import 'package:receitagora/services/location/location_service.dart';
 import 'restaurant_discovery_service.dart';
 
 class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
-  RestaurantDiscoveryServiceImpl();
+  RestaurantDiscoveryServiceImpl({
+    http.Client? httpClient,
+    Duration httpTimeout = const Duration(seconds: 20),
+    this.searchRadiusMeters = 4000,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _httpTimeout = httpTimeout;
+
+  final http.Client _httpClient;
+  final Duration _httpTimeout;
+  final int searchRadiusMeters;
+
+  static const String _overpassEndpoint = 'https://overpass-api.de/api/interpreter';
+  static const String _nominatimSearchEndpoint = 'https://nominatim.openstreetmap.org/search';
+  static const String _nominatimReverseEndpoint = 'https://nominatim.openstreetmap.org/reverse';
+
+  static const Map<String, String> _defaultHeaders = {
+    'Accept': 'application/json',
+    'User-Agent': 'ReceitagoraApp/1.0 (+https://receitagora.app)',
+  };
 
   static const List<RestaurantFocus> _focusCatalog = [
     RestaurantFocus(
@@ -17,587 +38,140 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
       emoji: '🥗',
       description:
           'Bowls, saladas e grelhados leves para manter o cardápio em dia sem abrir mão do sabor.',
-      tags: {'balanced', 'leve', 'salada', 'integral', 'natural', 'lowcarb'},
+      tags: {
+        'balanced',
+        'leve',
+        'salada',
+        'salad',
+        'integral',
+        'natural',
+        'lowcarb',
+        'saudavel',
+        'healthy',
+        'healthfood',
+        'fit',
+        'poke',
+        'lightmeal',
+      },
     ),
     RestaurantFocus(
       id: 'high_protein',
       label: 'Proteínas em destaque',
       emoji: '🥩',
       description: 'Churrascarias, parrillas e casas de grelhados ricas em proteína.',
-      tags: {'proteina', 'churrasco', 'grelhado', 'parrilla'},
+      tags: {
+        'proteina',
+        'proteinas',
+        'carne',
+        'carnes',
+        'churrasco',
+        'grelhado',
+        'parrilla',
+        'rodizio',
+        'steak',
+        'steakhouse',
+        'bbq',
+        'barbecue',
+        'grill',
+        'meat',
+        'churrascaria',
+      },
     ),
     RestaurantFocus(
       id: 'comfort_br',
       label: 'Caseiro brasileiro',
       emoji: '🍛',
       description: 'PF equilibrado, pratos regionais e comida afetiva bem servida.',
-      tags: {'caseiro', 'brasileira', 'regional', 'comfort'},
+      tags: {
+        'caseiro',
+        'caseira',
+        'brasileira',
+        'regional',
+        'comfort',
+        'brazilian',
+        'pf',
+        'prato',
+        'pratofeito',
+        'comidacaseira',
+        'popular',
+      },
     ),
     RestaurantFocus(
       id: 'italian',
       label: 'Massas e risotos',
       emoji: '🍝',
       description: 'Cantinas e fornerias com massas artesanais e risotos cremosos.',
-      tags: {'massas', 'italiano', 'risoto', 'pizza'},
+      tags: {
+        'massas',
+        'massa',
+        'italiano',
+        'italiana',
+        'risoto',
+        'risotto',
+        'pizza',
+        'pasta',
+        'cantina',
+        'pizzeria',
+      },
     ),
     RestaurantFocus(
       id: 'seafood',
       label: 'Peixes e frutos do mar',
       emoji: '🐟',
       description: 'Grelhados leves, moquecas e pratos do mar cheios de frescor.',
-      tags: {'peixe', 'frutosdomar', 'seafood', 'leve'},
+      tags: {
+        'peixe',
+        'peixes',
+        'frutosdomar',
+        'seafood',
+        'fish',
+        'mar',
+        'sushi',
+        'marisco',
+        'mariscos',
+      },
     ),
     RestaurantFocus(
       id: 'vegetarian',
       label: 'Vegetariano & vegano',
       emoji: '🥦',
       description: 'Cozinha plant-based criativa com ingredientes orgânicos e integrais.',
-      tags: {'vegetariano', 'vegano', 'plantbased', 'natural', 'integral'},
+      tags: {
+        'vegetariano',
+        'vegetarian',
+        'vegano',
+        'vegan',
+        'plantbased',
+        'plant_based',
+        'natural',
+        'integral',
+        'organic',
+        'wholefood',
+      },
     ),
     RestaurantFocus(
       id: 'light',
       label: 'Refeições leves',
       emoji: '🥙',
       description: 'Bowls frescos, wraps funcionais e lanches rápidos sem pesar.',
-      tags: {'leve', 'lowcarb', 'wrap', 'bowl', 'salada'},
+      tags: {
+        'leve',
+        'light',
+        'lowcarb',
+        'wrap',
+        'wraps',
+        'bowl',
+        'salada',
+        'salad',
+        'poke',
+        'healthy',
+        'fit',
+        'sandwich',
+      },
     ),
   ];
 
-  static const List<_RestaurantVenue> _venues = [
-    _RestaurantVenue(
-      id: 'sp_raiz_do_campo',
-      name: 'Raiz do Campo',
-      cityLabel: 'São Paulo, SP',
-      normalizedCity: 'sao paulo',
-      address: 'R. Augusta, 1234 - Consolação',
-      primaryCuisine: 'Natural contemporâneo',
-      priceRange: 'R\$ 45 - R\$ 68',
-      rating: 4.6,
-      latitude: -23.5558,
-      longitude: -46.6623,
-      focusKeywords: {'balanced', 'leve', 'salada', 'integral', 'natural', 'vegetariano', 'vegano'},
-      specialties: [
-        'Buffet leve com grãos, saladas e grelhados do dia',
-        'Combos low carb com sobremesas sem açúcar refinado',
-      ],
-      dietHighlights: [
-        'Opções ricas em fibras e proteína vegetal',
-        'Sucos prensados a frio e sobremesas sem lactose',
-      ],
-      services: ['Almoço no local', 'Entrega programada', 'Retirada'],
-    ),
-    _RestaurantVenue(
-      id: 'sp_casa_do_grelhado',
-      name: 'Casa do Grelhado Paulista',
-      cityLabel: 'São Paulo, SP',
-      normalizedCity: 'sao paulo',
-      address: 'Av. Brigadeiro Luís Antônio, 2010 - Jardins',
-      primaryCuisine: 'Grelhados e parrilla',
-      priceRange: 'R\$ 62 - R\$ 95',
-      rating: 4.7,
-      latitude: -23.5622,
-      longitude: -46.6559,
-      focusKeywords: {'proteina', 'churrasco', 'grelhado', 'parrilla', 'lowcarb'},
-      specialties: [
-        'Cortes nobres com acompanhamento de vegetais na brasa',
-        'Menu executivo hiperproteico com entrada e sobremesa leve',
-      ],
-      dietHighlights: [
-        'Sugestões low carb alinhadas ao ganho de massa',
-        'Molhos sem farinha e opção de arroz integral',
-      ],
-      services: ['Almoço e jantar', 'Reserva online', 'Delivery parceiro'],
-    ),
-    _RestaurantVenue(
-      id: 'sp_trattoria_delle_nonne',
-      name: 'Trattoria delle Nonne',
-      cityLabel: 'São Paulo, SP',
-      normalizedCity: 'sao paulo',
-      address: 'R. Oscar Freire, 987 - Jardins',
-      primaryCuisine: 'Massas artesanais',
-      priceRange: 'R\$ 58 - R\$ 92',
-      rating: 4.8,
-      latitude: -23.561,
-      longitude: -46.6689,
-      focusKeywords: {'massas', 'italiano', 'risoto', 'comfort'},
-      specialties: [
-        'Massa fresca integral com molho de tomates rústico',
-        'Risoto de abóbora com queijo de cabra e sementes tostadas',
-      ],
-      dietHighlights: [
-        'Porções com ajuste de carboidrato conforme preferência',
-        'Opções sem lactose e integrais mediante solicitação',
-      ],
-      services: ['Jantar no local', 'Menu degustação', 'Delivery noturno'],
-    ),
-    _RestaurantVenue(
-      id: 'sp_mar_azul',
-      name: 'Mar Azul Pinheiros',
-      cityLabel: 'São Paulo, SP',
-      normalizedCity: 'sao paulo',
-      address: 'R. dos Pinheiros, 1145 - Pinheiros',
-      primaryCuisine: 'Peixes e frutos do mar',
-      priceRange: 'R\$ 55 - R\$ 98',
-      rating: 4.5,
-      latitude: -23.5661,
-      longitude: -46.6941,
-      focusKeywords: {'peixe', 'frutosdomar', 'leve', 'balanced'},
-      specialties: [
-        'Bowl de salmão grelhado com quinoa cítrica',
-        'Moqueca de frutos do mar com leite de coco leve',
-      ],
-      dietHighlights: [
-        'Sugestões ricas em ômega-3 para planos focados em saúde cardiovascular',
-        'Possibilidade de substituir arroz por legumes salteados',
-      ],
-      services: ['Almoço executivo', 'Festival do mar aos sábados', 'Delivery próprio'],
-    ),
-    _RestaurantVenue(
-      id: 'rj_orla_fit',
-      name: 'Orla Fit Bistrô',
-      cityLabel: 'Rio de Janeiro, RJ',
-      normalizedCity: 'rio de janeiro',
-      address: 'Av. Atlântica, 3200 - Copacabana',
-      primaryCuisine: 'Saudável praiano',
-      priceRange: 'R\$ 42 - R\$ 75',
-      rating: 4.6,
-      latitude: -22.986,
-      longitude: -43.205,
-      focusKeywords: {'balanced', 'leve', 'salada', 'bowl', 'lowcarb'},
-      specialties: [
-        'Bowls refrescantes com peixes marinados e frutas cítricas',
-        'Wrap integral com frango, abacate e creme de castanhas',
-      ],
-      dietHighlights: [
-        'Cardápio com indicação de calorias e macro nutrientes',
-        'Sucos funcionais alinhados ao plano de hidratação',
-      ],
-      services: ['Café da manhã estendido', 'Entrega na praia', 'Programa de assinatura'],
-    ),
-    _RestaurantVenue(
-      id: 'rj_fogo_atlantico',
-      name: 'Fogo do Atlântico',
-      cityLabel: 'Rio de Janeiro, RJ',
-      normalizedCity: 'rio de janeiro',
-      address: 'Av. das Américas, 5000 - Barra da Tijuca',
-      primaryCuisine: 'Parrilla e frutos do mar',
-      priceRange: 'R\$ 68 - R\$ 120',
-      rating: 4.7,
-      latitude: -22.999,
-      longitude: -43.365,
-      focusKeywords: {'proteina', 'churrasco', 'grelhado', 'frutosdomar', 'seafood'},
-      specialties: [
-        'Rodízio de grelhados com cortes magros e frutos do mar',
-        'Pratos low carb com legumes tostados e purê de couve-flor',
-      ],
-      dietHighlights: [
-        'Orientação de combinações ricas em proteína para cada perfil',
-        'Estações com saladas frescas e grãos integrais',
-      ],
-      services: ['Jantar no local', 'Reserva de eventos', 'Delivery via parceiros'],
-    ),
-    _RestaurantVenue(
-      id: 'rj_cantina_lapa',
-      name: 'Cantina da Lapa',
-      cityLabel: 'Rio de Janeiro, RJ',
-      normalizedCity: 'rio de janeiro',
-      address: 'R. do Lavradio, 180 - Lapa',
-      primaryCuisine: 'Italiana clássica',
-      priceRange: 'R\$ 48 - R\$ 82',
-      rating: 4.4,
-      latitude: -22.9136,
-      longitude: -43.1797,
-      focusKeywords: {'massas', 'italiano', 'risoto', 'comfort'},
-      specialties: [
-        'Espaguete artesanal ao molho pomodoro com manjericão fresco',
-        'Risoto de frutos do mar com caldo leve e toque cítrico',
-      ],
-      dietHighlights: [
-        'Opções de massa integral e redução de sódio sob demanda',
-        'Entradas frias alinhadas a planos focados em leveza',
-      ],
-      services: ['Almoço no local', 'Noite da massa às quintas', 'Delivery noturno'],
-    ),
-    _RestaurantVenue(
-      id: 'rj_mesa_carioca',
-      name: 'Mesa Carioca',
-      cityLabel: 'Rio de Janeiro, RJ',
-      normalizedCity: 'rio de janeiro',
-      address: 'R. Maria Angélica, 45 - Jardim Botânico',
-      primaryCuisine: 'Brasileira contemporânea',
-      priceRange: 'R\$ 52 - R\$ 88',
-      rating: 4.5,
-      latitude: -22.9681,
-      longitude: -43.222,
-      focusKeywords: {'caseiro', 'brasileira', 'regional', 'comfort', 'balanced'},
-      specialties: [
-        'Prato feito equilibrado com arroz integral, feijão cremoso e proteína grelhada',
-        'Moqueca vegetariana com banana-da-terra assada',
-      ],
-      dietHighlights: [
-        'Cardápio destaca substituições alinhadas a restrições alimentares',
-        'Sobremesas com açúcar mascavo e frutas da estação',
-      ],
-      services: ['Almoço executivo', 'Menu família aos domingos', 'Delivery próprio'],
-    ),
-    _RestaurantVenue(
-      id: 'bh_quintal_serra',
-      name: 'Quintal da Serra',
-      cityLabel: 'Belo Horizonte, MG',
-      normalizedCity: 'belo horizonte',
-      address: 'R. Fernandes Tourinho, 600 - Savassi',
-      primaryCuisine: 'Cozinha mineira leve',
-      priceRange: 'R\$ 39 - R\$ 72',
-      rating: 4.6,
-      latitude: -19.9378,
-      longitude: -43.9301,
-      focusKeywords: {'caseiro', 'regional', 'comfort', 'balanced'},
-      specialties: [
-        'PF mineiro com feijão tropeiro mais leve e salada morna',
-        'Tilápia assada com purê de mandioquinha e legumes ao vapor',
-      ],
-      dietHighlights: [
-        'Indicação de trocas para planos de redução calórica',
-        'Sobremesas com doce de leite zero adição de açúcar',
-      ],
-      services: ['Self-service equilibrado', 'Delivery no centro', 'Eventos corporativos'],
-    ),
-    _RestaurantVenue(
-      id: 'bh_brasa_moderna',
-      name: 'Brasa Moderna',
-      cityLabel: 'Belo Horizonte, MG',
-      normalizedCity: 'belo horizonte',
-      address: 'Av. Álvares Cabral, 805 - Centro',
-      primaryCuisine: 'Parrilla urbana',
-      priceRange: 'R\$ 55 - R\$ 96',
-      rating: 4.7,
-      latitude: -19.9285,
-      longitude: -43.9412,
-      focusKeywords: {'proteina', 'churrasco', 'grelhado', 'parrilla'},
-      specialties: [
-        'Bife ancho com legumes tostados e chimichurri leve',
-        'Sanduíche de roast beef em pão integral e maionese de ervas',
-      ],
-      dietHighlights: [
-        'Sugestões para bulking controlado com acompanhamento de macros',
-        'Menu kids com versões sem fritura',
-      ],
-      services: ['Almoço executivo', 'Delivery noite', 'Assinatura de marmitas'],
-    ),
-    _RestaurantVenue(
-      id: 'bh_horta_urbana',
-      name: 'Horta Urbana',
-      cityLabel: 'Belo Horizonte, MG',
-      normalizedCity: 'belo horizonte',
-      address: 'R. Santa Catarina, 975 - Lourdes',
-      primaryCuisine: 'Vegetariano criativo',
-      priceRange: 'R\$ 42 - R\$ 70',
-      rating: 4.8,
-      latitude: -19.9261,
-      longitude: -43.9406,
-      focusKeywords: {'vegetariano', 'vegano', 'plantbased', 'natural', 'integral', 'balanced'},
-      specialties: [
-        'Moqueca de banana-da-terra com arroz de coco e farofa crocante',
-        'Lasanha de abobrinha com ricota de castanhas',
-      ],
-      dietHighlights: [
-        'Cardápio com opções sem glúten e sem lactose',
-        'Sobremesas à base de frutas e cacau puro',
-      ],
-      services: ['Buffet por peso', 'Feira orgânica aos sábados', 'Entrega via app'],
-    ),
-    _RestaurantVenue(
-      id: 'bh_cantina_pampulha',
-      name: 'Cantina Pampulha',
-      cityLabel: 'Belo Horizonte, MG',
-      normalizedCity: 'belo horizonte',
-      address: 'Av. Otacílio Negrão de Lima, 3000 - Pampulha',
-      primaryCuisine: 'Italiana mineira',
-      priceRange: 'R\$ 47 - R\$ 85',
-      rating: 4.5,
-      latitude: -19.851,
-      longitude: -43.9718,
-      focusKeywords: {'massas', 'italiano', 'risoto', 'comfort'},
-      specialties: [
-        'Nhoque de mandioquinha com ragu de fraldinha',
-        'Risoto de queijo canastra com cogumelos salteados',
-      ],
-      dietHighlights: [
-        'Troca de massa tradicional por integral sob pedido',
-        'Opções de meia porção para controle de calorias',
-      ],
-      services: ['Almoço de domingo', 'Delivery regional', 'Eventos familiares'],
-    ),
-    _RestaurantVenue(
-      id: 'ct_jardim_oriente',
-      name: 'Jardim do Oriente',
-      cityLabel: 'Curitiba, PR',
-      normalizedCity: 'curitiba',
-      address: 'Av. Vicente Machado, 1200 - Centro',
-      primaryCuisine: 'Asiático leve',
-      priceRange: 'R\$ 44 - R\$ 78',
-      rating: 4.6,
-      latitude: -25.4365,
-      longitude: -49.2769,
-      focusKeywords: {'leve', 'bowl', 'peixe', 'frutosdomar', 'balanced'},
-      specialties: [
-        'Bowl de salmão selado com arroz de jasmim integral',
-        'Ramen leve com caldo vegetal e cogumelos sazonais',
-      ],
-      dietHighlights: [
-        'Caldo sem glutamato e massas integrais sob solicitação',
-        'Sucos quentes e frios com ervas digestivas',
-      ],
-      services: ['Almoço executivo', 'Tea time oriental', 'Delivery próprio'],
-    ),
-    _RestaurantVenue(
-      id: 'ct_foggo_parrilla',
-      name: 'Foggo Parrilla',
-      cityLabel: 'Curitiba, PR',
-      normalizedCity: 'curitiba',
-      address: 'R. Saldanha Marinho, 1650 - Batel',
-      primaryCuisine: 'Parrilla uruguaia',
-      priceRange: 'R\$ 65 - R\$ 110',
-      rating: 4.7,
-      latitude: -25.4421,
-      longitude: -49.2803,
-      focusKeywords: {'proteina', 'churrasco', 'grelhado', 'parrilla'},
-      specialties: [
-        'Assado de tira com salada morna de grãos',
-        'Hambúrguer artesanal servido no pão de fermentação natural',
-      ],
-      dietHighlights: [
-        'Acompanhamentos low carb para planos de ganho de massa',
-        'Oferece cortes magros marinados com ervas frescas',
-      ],
-      services: ['Jantar no local', 'Assinatura corporativa', 'Delivery via apps'],
-    ),
-    _RestaurantVenue(
-      id: 'ct_emporio_organico',
-      name: 'Empório Orgânico Centro',
-      cityLabel: 'Curitiba, PR',
-      normalizedCity: 'curitiba',
-      address: 'R. XV de Novembro, 500 - Centro',
-      primaryCuisine: 'Orgânico e plant-based',
-      priceRange: 'R\$ 36 - R\$ 68',
-      rating: 4.5,
-      latitude: -25.4296,
-      longitude: -49.2713,
-      focusKeywords: {'vegetariano', 'vegano', 'plantbased', 'natural', 'integral', 'balanced'},
-      specialties: [
-        'Buffet orgânico com pratos regionais reinterpretados',
-        'Tortas salgadas integrais com recheios sazonais',
-      ],
-      dietHighlights: [
-        'Ingredientes certificados e sem conservantes',
-        'Sobremesas adoçadas com frutas e melado',
-      ],
-      services: ['Almoço no local', 'Mercearia orgânica', 'Entrega por assinatura'],
-    ),
-    _RestaurantVenue(
-      id: 'ct_nonna_curitiba',
-      name: 'Nonna di Curitiba',
-      cityLabel: 'Curitiba, PR',
-      normalizedCity: 'curitiba',
-      address: 'R. Padre Anchieta, 2100 - Bigorrilho',
-      primaryCuisine: 'Italiana artesanal',
-      priceRange: 'R\$ 50 - R\$ 88',
-      rating: 4.6,
-      latitude: -25.4454,
-      longitude: -49.2911,
-      focusKeywords: {'massas', 'italiano', 'risoto', 'comfort'},
-      specialties: [
-        'Talharim artesanal ao pesto de manjericão com castanhas',
-        'Risoto de limão siciliano com camarões salteados',
-      ],
-      dietHighlights: [
-        'Massas frescas também em versão integral',
-        'Pratos com ajuste de sódio para necessidades específicas',
-      ],
-      services: ['Jantar romântico', 'Delivery noturno', 'Cursos de massa fresca'],
-    ),
-    _RestaurantVenue(
-      id: 'po_braseiro_guaiba',
-      name: 'Braseiro do Guaíba',
-      cityLabel: 'Porto Alegre, RS',
-      normalizedCity: 'porto alegre',
-      address: 'Av. Edvaldo Pereira Paiva, 1200 - Praia de Belas',
-      primaryCuisine: 'Churrasco gaúcho',
-      priceRange: 'R\$ 60 - R\$ 115',
-      rating: 4.7,
-      latitude: -30.033,
-      longitude: -51.2287,
-      focusKeywords: {'proteina', 'churrasco', 'grelhado', 'parrilla'},
-      specialties: [
-        'Costela fogo de chão com legumes defumados',
-        'Buffet de saladas com grãos e molhos autorais',
-      ],
-      dietHighlights: [
-        'Indicação de cortes magros para planos de manutenção',
-        'Sobremesas com frutas assadas e especiarias',
-      ],
-      services: ['Rodízio completo', 'Take away por peso', 'Delivery em embalagens térmicas'],
-    ),
-    _RestaurantVenue(
-      id: 'po_casa_verde',
-      name: 'Casa Verde Jardim',
-      cityLabel: 'Porto Alegre, RS',
-      normalizedCity: 'porto alegre',
-      address: 'R. Dona Laura, 55 - Moinhos de Vento',
-      primaryCuisine: 'Vegetariano contemporâneo',
-      priceRange: 'R\$ 40 - R\$ 74',
-      rating: 4.6,
-      latitude: -30.0344,
-      longitude: -51.2131,
-      focusKeywords: {'vegetariano', 'vegano', 'plantbased', 'natural', 'leve'},
-      specialties: [
-        'Prato do dia com grãos orgânicos e vegetais assados',
-        'Tigelas de açaí salgado com toppings funcionais',
-      ],
-      dietHighlights: [
-        'Ingredientes sem glúten preparados em área dedicada',
-        'Bebidas fermentadas e kombuchas autorais',
-      ],
-      services: ['Almoço garden', 'Eventos intimistas', 'Delivery veg'],
-    ),
-    _RestaurantVenue(
-      id: 'po_porto_mediterraneo',
-      name: 'Porto Mediterrâneo',
-      cityLabel: 'Porto Alegre, RS',
-      normalizedCity: 'porto alegre',
-      address: 'R. Padre Chagas, 300 - Moinhos de Vento',
-      primaryCuisine: 'Mediterrânea do mar',
-      priceRange: 'R\$ 58 - R\$ 102',
-      rating: 4.5,
-      latitude: -30.0279,
-      longitude: -51.226,
-      focusKeywords: {'peixe', 'frutosdomar', 'leve', 'balanced'},
-      specialties: [
-        'Polvo grelhado com purê de grão-de-bico e azeite cítrico',
-        'Linguado ao limão com legumes salteados',
-      ],
-      dietHighlights: [
-        'Sugestões com destaque de ômega-3 e calorias estimadas',
-        'Entradas frias com conservas caseiras de legumes',
-      ],
-      services: ['Menu harmonizado', 'Festival do mar', 'Delivery premium'],
-    ),
-    _RestaurantVenue(
-      id: 'po_forneria_porto',
-      name: 'Forneria do Porto',
-      cityLabel: 'Porto Alegre, RS',
-      normalizedCity: 'porto alegre',
-      address: 'R. Joaquim Nabuco, 90 - Cidade Baixa',
-      primaryCuisine: 'Forneria italiana',
-      priceRange: 'R\$ 48 - R\$ 86',
-      rating: 4.4,
-      latitude: -30.0423,
-      longitude: -51.2198,
-      focusKeywords: {'massas', 'italiano', 'pizza', 'comfort'},
-      specialties: [
-        'Pizza de fermentação lenta com farinhas especiais',
-        'Pappardelle com ragu de cogumelos e azeite trufado',
-      ],
-      dietHighlights: [
-        'Opção de massa sem glúten e pizza com massa de couve-flor',
-        'Sobremesas individuais com controle de porção',
-      ],
-      services: ['Rodízio de pizza sazonal', 'Take away', 'Delivery rápido'],
-    ),
-    _RestaurantVenue(
-      id: 'sa_sabor_baia',
-      name: 'Sabor da Baía',
-      cityLabel: 'Salvador, BA',
-      normalizedCity: 'salvador',
-      address: 'Largo do Farol da Barra, 15 - Barra',
-      primaryCuisine: 'Baiana do mar',
-      priceRange: 'R\$ 46 - R\$ 88',
-      rating: 4.7,
-      latitude: -13.0059,
-      longitude: -38.5322,
-      focusKeywords: {'frutosdomar', 'peixe', 'regional', 'leve'},
-      specialties: [
-        'Moqueca de peixe com azeite de dendê moderado e arroz integral',
-        'Camarões grelhados com purê de banana-da-terra assada',
-      ],
-      dietHighlights: [
-        'Indicação de versões menos calóricas sem perder o sabor',
-        'Sucos e águas aromatizadas com frutas tropicais',
-      ],
-      services: ['Almoço vista mar', 'Delivery na orla', 'Eventos ao pôr do sol'],
-    ),
-    _RestaurantVenue(
-      id: 'sa_terraco_carne',
-      name: 'Terraço da Carne',
-      cityLabel: 'Salvador, BA',
-      normalizedCity: 'salvador',
-      address: 'Av. Tancredo Neves, 2227 - Caminho das Árvores',
-      primaryCuisine: 'Steakhouse tropical',
-      priceRange: 'R\$ 62 - R\$ 110',
-      rating: 4.5,
-      latitude: -12.9991,
-      longitude: -38.5129,
-      focusKeywords: {'proteina', 'churrasco', 'grelhado', 'regional'},
-      specialties: [
-        'Prime rib com manteiga de ervas nordestinas',
-        'Mix de espetos magros com saladas crocantes',
-      ],
-      dietHighlights: [
-        'Acompanhamentos com raízes assadas e farofas leves',
-        'Drinks sem álcool pensados para hidratação',
-      ],
-      services: ['Jantar panorâmico', 'Adega climatizada', 'Delivery noturno'],
-    ),
-    _RestaurantVenue(
-      id: 'sa_raizes_tropicais',
-      name: 'Raízes Tropicais',
-      cityLabel: 'Salvador, BA',
-      normalizedCity: 'salvador',
-      address: 'R. das Hortênsias, 360 - Pituba',
-      primaryCuisine: 'Natural tropical',
-      priceRange: 'R\$ 38 - R\$ 69',
-      rating: 4.6,
-      latitude: -12.9898,
-      longitude: -38.4372,
-      focusKeywords: {'vegetariano', 'vegano', 'plantbased', 'natural', 'leve'},
-      specialties: [
-        'Prato do dia com grãos tropicais, legumes grelhados e frutas assadas',
-        'Tigelas frias com mix de folhas, quinoa e molhos cítricos',
-      ],
-      dietHighlights: [
-        'Combinações detox alinhadas a planos de reeducação alimentar',
-        'Sobremesas com cacau e castanhas regionais',
-      ],
-      services: ['Almoço leve', 'Mercadinho de produtores locais', 'Entrega sustentável'],
-    ),
-    _RestaurantVenue(
-      id: 'sa_cantina_solar',
-      name: 'Cantina Solar',
-      cityLabel: 'Salvador, BA',
-      normalizedCity: 'salvador',
-      address: 'R. do Carmo, 45 - Santo Antônio Além do Carmo',
-      primaryCuisine: 'Italiana tropicalizada',
-      priceRange: 'R\$ 44 - R\$ 82',
-      rating: 4.4,
-      latitude: -12.9792,
-      longitude: -38.5166,
-      focusKeywords: {'massas', 'italiano', 'risoto', 'comfort'},
-      specialties: [
-        'Tagliatelle com frutos do mar e toque de coentro',
-        'Risoto de queijo coalho com redução de maracujá',
-      ],
-      dietHighlights: [
-        'Possibilidade de massa sem glúten e versões sem lactose',
-        'Entradas frias com legumes marinados e azeites infusionados',
-      ],
-      services: ['Jantar romântico', 'Delivery artesanal', 'Cursos de culinária'],
-    ),
-  ];
-
-  static final List<String> _supportedCities = _venues
-      .map((venue) => venue.normalizedCity)
-      .toSet()
-      .toList(growable: false);
+  final Map<String, Set<String>> _focusKeywordCache = {};
 
   @override
   List<RestaurantFocus> baseFocuses() => _focusCatalog;
@@ -648,28 +222,29 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     RestaurantFocus? focus,
     int limit = 12,
   }) async {
-    final matches = _venues
-        .map((venue) => _VenueMatch(
-              venue: venue,
-              distanceKm: _distanceKm(latitude, longitude, venue.latitude, venue.longitude),
-            ))
-        .where((match) => _matchesFocus(match.venue, focus))
-        .toList(growable: false);
+    final reference = LocationCoordinates(latitude: latitude, longitude: longitude);
+    final rawResults = await _fetchRestaurantsByCoordinates(
+      latitude: latitude,
+      longitude: longitude,
+      limitHint: limit,
+    );
 
-    matches.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+    final resolvedLabel =
+        await _reverseGeocodeLabel(latitude: latitude, longitude: longitude) ?? 'Sua região';
 
-    final limited = matches.take(limit).toList(growable: false);
-    final resolvedCity =
-        limited.isNotEmpty ? limited.first.venue.cityLabel : _resolveNearestCityLabel(latitude, longitude);
-    final suggestions = limited
-        .map((match) => match.venue.toSuggestion(distanceKm: match.distanceKm))
-        .toList(growable: false);
+    final suggestions = _buildSuggestions(
+      rawResults,
+      focus: focus,
+      limit: limit,
+      reference: reference,
+      fallbackCityLabel: resolvedLabel,
+    );
 
     return RestaurantSearchResult(
       restaurants: suggestions,
-      resolvedLocationLabel: resolvedCity,
+      resolvedLocationLabel: resolvedLabel,
       appliedFocus: focus,
-      referenceCoordinates: LocationCoordinates(latitude: latitude, longitude: longitude),
+      referenceCoordinates: reference,
     );
   }
 
@@ -679,100 +254,697 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     RestaurantFocus? focus,
     int limit = 12,
   }) async {
-    final normalizedInput = _normalize(city);
-    final resolvedKey = _resolveCityKey(normalizedInput);
+    final geocode = await _geocodeCity(city);
+    if (geocode == null) {
+      throw Exception('Cidade não encontrada');
+    }
 
-    final venues = _venues
-        .where((venue) =>
-            venue.normalizedCity == resolvedKey ||
-            venue.normalizedCity.contains(resolvedKey) ||
-            resolvedKey.contains(venue.normalizedCity))
-        .toList(growable: false);
+    final rawResults = await _fetchRestaurantsByCoordinates(
+      latitude: geocode.coordinates.latitude,
+      longitude: geocode.coordinates.longitude,
+      limitHint: limit,
+      radiusOverride: geocode.suggestedRadiusMeters,
+    );
 
-    final filtered = venues.where((venue) => _matchesFocus(venue, focus)).toList(growable: false);
-    filtered.sort((a, b) => b.rating.compareTo(a.rating));
-
-    final suggestions = filtered.take(limit).map((venue) => venue.toSuggestion()).toList(growable: false);
-
-    final resolvedLabel = filtered.isNotEmpty
-        ? filtered.first.cityLabel
-        : venues.isNotEmpty
-            ? venues.first.cityLabel
-            : _titleCase(city);
+    final suggestions = _buildSuggestions(
+      rawResults,
+      focus: focus,
+      limit: limit,
+      reference: geocode.coordinates,
+      fallbackCityLabel: geocode.label,
+    );
 
     return RestaurantSearchResult(
       restaurants: suggestions,
-      resolvedLocationLabel: resolvedLabel,
+      resolvedLocationLabel: geocode.label,
       appliedFocus: focus,
-      referenceCoordinates: null,
+      referenceCoordinates: geocode.coordinates,
     );
   }
 
-  static bool _matchesFocus(_RestaurantVenue venue, RestaurantFocus? focus) {
+  Future<List<_RawRestaurant>> _fetchRestaurantsByCoordinates({
+    required double latitude,
+    required double longitude,
+    required int limitHint,
+    int? radiusOverride,
+  }) async {
+    final radius = radiusOverride != null && radiusOverride > 0
+        ? radiusOverride
+        : searchRadiusMeters;
+    final sampleSize = math.max(limitHint * 4, 40);
+
+    final query = '''
+[out:json][timeout:25];
+(
+  node["amenity"="restaurant"](around:$radius,$latitude,$longitude);
+  way["amenity"="restaurant"](around:$radius,$latitude,$longitude);
+  relation["amenity"="restaurant"](around:$radius,$latitude,$longitude);
+);
+out center tags $sampleSize;
+''';
+
+    final response = await _httpClient
+        .post(
+          Uri.parse(_overpassEndpoint),
+          headers: _defaultHeaders,
+          body: {'data': query},
+        )
+        .timeout(_httpTimeout);
+
+    if (response.statusCode != 200) {
+      throw Exception('Falha ao consultar restaurantes (status ${response.statusCode}).');
+    }
+
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final elements = payload['elements'] as List<dynamic>? ?? const [];
+
+    return elements
+        .map((element) => _RawRestaurant.fromJson(element as Map<String, dynamic>?))
+        .whereType<_RawRestaurant>()
+        .toList(growable: false);
+  }
+
+  Future<String?> _reverseGeocodeLabel({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final uri = Uri.parse(_nominatimReverseEndpoint).replace(queryParameters: {
+      'format': 'jsonv2',
+      'lat': '$latitude',
+      'lon': '$longitude',
+      'addressdetails': '1',
+      'accept-language': 'pt-BR',
+    });
+
+    final response = await _httpClient
+        .get(uri, headers: _defaultHeaders)
+        .timeout(_httpTimeout);
+
+    if (response.statusCode != 200) {
+      return null;
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final address = data['address'] as Map<String, dynamic>?;
+    return _composeGeocodeLabel(address, data['display_name'] as String?);
+  }
+
+  Future<_GeocodeResult?> _geocodeCity(String city) async {
+    final uri = Uri.parse(_nominatimSearchEndpoint).replace(queryParameters: {
+      'q': city,
+      'format': 'jsonv2',
+      'limit': '1',
+      'addressdetails': '1',
+      'accept-language': 'pt-BR',
+    });
+
+    final response = await _httpClient
+        .get(uri, headers: _defaultHeaders)
+        .timeout(_httpTimeout);
+
+    if (response.statusCode != 200) {
+      throw Exception('Falha ao consultar localização da cidade.');
+    }
+
+    final results = jsonDecode(response.body);
+    if (results is! List || results.isEmpty) {
+      return null;
+    }
+
+    final data = results.first as Map<String, dynamic>;
+    final lat = double.tryParse(data['lat'] as String? ?? '');
+    final lon = double.tryParse(data['lon'] as String? ?? '');
+    if (lat == null || lon == null) {
+      return null;
+    }
+
+    final address = data['address'] as Map<String, dynamic>?;
+    final label = _composeGeocodeLabel(address, data['display_name'] as String?) ??
+        _titleCase(city.trim());
+
+    final radius = _radiusFromBoundingBox(
+      data['boundingbox'] as List<dynamic>?,
+      lat,
+      lon,
+    );
+
+    return _GeocodeResult(
+      coordinates: LocationCoordinates(latitude: lat, longitude: lon),
+      label: label,
+      suggestedRadiusMeters: radius,
+    );
+  }
+
+  String? _composeGeocodeLabel(Map<String, dynamic>? address, String? displayName) {
+    final city = address?['city'] ??
+        address?['town'] ??
+        address?['municipality'] ??
+        address?['village'] ??
+        address?['suburb'];
+    final state = address?['state'] ?? address?['region'];
+    if (city is String && state is String) {
+      return '$city, $state';
+    }
+    if (city is String) {
+      return city;
+    }
+    if (state is String) {
+      return state;
+    }
+    if (displayName != null && displayName.isNotEmpty) {
+      final parts = displayName
+          .split(',')
+          .map((part) => part.trim())
+          .where((part) => part.isNotEmpty)
+          .toList();
+      if (parts.length >= 2) {
+        return '${parts[0]}, ${parts[1]}';
+      }
+      if (parts.isNotEmpty) {
+        return parts.first;
+      }
+    }
+    return null;
+  }
+
+  int? _radiusFromBoundingBox(List<dynamic>? boundingBox, double lat, double lon) {
+    if (boundingBox == null || boundingBox.length != 4) {
+      return null;
+    }
+
+    final south = double.tryParse(boundingBox[0].toString());
+    final north = double.tryParse(boundingBox[1].toString());
+    final west = double.tryParse(boundingBox[2].toString());
+    final east = double.tryParse(boundingBox[3].toString());
+
+    if (south == null || north == null || west == null || east == null) {
+      return null;
+    }
+
+    final latSpan = (north - south).abs();
+    final lonSpan = (east - west).abs();
+
+    final latRadius = latSpan * 111000 / 2;
+    final lonRadius = lonSpan * 111000 * math.cos(lat * math.pi / 180) / 2;
+    final averageRadius = math.max(latRadius, lonRadius);
+
+    if (averageRadius.isNaN || averageRadius <= 0) {
+      return null;
+    }
+
+    final clamped = averageRadius.clamp(2000, 12000).toInt();
+    return clamped;
+  }
+
+  List<RestaurantSuggestion> _buildSuggestions(
+    List<_RawRestaurant> entries, {
+    required RestaurantFocus? focus,
+    required int limit,
+    required LocationCoordinates? reference,
+    required String fallbackCityLabel,
+  }) {
+    if (limit <= 0) {
+      return const [];
+    }
+
+    final focusMatches = <_SuggestionCandidate>[];
+    final generalMatches = <_SuggestionCandidate>[];
+
+    for (final entry in entries) {
+      final candidate = _buildCandidate(
+        entry,
+        reference: reference,
+        fallbackCityLabel: fallbackCityLabel,
+      );
+      if (candidate == null) {
+        continue;
+      }
+
+      if (_matchesFocus(focus, candidate)) {
+        focusMatches.add(candidate);
+      } else {
+        generalMatches.add(candidate);
+      }
+    }
+
+    focusMatches.sort((a, b) => a.compareTo(b));
+    generalMatches.sort((a, b) => a.compareTo(b));
+
+    final ordered = <_SuggestionCandidate>[...focusMatches, ...generalMatches];
+    final unique = <String, _SuggestionCandidate>{};
+    for (final candidate in ordered) {
+      unique.putIfAbsent(candidate.key, () => candidate);
+    }
+
+    return unique.values
+        .take(limit)
+        .map((candidate) => candidate.suggestion)
+        .toList(growable: false);
+  }
+
+  _SuggestionCandidate? _buildCandidate(
+    _RawRestaurant restaurant, {
+    required LocationCoordinates? reference,
+    required String fallbackCityLabel,
+  }) {
+    final tags = restaurant.tags;
+    final name = _stringTag(tags, 'name');
+    if (name == null || name.isEmpty) {
+      return null;
+    }
+
+    final cuisines = _extractCuisines(tags);
+    final cuisineKeywords = <String>{};
+    for (final cuisine in cuisines) {
+      cuisineKeywords.addAll(cuisine.normalizedKeywords);
+    }
+
+    final cityLabel = _resolveCityLabel(tags) ?? fallbackCityLabel;
+    final address = _composeAddress(tags);
+    final priceRange = _resolvePriceRange(tags);
+    final rating = _parseRating(tags);
+    final dietHighlights = _buildDietHighlights(tags);
+    final services = _buildServices(tags);
+    final specialties = _buildSpecialties(tags, cuisines);
+
+    double? distanceKm;
+    if (reference != null) {
+      distanceKm = _distanceKm(
+        reference.latitude,
+        reference.longitude,
+        restaurant.latitude,
+        restaurant.longitude,
+      );
+    }
+
+    final suggestion = RestaurantSuggestion(
+      id: restaurant.id,
+      name: name,
+      city: cityLabel,
+      address: address,
+      primaryCuisine: cuisines.isNotEmpty
+          ? cuisines.first.displayName
+          : 'Culinária variada',
+      priceRange: priceRange,
+      rating: rating,
+      specialties: specialties,
+      dietHighlights: dietHighlights,
+      services: services,
+      distanceKm: distanceKm,
+    );
+
+    final featureTags = <String>{
+      ...cuisineKeywords,
+      ..._normalizeKeywords(_stringTag(tags, 'amenity')),
+      ..._normalizeKeywords(_stringTag(tags, 'cuisine:primary')),
+      ..._normalizeKeywords(name),
+    };
+
+    if (_boolTag(tags, 'diet:vegan')) {
+      featureTags.addAll(_normalizeKeywords('vegano'));
+    }
+    if (_boolTag(tags, 'diet:vegetarian')) {
+      featureTags.addAll(_normalizeKeywords('vegetariano'));
+    }
+    if (_boolTag(tags, 'diet:gluten_free')) {
+      featureTags.addAll(_normalizeKeywords('sem gluten'));
+    }
+    if (_boolTag(tags, 'diet:lactose_free')) {
+      featureTags.addAll(_normalizeKeywords('sem lactose'));
+    }
+
+    final normalizedAddress = _normalize([
+      _stringTag(tags, 'addr:street'),
+      _stringTag(tags, 'addr:housenumber'),
+      _stringTag(tags, 'addr:suburb'),
+      _stringTag(tags, 'addr:district'),
+    ].whereType<String>().join(' '));
+
+    return _SuggestionCandidate(
+      raw: restaurant,
+      suggestion: suggestion,
+      normalizedName: _normalize(name),
+      normalizedAddress: normalizedAddress,
+      featureTags: featureTags,
+    );
+  }
+
+  bool _matchesFocus(RestaurantFocus? focus, _SuggestionCandidate candidate) {
     if (focus == null) {
       return true;
     }
-    return focus.tags.any(venue.focusKeywords.contains);
+    final focusKeywords = _focusKeywordCache.putIfAbsent(
+      focus.id,
+      () => {
+        ..._normalizeKeywords(focus.id),
+        for (final tag in focus.tags) ..._normalizeKeywords(tag),
+      },
+    );
+
+    return candidate.featureTags.any(focusKeywords.contains);
   }
 
-  static double _distanceKm(double lat1, double lon1, double lat2, double lon2) {
+  List<_CuisineInfo> _extractCuisines(Map<String, dynamic> tags) {
+    final rawValues = <String>[];
+    final cuisine = tags['cuisine'];
+    if (cuisine is String) {
+      rawValues.addAll(cuisine.split(RegExp(r'[;,]')));
+    } else if (cuisine is Iterable) {
+      rawValues.addAll(cuisine.map((value) => value.toString()));
+    }
+
+    tags.forEach((key, value) {
+      if (key.startsWith('cuisine:') && value is String) {
+        rawValues.add(value);
+      }
+    });
+
+    final results = <_CuisineInfo>[];
+    final seen = <String>{};
+    for (final raw in rawValues) {
+      final normalized = _normalize(raw);
+      if (normalized.isEmpty) {
+        continue;
+      }
+      final condensed = normalized.replaceAll(' ', '');
+      if (!seen.add(condensed)) {
+        continue;
+      }
+      final keywords = _normalizeKeywords(raw);
+      if (keywords.isEmpty) {
+        continue;
+      }
+      final display =
+          _cuisineLabels[normalized] ?? _cuisineLabels[condensed] ?? _beautifyLabel(raw);
+      results.add(_CuisineInfo(normalizedKeywords: keywords, displayName: display));
+    }
+
+    return results;
+  }
+
+  String? _resolveCityLabel(Map<String, dynamic> tags) {
+    final city = _stringTag(tags, 'addr:city') ??
+        _stringTag(tags, 'addr:town') ??
+        _stringTag(tags, 'addr:municipality') ??
+        _stringTag(tags, 'addr:village') ??
+        _stringTag(tags, 'addr:suburb');
+    final state = _stringTag(tags, 'addr:state') ?? _stringTag(tags, 'addr:region');
+
+    if (city != null && state != null) {
+      return '$city, $state';
+    }
+    return city ?? state;
+  }
+
+  String _composeAddress(Map<String, dynamic> tags) {
+    final street = _stringTag(tags, 'addr:street');
+    final number = _stringTag(tags, 'addr:housenumber');
+    final suburb = _stringTag(tags, 'addr:suburb') ?? _stringTag(tags, 'addr:neighbourhood');
+    final district = _stringTag(tags, 'addr:district') ?? _stringTag(tags, 'addr:quarter');
+
+    final segments = <String>[];
+    if (street != null && street.isNotEmpty) {
+      segments.add(number != null && number.isNotEmpty ? '$street, $number' : street);
+    }
+    if (suburb != null && suburb.isNotEmpty) {
+      segments.add(suburb);
+    }
+    if (district != null && district.isNotEmpty && district != suburb) {
+      segments.add(district);
+    }
+
+    if (segments.isNotEmpty) {
+      return segments.join(' • ');
+    }
+
+    final fullAddress = _stringTag(tags, 'addr:full');
+    if (fullAddress != null && fullAddress.isNotEmpty) {
+      return fullAddress;
+    }
+
+    return 'Endereço não informado';
+  }
+
+  String _resolvePriceRange(Map<String, dynamic> tags) {
+    final price = _stringTag(tags, 'price:range') ??
+        _stringTag(tags, 'price') ??
+        _stringTag(tags, 'charge');
+    if (price != null && price.isNotEmpty) {
+      return price;
+    }
+    final fee = _stringTag(tags, 'fee');
+    if (fee != null && fee.isNotEmpty) {
+      return fee;
+    }
+    return 'Faixa de preço não informada';
+  }
+
+  double _parseRating(Map<String, dynamic> tags) {
+    final ratingValue = _stringTag(tags, 'rating') ??
+        _stringTag(tags, 'rating:google') ??
+        _stringTag(tags, 'rating:food');
+    final starsValue = _stringTag(tags, 'stars');
+
+    double? rating = ratingValue != null ? double.tryParse(ratingValue.replaceAll(',', '.')) : null;
+    rating ??= starsValue != null ? double.tryParse(starsValue.replaceAll(',', '.')) : null;
+
+    if (rating == null) {
+      final michelin = _stringTag(tags, 'michelin');
+      if (michelin != null) {
+        rating = 5;
+      }
+    }
+
+    if (rating == null) {
+      return 0;
+    }
+
+    if (rating.isNaN) {
+      return 0;
+    }
+
+    if (rating > 5) {
+      rating = 5;
+    }
+    if (rating < 0) {
+      rating = 0;
+    }
+
+    return double.parse(rating.toStringAsFixed(1));
+  }
+
+  List<String> _buildDietHighlights(Map<String, dynamic> tags) {
+    final highlights = <String>[];
+    if (_boolTag(tags, 'diet:vegan')) {
+      highlights.add('Opções veganas disponíveis');
+    }
+    if (_boolTag(tags, 'diet:vegetarian')) {
+      highlights.add('Pratos vegetarianos destacados');
+    }
+    if (_boolTag(tags, 'diet:gluten_free')) {
+      highlights.add('Preparos sem glúten sob demanda');
+    }
+    if (_boolTag(tags, 'diet:lactose_free')) {
+      highlights.add('Versões sem lactose disponíveis');
+    }
+    if (_boolTag(tags, 'organic')) {
+      highlights.add('Ingredientes orgânicos e frescos');
+    }
+    if (_boolTag(tags, 'kosher')) {
+      highlights.add('Certificação kosher disponível');
+    }
+    if (_boolTag(tags, 'halal')) {
+      highlights.add('Preparos compatíveis com dieta halal');
+    }
+    return highlights;
+  }
+
+  List<String> _buildServices(Map<String, dynamic> tags) {
+    final services = <String>[];
+    if (_boolTag(tags, 'delivery') || _boolTag(tags, 'delivery:covid19')) {
+      services.add('Entrega disponível');
+    }
+    if (_boolTag(tags, 'takeaway')) {
+      services.add('Retirada para viagem');
+    }
+    if (_boolTag(tags, 'drive_through')) {
+      services.add('Drive-thru');
+    }
+    if (_boolTag(tags, 'wheelchair')) {
+      services.add('Acesso para cadeirantes');
+    }
+    if (_boolTag(tags, 'outdoor_seating')) {
+      services.add('Mesas ao ar livre');
+    }
+    if (_boolTag(tags, 'internet_access')) {
+      services.add('Wi-Fi disponível');
+    }
+    if (_boolTag(tags, 'reservation')) {
+      services.add('Aceita reservas');
+    }
+
+    final phone = _stringTag(tags, 'phone') ?? _stringTag(tags, 'contact:phone');
+    if (phone != null && phone.isNotEmpty) {
+      services.add('Contato: $phone');
+    }
+    final website = _stringTag(tags, 'website') ?? _stringTag(tags, 'contact:website');
+    if (website != null && website.isNotEmpty) {
+      services.add('Site: $website');
+    }
+
+    return services.take(6).toList(growable: false);
+  }
+
+  List<String> _buildSpecialties(Map<String, dynamic> tags, List<_CuisineInfo> cuisines) {
+    final specialties = <String>[];
+    final cuisineLabels = cuisines.map((cuisine) => cuisine.displayName).where((label) => label.isNotEmpty).toList();
+    if (cuisineLabels.isNotEmpty) {
+      specialties.add('Culinária destaque: ${_joinWithAnd(cuisineLabels.take(3).toList())}');
+    }
+
+    final speciality = _stringTag(tags, 'speciality') ?? _stringTag(tags, 'specialty');
+    if (speciality != null && speciality.isNotEmpty) {
+      specialties.add(_beautifySentence('Especialidade da casa: $speciality'));
+    }
+
+    final description = _stringTag(tags, 'description') ?? _stringTag(tags, 'note');
+    if (description != null && description.isNotEmpty) {
+      specialties.add(_beautifySentence(description));
+    }
+
+    final openingHours = _stringTag(tags, 'opening_hours');
+    if (openingHours != null && openingHours.isNotEmpty) {
+      specialties.add('Horário: $openingHours');
+    }
+
+    return specialties.take(4).toList(growable: false);
+  }
+
+  double _distanceKm(double lat1, double lon1, double lat2, double lon2) {
     const earthRadius = 6371.0;
     final dLat = _degToRad(lat2 - lat1);
     final dLon = _degToRad(lon2 - lon1);
     final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_degToRad(lat1)) * math.cos(_degToRad(lat2)) * math.sin(dLon / 2) * math.sin(dLon / 2);
+        math.cos(_degToRad(lat1)) * math.cos(_degToRad(lat2)) *
+            math.sin(dLon / 2) * math.sin(dLon / 2);
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    return double.parse((earthRadius * c).toStringAsFixed(2));
+    final distance = earthRadius * c;
+    return double.parse(distance.toStringAsFixed(2));
   }
 
-  static double _degToRad(double degree) => degree * (math.pi / 180);
+  double _degToRad(double degree) => degree * (math.pi / 180);
 
-  static String _resolveNearestCityLabel(double latitude, double longitude) {
-    _VenueMatch? closest;
-    for (final venue in _venues) {
-      final distance = _distanceKm(latitude, longitude, venue.latitude, venue.longitude);
-      if (closest == null || distance < closest.distanceKm) {
-        closest = _VenueMatch(venue: venue, distanceKm: distance);
+  bool _boolTag(Map<String, dynamic> tags, String key) {
+    final value = tags[key];
+    if (value is bool) {
+      return value;
+    }
+    if (value is num) {
+      return value != 0;
+    }
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return normalized == 'yes' ||
+          normalized == 'true' ||
+          normalized == 'sim' ||
+          normalized == '1';
+    }
+    return false;
+  }
+
+  String? _stringTag(Map<String, dynamic> tags, String key) {
+    final value = tags[key];
+    if (value == null) {
+      return null;
+    }
+    if (value is String) {
+      return value.trim();
+    }
+    if (value is num || value is bool) {
+      return value.toString();
+    }
+    return null;
+  }
+
+  String _beautifyLabel(String raw) {
+    final cleaned = raw.replaceAll(RegExp(r'[_-]'), ' ').trim();
+    if (cleaned.isEmpty) {
+      return 'Culinária variada';
+    }
+    final words = cleaned.split(RegExp(r'\s+')).map((word) {
+      final lower = word.toLowerCase();
+      if (lower.isEmpty) {
+        return '';
       }
-    }
-    return closest?.venue.cityLabel ?? 'Sua região';
-  }
-
-  static String _resolveCityKey(String normalizedInput) {
-    if (normalizedInput.isEmpty) {
-      return normalizedInput;
-    }
-    if (_supportedCities.contains(normalizedInput)) {
-      return normalizedInput;
-    }
-    for (final city in _supportedCities) {
-      if (city.contains(normalizedInput) || normalizedInput.contains(city)) {
-        return city;
+      if (lower.length == 1) {
+        return lower.toUpperCase();
       }
-    }
-    return normalizedInput;
+      return lower[0].toUpperCase() + lower.substring(1);
+    }).where((word) => word.isNotEmpty);
+    return words.join(' ');
   }
 
-  static String _normalize(String input) {
-    final lower = input.toLowerCase();
-    final buffer = StringBuffer();
-    for (final rune in lower.runes) {
-      final char = String.fromCharCode(rune);
-      buffer.write(_normalizationMap[char] ?? char);
+  String _beautifySentence(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) {
+      return trimmed;
     }
-    final simplified = buffer.toString();
-    return simplified.replaceAll(RegExp(r'[^a-z0-9 ]'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final normalized = trimmed[0].toUpperCase() + trimmed.substring(1);
+    return normalized;
   }
 
-  static String _titleCase(String input) {
-    final words = _normalize(input).split(' ');
+  String _joinWithAnd(List<String> values) {
+    if (values.isEmpty) {
+      return '';
+    }
+    if (values.length == 1) {
+      return values.first;
+    }
+    if (values.length == 2) {
+      return '${values[0]} e ${values[1]}';
+    }
+    final first = values.sublist(0, values.length - 1).join(', ');
+    return '$first e ${values.last}';
+  }
+
+  String _titleCase(String input) {
+    final normalized = _normalize(input);
+    if (normalized.isEmpty) {
+      return input.trim();
+    }
+    final words = normalized.split(' ').where((word) => word.isNotEmpty).toList();
     if (words.isEmpty) {
       return input.trim();
     }
-    return words
-        .where((word) => word.isNotEmpty)
-        .map((word) => word[0].toUpperCase() + word.substring(1))
-        .join(' ');
+    return words.map((word) => word[0].toUpperCase() + word.substring(1)).join(' ');
+  }
+
+  String _normalize(String? input) {
+    if (input == null) {
+      return '';
+    }
+    final lower = input.toLowerCase();
+    final buffer = StringBuffer();
+    for (final code in lower.runes) {
+      final char = String.fromCharCode(code);
+      buffer.write(_normalizationMap[char] ?? char);
+    }
+    final normalized = buffer.toString();
+    return normalized.replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
+  }
+
+  Set<String> _normalizeKeywords(String? input) {
+    final normalized = _normalize(input);
+    if (normalized.isEmpty) {
+      return const <String>{};
+    }
+    final tokens = normalized.split(' ').where((token) => token.isNotEmpty).toSet();
+    if (tokens.length > 1) {
+      tokens.add(normalized.replaceAll(' ', ''));
+    } else {
+      tokens.add(normalized);
+    }
+    return tokens;
   }
 
   static const Map<String, String> _normalizationMap = {
@@ -781,6 +953,7 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     'â': 'a',
     'ã': 'a',
     'ä': 'a',
+    'å': 'a',
     'é': 'e',
     'è': 'e',
     'ê': 'e',
@@ -801,61 +974,170 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     'ç': 'c',
     'ñ': 'n',
   };
+
+  static const Map<String, String> _cuisineLabels = {
+    'brazilian': 'Culinária brasileira',
+    'regional': 'Sabores regionais',
+    'northeastern': 'Comida nordestina',
+    'italian': 'Culinária italiana',
+    'pizza': 'Pizzas artesanais',
+    'pasta': 'Massas frescas',
+    'risotto': 'Risotos especiais',
+    'steak': 'Carnes grelhadas',
+    'steakhouse': 'Carnes e parrilla',
+    'bbq': 'Churrasco e BBQ',
+    'barbecue': 'Churrasco e parrilla',
+    'grill': 'Grelhados',
+    'japanese': 'Culinária japonesa',
+    'sushi': 'Sushi e sashimi',
+    'seafood': 'Frutos do mar',
+    'fish': 'Peixes frescos',
+    'vegetarian': 'Culinária vegetariana',
+    'vegan': 'Cozinha vegana',
+    'plantbased': 'Plant-based criativo',
+    'healthy': 'Comida saudável',
+    'salad': 'Saladas e bowls',
+    'poke': 'Pokes e bowls havaianos',
+    'burger': 'Hambúrgueres artesanais',
+    'sandwich': 'Sanduíches especiais',
+    'mexican': 'Culinária mexicana',
+    'arab': 'Sabores árabes',
+    'arabic': 'Sabores árabes',
+    'chinese': 'Culinária chinesa',
+    'thai': 'Culinária tailandesa',
+    'indian': 'Culinária indiana',
+    'french': 'Culinária francesa',
+    'spanish': 'Culinária espanhola',
+    'mediterranean': 'Culinária mediterrânea',
+    'peruvian': 'Culinária peruana',
+    'korean': 'Culinária coreana',
+    'german': 'Culinária alemã',
+    'greek': 'Culinária grega',
+    'tapas': 'Tapas e petiscos',
+    'rodizio': 'Rodízio variado',
+    'parrilla': 'Parrilla argentina',
+    'churrasco': 'Churrasco brasileiro',
+  };
 }
 
-class _VenueMatch {
-  const _VenueMatch({required this.venue, required this.distanceKm});
+class _GeocodeResult {
+  const _GeocodeResult({
+    required this.coordinates,
+    required this.label,
+    this.suggestedRadiusMeters,
+  });
 
-  final _RestaurantVenue venue;
-  final double distanceKm;
+  final LocationCoordinates coordinates;
+  final String label;
+  final int? suggestedRadiusMeters;
 }
 
-class _RestaurantVenue {
-  const _RestaurantVenue({
+class _CuisineInfo {
+  const _CuisineInfo({
+    required this.normalizedKeywords,
+    required this.displayName,
+  });
+
+  final Set<String> normalizedKeywords;
+  final String displayName;
+}
+
+class _RawRestaurant {
+  const _RawRestaurant({
     required this.id,
-    required this.name,
-    required this.cityLabel,
-    required this.normalizedCity,
-    required this.address,
-    required this.primaryCuisine,
-    required this.priceRange,
-    required this.rating,
     required this.latitude,
     required this.longitude,
-    required this.focusKeywords,
-    required this.specialties,
-    required this.dietHighlights,
-    required this.services,
+    required this.tags,
   });
 
   final String id;
-  final String name;
-  final String cityLabel;
-  final String normalizedCity;
-  final String address;
-  final String primaryCuisine;
-  final String priceRange;
-  final double rating;
   final double latitude;
   final double longitude;
-  final Set<String> focusKeywords;
-  final List<String> specialties;
-  final List<String> dietHighlights;
-  final List<String> services;
+  final Map<String, dynamic> tags;
 
-  RestaurantSuggestion toSuggestion({double? distanceKm}) {
-    return RestaurantSuggestion(
+  static _RawRestaurant? fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return null;
+    }
+
+    double? latitude = (json['lat'] as num?)?.toDouble();
+    double? longitude = (json['lon'] as num?)?.toDouble();
+
+    if (latitude == null || longitude == null) {
+      final center = json['center'] as Map<String, dynamic>?;
+      latitude = (center?['lat'] as num?)?.toDouble();
+      longitude = (center?['lon'] as num?)?.toDouble();
+    }
+
+    if (latitude == null || longitude == null) {
+      return null;
+    }
+
+    final id = json['id']?.toString();
+    if (id == null) {
+      return null;
+    }
+
+    final rawTags = json['tags'];
+    final tags = <String, dynamic>{};
+    if (rawTags is Map) {
+      rawTags.forEach((key, value) {
+        if (key == null) {
+          return;
+        }
+        tags[key.toString()] = value;
+      });
+    }
+
+    return _RawRestaurant(
       id: id,
-      name: name,
-      city: cityLabel,
-      address: address,
-      primaryCuisine: primaryCuisine,
-      priceRange: priceRange,
-      rating: rating,
-      specialties: specialties,
-      dietHighlights: dietHighlights,
-      services: services,
-      distanceKm: distanceKm,
+      latitude: latitude,
+      longitude: longitude,
+      tags: tags,
     );
+  }
+}
+
+class _SuggestionCandidate {
+  const _SuggestionCandidate({
+    required this.raw,
+    required this.suggestion,
+    required this.normalizedName,
+    required this.normalizedAddress,
+    required this.featureTags,
+  });
+
+  final _RawRestaurant raw;
+  final RestaurantSuggestion suggestion;
+  final String normalizedName;
+  final String normalizedAddress;
+  final Set<String> featureTags;
+
+  String get key {
+    final latKey = raw.latitude.toStringAsFixed(3);
+    final lonKey = raw.longitude.toStringAsFixed(3);
+    return '$normalizedName|$normalizedAddress|$latKey|$lonKey';
+  }
+
+  int compareTo(_SuggestionCandidate other) {
+    final aDistance = suggestion.distanceKm;
+    final bDistance = other.suggestion.distanceKm;
+    if (aDistance != null && bDistance != null) {
+      final diff = aDistance.compareTo(bDistance);
+      if (diff != 0) {
+        return diff;
+      }
+    } else if (aDistance != null) {
+      return -1;
+    } else if (bDistance != null) {
+      return 1;
+    }
+
+    final ratingDiff = other.suggestion.rating.compareTo(suggestion.rating);
+    if (ratingDiff != 0) {
+      return ratingDiff;
+    }
+
+    return suggestion.name.compareTo(other.suggestion.name);
   }
 }
