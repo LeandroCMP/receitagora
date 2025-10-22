@@ -29,6 +29,7 @@ Future<void> main() async {
   await notificationService.init();
   Get.put<LocalNotificationService>(notificationService, permanent: true);
   await notificationService.notifyAppOpened();
+  await notificationService.scheduleAppClosedNotificationTest();
 
   final firebaseAuth = FirebaseAuth.instance;
   final firestore = FirebaseFirestore.instance;

@@ -16,6 +16,7 @@ class LocalNotificationService extends GetxService {
       'Alertas para check-ins e atualizações do plano premium.';
   static const int _checkInNotificationId = 7812;
   static const int _appOpenNotificationId = 7813;
+  static const int _appClosedNotificationId = 7814;
   static const String _hydrationChannelId = 'hydration-coach';
   static const String _hydrationChannelName = 'Coach de hidratação';
   static const String _hydrationChannelDescription =
@@ -171,6 +172,43 @@ class LocalNotificationService extends GetxService {
       _details,
       payload: 'app-open',
     );
+  }
+
+  Future<void> scheduleAppClosedNotificationTest() async {
+    if (!_initialized) {
+      return;
+    }
+
+    await _plugin.cancel(_appClosedNotificationId);
+
+    final scheduledDate =
+        tz.TZDateTime.now(_localLocation).add(const Duration(minutes: 1));
+
+    try {
+      await _plugin.zonedSchedule(
+        _appClosedNotificationId,
+        'Teste com o app fechado',
+        'Feche o Receitagora e aguarde este lembrete para confirmar as notificações.',
+        scheduledDate,
+        _details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        payload: 'app-closed-test',
+      );
+    } on PlatformException catch (error) {
+      if (error.code == 'exact_alarms_not_permitted') {
+        await _plugin.zonedSchedule(
+          _appClosedNotificationId,
+          'Teste com o app fechado',
+          'Feche o Receitagora e aguarde este lembrete para confirmar as notificações.',
+          scheduledDate,
+          _details,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          payload: 'app-closed-test',
+        );
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<void> cancelCheckInReminder() async {
