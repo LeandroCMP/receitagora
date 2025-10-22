@@ -9,13 +9,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:receitagora/application/app.dart';
 import 'package:receitagora/core/services/firebase_initializer.dart';
-import 'package:receitagora/services/notifications/local_notification_service.dart';
 import 'package:receitagora/services/config/usage_config_service.dart';
 import 'package:receitagora/services/config/usage_config_service_impl.dart';
 import 'package:receitagora/services/session/session_service.dart';
 import 'package:receitagora/services/session/session_service_impl.dart';
 import 'package:receitagora/services/billing/billing_service.dart';
 import 'package:receitagora/services/billing/stripe_billing_service.dart';
+import 'package:receitagora/services/app/app_lifecycle_service.dart';
+import 'package:receitagora/services/notifications/local_notification_service.dart';
 import 'package:receitagora/services/usage/app_usage_service.dart';
 import 'package:receitagora/services/usage/app_usage_service_impl.dart';
 import 'package:receitagora/services/shopping_list/shopping_list_service.dart';
@@ -39,7 +40,6 @@ Future<void> main() async {
 
   final usageService = AppUsageServiceImpl(preferences: sharedPreferences);
   await usageService.ensureInitialized();
-  await usageService.registerAppOpen();
   Get.put<AppUsageService>(usageService, permanent: true);
 
   final shoppingListService =
@@ -57,8 +57,13 @@ Future<void> main() async {
   final notificationService = LocalNotificationService();
   await notificationService.init();
   Get.put<LocalNotificationService>(notificationService, permanent: true);
-  await notificationService.notifyAppOpened();
-  await notificationService.scheduleAppClosedNotificationTest();
+
+  final lifecycleService = AppLifecycleService(
+    usageService: usageService,
+    notificationService: notificationService,
+  );
+  await lifecycleService.init();
+  Get.put<AppLifecycleService>(lifecycleService, permanent: true);
 
   final wellnessRoutineService = WellnessRoutineServiceImpl(
     preferences: sharedPreferences,

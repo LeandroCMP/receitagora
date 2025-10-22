@@ -211,6 +211,13 @@ class LocalNotificationService extends GetxService {
     }
   }
 
+  Future<void> cancelAppClosedNotificationTest() async {
+    if (!_initialized) {
+      return;
+    }
+    await _plugin.cancel(_appClosedNotificationId);
+  }
+
   Future<void> cancelCheckInReminder() async {
     if (!_initialized) {
       return;

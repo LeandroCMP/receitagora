@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
@@ -18,6 +19,7 @@ class ShoppingListServiceImpl extends GetxService implements ShoppingListService
   final SharedPreferences _preferences;
 
   static const String _storageKey = 'shopping.lists.index';
+  static const int _maxStoredLists = 50; // evita crescimento ilimitado no cache
 
   final RxList<ShoppingList> _lists = <ShoppingList>[].obs;
 
@@ -250,10 +252,13 @@ class ShoppingListServiceImpl extends GetxService implements ShoppingListService
   }
 
   Future<void> _upsert(ShoppingList list) async {
-    final updated = List<ShoppingList>.from(_lists)
+    var updated = List<ShoppingList>.from(_lists)
       ..removeWhere((element) => element.id == list.id)
       ..insert(0, list);
     updated.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    if (updated.length > _maxStoredLists) {
+      updated = updated.sublist(0, _maxStoredLists);
+    }
     _lists.assignAll(updated);
     await _persist();
   }
@@ -282,7 +287,13 @@ class ShoppingListServiceImpl extends GetxService implements ShoppingListService
               ShoppingList.fromMap(Map<String, dynamic>.from(item as Map)))
           .toList();
       lists.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-      _lists.assignAll(lists);
+      if (lists.length > _maxStoredLists) {
+        lists.removeRange(_maxStoredLists, lists.length);
+        _lists.assignAll(lists);
+        unawaited(_persist());
+      } else {
+        _lists.assignAll(lists);
+      }
     } catch (error, stackTrace) {
       Get.log(
         'Falha ao carregar listas de compras: $error\n$stackTrace',
