@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
@@ -19,6 +20,11 @@ class RecipeHistoryPage extends GetView<RecipeHistoryController> {
       appBar: AppBar(
         title: const Text('Histórico de buscas'),
         actions: [
+          IconButton(
+            tooltip: 'Abrir listas de compras',
+            icon: const Icon(Icons.shopping_bag_outlined),
+            onPressed: () => Get.toNamed(AppRoutes.shoppingLists),
+          ),
           Obx(() {
             final hasEntries = controller.entries.isNotEmpty;
             final isClearing = controller.isClearing.value;
@@ -262,21 +268,40 @@ class _HistoryEntryCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 20),
-            Row(
-              children: [
-                FilledButton.icon(
-                  onPressed: () => controller.openEntry(entry),
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text('Ver receitas'),
-                ),
-                const SizedBox(width: 12),
-                TextButton.icon(
-                  onPressed: () => controller.removeEntry(entry),
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Remover'),
-                ),
-              ],
-            ),
+            Obx(() {
+              final isCreating = controller.isCreatingList.value;
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () => controller.openEntry(entry),
+                    icon: const Icon(Icons.open_in_new_rounded),
+                    label: const Text('Ver receitas'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: isCreating
+                        ? null
+                        : () => controller.createShoppingList(entry),
+                    icon: isCreating
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.shopping_cart_checkout_outlined),
+                    label: Text(
+                      isCreating ? 'Gerando lista...' : 'Lista de compras',
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => controller.removeEntry(entry),
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('Remover'),
+                  ),
+                ],
+              );
+            }),
           ],
         ),
       ),

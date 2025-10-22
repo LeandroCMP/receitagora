@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
 import 'package:receitagora/services/usage/app_usage_service.dart';
+import 'package:receitagora/services/wellness/wellness_routine_service.dart';
 
 import 'user_profile_controller.dart';
 
@@ -112,6 +114,9 @@ class _ProfileContent extends StatelessWidget {
     final user = controller.user;
     final usageService =
         Get.isRegistered<AppUsageService>() ? Get.find<AppUsageService>() : null;
+    final wellnessService = Get.isRegistered<WellnessRoutineService>()
+        ? Get.find<WellnessRoutineService>()
+        : null;
 
     if (user == null) {
       return Center(
@@ -140,6 +145,10 @@ class _ProfileContent extends StatelessWidget {
         if (usageService != null) ...[
           const SizedBox(height: 24),
           _UsageInsightsCard(theme: theme, usageService: usageService),
+        ],
+        if (wellnessService != null) ...[
+          const SizedBox(height: 24),
+          _WellnessRoutinesCallout(theme: theme),
         ],
         const SizedBox(height: 24),
         _AccountDetailsCard(theme: theme, user: user),
@@ -697,6 +706,11 @@ class _UsageInsightsCard extends StatelessWidget {
                     );
                   },
                 ),
+                const SizedBox(height: 24),
+                _UsageAchievementsSection(
+                  theme: theme,
+                  achievements: _buildUsageAchievements(metrics),
+                ),
               ],
             ),
           ),
@@ -801,6 +815,342 @@ class _UsageMetricTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class _UsageAchievementsSection extends StatelessWidget {
+  const _UsageAchievementsSection({
+    required this.theme,
+    required this.achievements,
+  });
+
+  final ThemeData theme;
+  final List<_UsageAchievement> achievements;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final unlocked = achievements.where((item) => item.unlocked).toList();
+    final upcoming = achievements
+        .where((item) => !item.unlocked)
+        .toList()
+      ..sort((a, b) => a.progress.compareTo(b.progress));
+
+    if (unlocked.isEmpty && upcoming.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (unlocked.isNotEmpty) ...[
+          Text(
+            'Conquistas desbloqueadas',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: unlocked
+                .map(
+                  (achievement) => Chip(
+                    avatar: Icon(
+                      achievement.icon,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    label: Text(achievement.title),
+                    backgroundColor:
+                        colorScheme.primaryContainer.withOpacity(0.4),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 20),
+        ],
+        if (upcoming.isNotEmpty) ...[
+          Text(
+            'Próximas metas',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...upcoming.take(3).map(
+                (achievement) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _AchievementProgressCard(
+                    theme: theme,
+                    achievement: achievement,
+                  ),
+                ),
+              ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AchievementProgressCard extends StatelessWidget {
+  const _AchievementProgressCard({
+    required this.theme,
+    required this.achievement,
+  });
+
+  final ThemeData theme;
+  final _UsageAchievement achievement;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final percent = (achievement.progress * 100).clamp(0, 100).round();
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: colorScheme.surfaceVariant.withOpacity(0.55),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(achievement.icon, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        achievement.title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        achievement.description,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withOpacity(0.75),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${achievement.current}/${achievement.target}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: achievement.progress.clamp(0, 1),
+                minHeight: 6,
+                backgroundColor:
+                    colorScheme.surface.withOpacity(0.4),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$percent% concluído',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.65),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UsageAchievement {
+  const _UsageAchievement({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.unlocked,
+    required this.progress,
+    required this.current,
+    required this.target,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final IconData icon;
+  final bool unlocked;
+  final double progress;
+  final int current;
+  final int target;
+}
+
+class _WellnessRoutinesCallout extends StatelessWidget {
+  const _WellnessRoutinesCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.self_improvement_outlined, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Rotinas guiadas de bem-estar',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Combine lembretes automáticos de hidratação, pausas ativas e preparo para o sono em pacotes prontos.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.72),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.wellnessRoutines),
+              icon: const Icon(Icons.tune_outlined),
+              label: const Text('Configurar rotinas'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UsageAchievementDefinition {
+  const _UsageAchievementDefinition({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.target,
+    required this.metricResolver,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final IconData icon;
+  final int target;
+  final int Function(AppUsageMetrics) metricResolver;
+}
+
+List<_UsageAchievement> _buildUsageAchievements(AppUsageMetrics metrics) {
+  int _sanitize(int value) => value < 0 ? 0 : value;
+
+  final definitions = <_UsageAchievementDefinition>[
+    _UsageAchievementDefinition(
+      id: 'streak_start',
+      title: 'Primeiros passos',
+      description: 'Complete 3 dias seguidos de uso para solidificar o hábito.',
+      icon: Icons.flag_outlined,
+      target: 3,
+      metricResolver: (value) => value.currentStreak,
+    ),
+    _UsageAchievementDefinition(
+      id: 'streak_week',
+      title: 'Semana consistente',
+      description: 'Bata o recorde de 7 dias consecutivos explorando receitas.',
+      icon: Icons.calendar_month_outlined,
+      target: 7,
+      metricResolver: (value) => value.longestStreak,
+    ),
+    _UsageAchievementDefinition(
+      id: 'streak_pro',
+      title: 'Rotina campeã',
+      description:
+          'Mantenha 14 dias de sequência para mostrar que a cozinha já faz parte do seu dia a dia.',
+      icon: Icons.local_fire_department_outlined,
+      target: 14,
+      metricResolver: (value) => value.longestStreak,
+    ),
+    _UsageAchievementDefinition(
+      id: 'opener_explorer',
+      title: 'Explorador',
+      description: 'Abra o Receitagora 10 vezes para desbloquear mais sugestões.',
+      icon: Icons.travel_explore_outlined,
+      target: 10,
+      metricResolver: (value) => value.totalOpens,
+    ),
+    _UsageAchievementDefinition(
+      id: 'opener_master',
+      title: 'Maratona gourmet',
+      description: 'Chegue a 30 aberturas acumuladas e mantenha o ritmo criativo.',
+      icon: Icons.bolt_outlined,
+      target: 30,
+      metricResolver: (value) => value.totalOpens,
+    ),
+    _UsageAchievementDefinition(
+      id: 'fresh_today',
+      title: 'Dia em dia',
+      description: 'Volte hoje mesmo para não deixar sua sequência esfriar.',
+      icon: Icons.refresh_outlined,
+      target: 1,
+      metricResolver: (value) {
+        final lastOpen = value.lastOpenDate;
+        if (lastOpen == null) {
+          return 0;
+        }
+        final local = lastOpen.toLocal();
+        final today = DateTime.now();
+        if (local.year == today.year &&
+            local.month == today.month &&
+            local.day == today.day) {
+          return 1;
+        }
+        return 0;
+      },
+    ),
+  ];
+
+  return definitions.map((definition) {
+    final currentValue = _sanitize(definition.metricResolver(metrics));
+    final progress = currentValue / definition.target;
+    return _UsageAchievement(
+      id: definition.id,
+      title: definition.title,
+      description: definition.description,
+      icon: definition.icon,
+      unlocked: currentValue >= definition.target,
+      progress: progress.isFinite ? progress : 0,
+      current: currentValue,
+      target: definition.target,
+    );
+  }).toList();
 }
 
 class _AccountDetailsCard extends StatelessWidget {

@@ -29,6 +29,12 @@ class FavoritesPage extends GetView<FavoritesController> {
       appBar: AppBar(
         title: const Text('Favoritos'),
         actions: [
+          IconButton(
+            tooltip: 'Abrir cadernos colaborativos',
+            icon: const Icon(Icons.collections_bookmark_outlined),
+            onPressed: () => Get.toNamed(AppRoutes.favoritesNotebooks),
+          ),
+          const SizedBox(width: 4),
           TextButton(
             onPressed: () => Get.offAllNamed(AppRoutes.recipeFinder),
             child: const Text('Buscar receitas'),

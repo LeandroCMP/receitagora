@@ -18,6 +18,12 @@ import 'package:receitagora/services/billing/billing_service.dart';
 import 'package:receitagora/services/billing/stripe_billing_service.dart';
 import 'package:receitagora/services/usage/app_usage_service.dart';
 import 'package:receitagora/services/usage/app_usage_service_impl.dart';
+import 'package:receitagora/services/shopping_list/shopping_list_service.dart';
+import 'package:receitagora/services/shopping_list/shopping_list_service_impl.dart';
+import 'package:receitagora/services/wellness/wellness_routine_service.dart';
+import 'package:receitagora/services/wellness/wellness_routine_service_impl.dart';
+import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service.dart';
+import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service_impl.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,11 +38,21 @@ Future<void> main() async {
   await usageService.registerAppOpen();
   Get.put<AppUsageService>(usageService, permanent: true);
 
+  final shoppingListService =
+      ShoppingListServiceImpl(preferences: sharedPreferences);
+  Get.put<ShoppingListService>(shoppingListService, permanent: true);
+
   final notificationService = LocalNotificationService();
   await notificationService.init();
   Get.put<LocalNotificationService>(notificationService, permanent: true);
   await notificationService.notifyAppOpened();
   await notificationService.scheduleAppClosedNotificationTest();
+
+  final wellnessRoutineService = WellnessRoutineServiceImpl(
+    preferences: sharedPreferences,
+    notificationService: notificationService,
+  );
+  Get.put<WellnessRoutineService>(wellnessRoutineService, permanent: true);
 
   final firebaseAuth = FirebaseAuth.instance;
   final firestore = FirebaseFirestore.instance;
@@ -62,6 +78,13 @@ Future<void> main() async {
   final billingService = StripeBillingService(functions: functions);
   await billingService.ensureInitialized();
   Get.put<BillingService>(billingService, permanent: true);
+
+  final notebooksService = FavoritesNotebookServiceImpl(
+    firestore: firestore,
+    firebaseAuth: firebaseAuth,
+    sessionService: sessionService,
+  );
+  Get.put<FavoritesNotebookService>(notebooksService, permanent: true);
 
   runApp(const ReceitagoraApp());
 }
