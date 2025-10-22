@@ -20,7 +20,7 @@ class AppUsageServiceImpl extends GetxService implements AppUsageService {
       const AppUsageMetrics(currentStreak: 0, longestStreak: 0, totalOpens: 0)
           .obs;
   bool _initialized = false;
-  final Completer<void> _initializing = Completer<void>();
+  Completer<void>? _initializing;
 
   @override
   AppUsageMetrics get metrics => _metrics.value;
@@ -31,34 +31,43 @@ class AppUsageServiceImpl extends GetxService implements AppUsageService {
   @override
   Future<void> ensureInitialized() async {
     if (_initialized) {
-      return _initializing.future;
+      return _initializing?.future ?? Future<void>.value();
+    }
+
+    _initializing ??= Completer<void>();
+    if (_initializing!.isCompleted && !_initialized) {
+      _initializing = Completer<void>();
+    }
+    final completer = _initializing!;
+
+    if (completer.isCompleted) {
+      return completer.future;
     }
 
     try {
-      if (!_initializing.isCompleted) {
-        final current = _preferences.getInt(_currentStreakKey) ?? 0;
-        final longest = _preferences.getInt(_longestStreakKey) ?? 0;
-        final total = _preferences.getInt(_totalOpensKey) ?? 0;
-        final lastRaw = _preferences.getString(_lastOpenKey);
-        final lastDate =
-            lastRaw == null ? null : DateTime.tryParse(lastRaw)?.toLocal();
-        _metrics.value = AppUsageMetrics(
-          currentStreak: current,
-          longestStreak: longest,
-          totalOpens: total,
-          lastOpenDate: lastDate,
-        );
-        _initializing.complete();
-        _initialized = true;
+      final current = _preferences.getInt(_currentStreakKey) ?? 0;
+      final longest = _preferences.getInt(_longestStreakKey) ?? 0;
+      final total = _preferences.getInt(_totalOpensKey) ?? 0;
+      final lastRaw = _preferences.getString(_lastOpenKey);
+      final lastDate =
+          lastRaw == null ? null : DateTime.tryParse(lastRaw)?.toLocal();
+      _metrics.value = AppUsageMetrics(
+        currentStreak: current,
+        longestStreak: longest,
+        totalOpens: total,
+        lastOpenDate: lastDate,
+      );
+      _initialized = true;
+      completer.complete();
+    } catch (error, stackTrace) {
+      if (!completer.isCompleted) {
+        completer.completeError(error, stackTrace);
       }
-    } catch (error) {
-      if (!_initializing.isCompleted) {
-        _initializing.completeError(error);
-      }
+      _initializing = null;
       rethrow;
     }
 
-    return _initializing.future;
+    return completer.future;
   }
 
   @override

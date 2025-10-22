@@ -18,7 +18,7 @@ class MoodJournalServiceImpl extends GetxService implements MoodJournalService {
 
   final RxList<MoodEntry> _entries = <MoodEntry>[].obs;
   bool _initialized = false;
-  final Completer<void> _initializing = Completer<void>();
+  Completer<void>? _initializing;
 
   @override
   List<MoodEntry> get entries => List.unmodifiable(_entries);
@@ -29,38 +29,47 @@ class MoodJournalServiceImpl extends GetxService implements MoodJournalService {
   @override
   Future<void> ensureInitialized() async {
     if (_initialized) {
-      return _initializing.future;
+      return _initializing?.future ?? Future<void>.value();
+    }
+
+    _initializing ??= Completer<void>();
+    if (_initializing!.isCompleted && !_initialized) {
+      _initializing = Completer<void>();
+    }
+    final completer = _initializing!;
+
+    if (completer.isCompleted) {
+      return completer.future;
     }
 
     try {
-      if (!_initializing.isCompleted) {
-        final raw = _preferences.getString(_storageKey);
-        if (raw != null && raw.isNotEmpty) {
-          final decoded = jsonDecode(raw);
-          if (decoded is List) {
-            final parsed = decoded
-                .map((item) => item is Map<String, dynamic>
-                    ? MoodEntry.fromJson(item)
-                    : item is Map
-                        ? MoodEntry.fromJson(Map<String, dynamic>.from(item))
-                        : null)
-                .whereType<MoodEntry>()
-                .toList();
-            parsed.sort((a, b) => b.date.compareTo(a.date));
-            _entries.assignAll(parsed);
-          }
+      final raw = _preferences.getString(_storageKey);
+      if (raw != null && raw.isNotEmpty) {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) {
+          final parsed = decoded
+              .map((item) => item is Map<String, dynamic>
+                  ? MoodEntry.fromJson(item)
+                  : item is Map
+                      ? MoodEntry.fromJson(Map<String, dynamic>.from(item))
+                      : null)
+              .whereType<MoodEntry>()
+              .toList();
+          parsed.sort((a, b) => b.date.compareTo(a.date));
+          _entries.assignAll(parsed);
         }
-        _initializing.complete();
-        _initialized = true;
       }
-    } catch (error) {
-      if (!_initializing.isCompleted) {
-        _initializing.completeError(error);
+      _initialized = true;
+      completer.complete();
+    } catch (error, stackTrace) {
+      if (!completer.isCompleted) {
+        completer.completeError(error, stackTrace);
       }
+      _initializing = null;
       rethrow;
     }
 
-    return _initializing.future;
+    return completer.future;
   }
 
   @override

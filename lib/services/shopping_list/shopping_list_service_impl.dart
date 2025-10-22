@@ -48,9 +48,14 @@ class ShoppingListServiceImpl extends GetxService implements ShoppingListService
     final now = DateTime.now();
 
     final sections = <ShoppingListSection>[];
+    final Set<String>? normalizedCache = allowDuplicates ? null : <String>{};
 
     for (final recipe in historyResult.recipes) {
-      final section = _buildSectionFromRecipe(recipe);
+      final section = _buildSectionFromRecipe(
+        recipe,
+        allowDuplicates: allowDuplicates,
+        globalSeen: normalizedCache,
+      );
       if (section.items.isEmpty && !allowDuplicates) {
         continue;
       }
@@ -58,18 +63,32 @@ class ShoppingListServiceImpl extends GetxService implements ShoppingListService
     }
 
     if (sections.isEmpty) {
+      final fallbackItems = <ShoppingListItem>[];
+      final fallbackSeen = normalizedCache;
+      for (final ingredient in historyResult.ingredients) {
+        final normalized = ingredient.trim();
+        if (normalized.isEmpty) {
+          continue;
+        }
+        final normalizedKey = normalized.toLowerCase();
+        if (!allowDuplicates && fallbackSeen != null) {
+          if (fallbackSeen.contains(normalizedKey)) {
+            continue;
+          }
+          fallbackSeen.add(normalizedKey);
+        }
+        fallbackItems.add(
+          ShoppingListItem(
+            id: _generateId(prefix: 'item'),
+            label: normalized,
+            recipeName: 'Ingredientes salvos',
+          ),
+        );
+      }
       final fallbackSection = ShoppingListSection(
         id: _generateId(prefix: 'section'),
         title: 'Lista rápida',
-        items: historyResult.ingredients
-            .map(
-              (ingredient) => ShoppingListItem(
-                id: _generateId(prefix: 'item'),
-                label: ingredient,
-                recipeName: 'Ingredientes salvos',
-              ),
-            )
-            .toList(),
+        items: List<ShoppingListItem>.unmodifiable(fallbackItems),
       );
       sections.add(fallbackSection);
     }
@@ -273,19 +292,30 @@ class ShoppingListServiceImpl extends GetxService implements ShoppingListService
     }
   }
 
-  ShoppingListSection _buildSectionFromRecipe(RecipeEntity recipe) {
+  ShoppingListSection _buildSectionFromRecipe(
+    RecipeEntity recipe, {
+    required bool allowDuplicates,
+    Set<String>? globalSeen,
+  }) {
     final items = <ShoppingListItem>[];
-    final seen = <String>{};
+    final Set<String>? localSeen = allowDuplicates ? null : <String>{};
 
     for (final ingredient in recipe.ingredients) {
       final normalized = ingredient.trim();
       if (normalized.isEmpty) {
         continue;
       }
-      if (seen.contains(normalized.toLowerCase())) {
-        continue;
+      final normalizedKey = normalized.toLowerCase();
+      if (!allowDuplicates) {
+        if (localSeen != null && localSeen.contains(normalizedKey)) {
+          continue;
+        }
+        if (globalSeen != null && globalSeen.contains(normalizedKey)) {
+          continue;
+        }
       }
-      seen.add(normalized.toLowerCase());
+      localSeen?.add(normalizedKey);
+      globalSeen?.add(normalizedKey);
       items.add(
         ShoppingListItem(
           id: _generateId(prefix: 'item'),
