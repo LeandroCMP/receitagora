@@ -22,19 +22,19 @@ class IngredientChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       deleteIcon: const Icon(Icons.close_rounded, size: 16),
       backgroundColor:
-          (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.35),
+          (surfaces?.high ?? theme.colorScheme.surfaceVariant).withValues(alpha: 0.35),
       labelStyle: theme.textTheme.bodyMedium?.copyWith(
         height: 1.3,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
       ),
-      deleteIconColor: theme.colorScheme.onSurface.withOpacity(0.7),
+      deleteIconColor: theme.colorScheme.onSurface.withValues(alpha: 0.7),
       onDeleted: onDeleted,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(22),
         side: BorderSide(
           color:
-              (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.45),
+              (surfaces?.high ?? theme.colorScheme.surfaceVariant).withValues(alpha: 0.45),
         ),
       ),
     );

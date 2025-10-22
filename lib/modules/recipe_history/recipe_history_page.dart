@@ -139,14 +139,14 @@ class _HistorySummaryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primaryContainer.withOpacity(0.85),
+            colorScheme.primaryContainer.withValues(alpha: 0.85),
             (surfaces?.surface ?? colorScheme.surfaceVariant)
-                .withOpacity(0.9),
+                .withValues(alpha: 0.9),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withOpacity(0.08),
+            color: colorScheme.primary.withValues(alpha: 0.08),
             blurRadius: 22,
             offset: const Offset(0, 14),
           ),
@@ -170,7 +170,7 @@ class _HistorySummaryCard extends StatelessWidget {
             Text(
               'A última busca registrada foi em $formattedDate. Abra qualquer item para visualizar as receitas sem precisar gerar novamente.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onPrimary.withOpacity(0.85),
+                color: colorScheme.onPrimary.withValues(alpha: 0.85),
                 height: 1.5,
               ),
             ),
@@ -221,7 +221,7 @@ class _HistoryEntryCard extends StatelessWidget {
                   width: 42,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: colorScheme.secondaryContainer.withOpacity(0.35),
+                    color: colorScheme.secondaryContainer.withValues(alpha: 0.35),
                   ),
                   child: Icon(
                     Icons.auto_awesome_mosaic_outlined,
@@ -243,7 +243,7 @@ class _HistoryEntryCard extends StatelessWidget {
                       Text(
                         '$formattedTimestamp • ${entry.totalRecipes} receita${entry.totalRecipes == 1 ? '' : 's'} sugeridas',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ],
@@ -261,7 +261,7 @@ class _HistoryEntryCard extends StatelessWidget {
                       (ingredient) => Chip(
                         label: Text(ingredient),
                         backgroundColor:
-                            colorScheme.surfaceVariant.withOpacity(0.6),
+                            colorScheme.surfaceVariant.withValues(alpha: 0.6),
                       ),
                     )
                     .toList(),
@@ -347,7 +347,7 @@ class _EmptyHistory extends StatelessWidget {
         Icon(
           Icons.history_toggle_off_rounded,
           size: 56,
-          color: colorScheme.primary.withOpacity(0.45),
+          color: colorScheme.primary.withValues(alpha: 0.45),
         ),
         const SizedBox(height: 20),
         Text(
@@ -362,7 +362,7 @@ class _EmptyHistory extends StatelessWidget {
           'Sempre que você gerar receitas, guardaremos a combinação aqui para que possa revisitar mesmo sem conexão.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             height: 1.5,
           ),
         ),

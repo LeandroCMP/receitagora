@@ -122,7 +122,7 @@ class ReceitagoraAppUiConfig {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(28),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.4)),
+          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -130,7 +130,7 @@ class ReceitagoraAppUiConfig {
           minimumSize: const Size.fromHeight(52),
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
-          shadowColor: colorScheme.primary.withOpacity(0.2),
+          shadowColor: colorScheme.primary.withValues(alpha: 0.2),
           elevation: 1,
           textStyle: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
@@ -145,14 +145,14 @@ class ReceitagoraAppUiConfig {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 52),
           foregroundColor: colorScheme.onSurface,
-          side: BorderSide(color: colorScheme.outline.withOpacity(0.5)),
+          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.5)),
           textStyle: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             letterSpacing: 0.2,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
-            side: BorderSide(color: colorScheme.outline.withOpacity(0.4)),
+            side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.4)),
           ),
         ),
       ),
@@ -168,7 +168,7 @@ class ReceitagoraAppUiConfig {
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
-            side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.45)),
+            side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.45)),
           ),
         ),
       ),
@@ -178,25 +178,25 @@ class ReceitagoraAppUiConfig {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+          borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
-          borderSide: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.5)),
+          borderSide: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.5)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),
           borderSide: BorderSide(color: colorScheme.primary, width: 1.6),
         ),
         hintStyle: textTheme.bodyMedium?.copyWith(
-          color: colorScheme.onSurface.withOpacity(0.55),
+          color: colorScheme.onSurface.withValues(alpha: 0.55),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surfaces.high,
-        disabledColor: surfaces.surface.withOpacity(0.75),
-        selectedColor: colorScheme.primaryContainer.withOpacity(0.6),
-        secondarySelectedColor: colorScheme.primaryContainer.withOpacity(0.55),
+        disabledColor: surfaces.surface.withValues(alpha: 0.75),
+        selectedColor: colorScheme.primaryContainer.withValues(alpha: 0.6),
+        secondarySelectedColor: colorScheme.primaryContainer.withValues(alpha: 0.55),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         labelStyle: textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.w500,
@@ -217,7 +217,7 @@ class ReceitagoraAppUiConfig {
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.outlineVariant.withOpacity(0.7),
+        color: colorScheme.outlineVariant.withValues(alpha: 0.7),
         thickness: 1,
         space: 28,
       ),
@@ -238,7 +238,7 @@ class ReceitagoraAppUiConfig {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surfaces.high,
-        indicatorColor: colorScheme.primaryContainer.withOpacity(0.5),
+        indicatorColor: colorScheme.primaryContainer.withValues(alpha: 0.5),
         labelTextStyle: MaterialStateProperty.resolveWith(
           (states) => textTheme.labelMedium?.copyWith(
             color: states.contains(MaterialState.selected)
@@ -259,14 +259,14 @@ class ReceitagoraAppUiConfig {
         color: surfaces.high,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: colorScheme.outlineVariant.withOpacity(0.35)),
+          side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.35)),
         ),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: colorScheme.onSurface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: colorScheme.outlineVariant.withOpacity(0.45)),
+          border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.45)),
         ),
         textStyle: textTheme.labelSmall?.copyWith(
           color: colorScheme.surface,

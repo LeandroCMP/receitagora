@@ -88,7 +88,7 @@ class RecipeSummaryCard extends StatelessWidget {
                 Text(
                   'Sugestão ${position + 1}'.toUpperCase(),
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     letterSpacing: 1.2,
                     fontWeight: FontWeight.w600,
                   ),
@@ -130,7 +130,7 @@ class RecipeSummaryCard extends StatelessWidget {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 height: 1.55,
               ),
             ),
@@ -138,7 +138,7 @@ class RecipeSummaryCard extends StatelessWidget {
             Text(
               'Toque para ver ingredientes e preparo completo',
               style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.78),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -189,11 +189,11 @@ class RecipeSummaryCard extends StatelessWidget {
                   ],
                 ),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withOpacity(0.35),
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.05),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),
@@ -228,10 +228,10 @@ class _MetaPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-            .withOpacity(0.4),
+            .withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.3),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -242,7 +242,7 @@ class _MetaPill extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.78),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
               letterSpacing: 0.2,
               fontWeight: FontWeight.w600,
             ),

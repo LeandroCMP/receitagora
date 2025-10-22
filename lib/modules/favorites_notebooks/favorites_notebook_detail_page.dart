@@ -6,6 +6,7 @@ import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
+import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service.dart';
 
 import 'favorites_notebook_detail_controller.dart';
 
@@ -128,7 +129,7 @@ class _NotebookOverview extends StatelessWidget {
               notebook.description ??
                   'Sem descrição. Adicione notas para contextualizar este caderno.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.7),
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
                 height: 1.5,
               ),
             ),
@@ -251,7 +252,7 @@ class _FavoritesSection extends StatelessWidget {
               Text(
                 'Nenhuma receita favoritada ainda. Adicione favoritos primeiro e organize-os aqui.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               )
             else
@@ -363,7 +364,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
               Text(
                 'Sem comentários até agora. Use este espaço para combinar ajustes e sugestões com seus colaboradores.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               )
             else
@@ -383,7 +384,7 @@ class _CommentsSectionState extends State<_CommentsSection> {
                   trailing: Text(
                     _formatDate(comment.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                 ),

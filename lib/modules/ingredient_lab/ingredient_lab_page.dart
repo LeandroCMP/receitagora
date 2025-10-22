@@ -26,7 +26,7 @@ class IngredientLabPage extends GetView<IngredientLabController> {
             end: Alignment.bottomCenter,
             colors: [
               Color.alphaBlend(
-                theme.colorScheme.secondary.withOpacity(0.05),
+                theme.colorScheme.secondary.withValues(alpha: 0.05),
                 background,
               ),
               background,
@@ -66,7 +66,7 @@ class IngredientLabPage extends GetView<IngredientLabController> {
                           'Descreva o ingrediente, o contexto e o objetivo da troca. A IA organiza alternativas viáveis, '
                           'ajustes de preparo, alertas e uma lista de compras rápida.',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.75),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -233,7 +233,7 @@ class _IngredientLabResultSection extends StatelessWidget {
                         color: theme.colorScheme.primary,
                         size: 18,
                       ),
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.08),
                     ),
                   )
                   .toList(),
@@ -273,7 +273,7 @@ class _IngredientLabResultSection extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: theme.colorScheme.error.withOpacity(0.08),
+                color: theme.colorScheme.error.withValues(alpha: 0.08),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +353,7 @@ class _AlternativeTile extends StatelessWidget {
         subtitle: Text(
           alternative.description,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         children: [
@@ -470,7 +470,7 @@ class _EditableChips extends StatelessWidget {
         Text(
           helper,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 12),
@@ -504,7 +504,7 @@ class _EditableChips extends StatelessWidget {
               return Text(
                 'Nenhum item informado ainda.',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               );
             }
@@ -553,7 +553,7 @@ class _LabeledField extends StatelessWidget {
           Text(
             helper!,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -656,7 +656,7 @@ class _LabSectionCard extends StatelessWidget {
               Text(
                 description!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 20),
@@ -681,7 +681,7 @@ class _EmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.15),
+          color: theme.colorScheme.primary.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
@@ -693,7 +693,7 @@ class _EmptyState extends StatelessWidget {
             child: Text(
               'Assim que rodar o laboratório, você verá as melhores substituições com ajustes de preparo, alertas e dicas de compra.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ),

@@ -208,7 +208,7 @@ class _WelcomeSection extends StatelessWidget {
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24),
-                          color: theme.colorScheme.secondaryContainer.withOpacity(0.72),
+                          color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.72),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
@@ -238,14 +238,14 @@ class _WelcomeSection extends StatelessWidget {
                       'Adicione seus ingredientes e deixe o Receita Agora sugerir combinações pensadas para o seu dia.',
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontSize: isCompact ? 14 : 15,
-                        color: theme.colorScheme.onPrimaryContainer.withOpacity(0.78),
+                        color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.78),
                         height: 1.55,
                       ),
                     ),
                     const SizedBox(height: 24),
                     Card(
                       elevation: 0,
-                      color: theme.colorScheme.surface.withOpacity(0.28),
+                      color: theme.colorScheme.surface.withValues(alpha: 0.28),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -264,7 +264,7 @@ class _WelcomeSection extends StatelessWidget {
                               child: Text(
                                 'Receitas rápidas, equilibradas e sempre prontas para salvar.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.78),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
                                   height: 1.4,
                                 ),
                               ),
@@ -310,7 +310,7 @@ class _DailyLimitNotice extends StatelessWidget {
                   child: Text(
                     'Adicione ingredientes, revise suas preferências no perfil e explore as combinações pensadas para hoje.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.72),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                       height: 1.5,
                     ),
                   ),
@@ -341,7 +341,7 @@ class _DailyLimitNotice extends StatelessWidget {
                 width: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.7),
+                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
                 ),
                 child: Icon(
                   Icons.hourglass_top_rounded,
@@ -353,7 +353,7 @@ class _DailyLimitNotice extends StatelessWidget {
                 child: Text(
                   helper,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.72),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                     height: 1.5,
                   ),
                 ),
@@ -401,7 +401,7 @@ class _PremiumShortcuts extends StatelessWidget {
                           width: 44,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: colorScheme.primary.withOpacity(0.12),
+                            color: colorScheme.primary.withValues(alpha: 0.12),
                           ),
                           child: Icon(
                             Icons.workspace_premium_outlined,
@@ -423,7 +423,7 @@ class _PremiumShortcuts extends StatelessWidget {
                     Text(
                       'O plano Premium libera o Laboratório de Ingredientes com o chef IA e um cardápio nutricional guiado com lista de compras automática.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.72),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                         height: 1.5,
                       ),
                     ),
@@ -461,7 +461,7 @@ class _PremiumShortcuts extends StatelessWidget {
                         width: 44,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: colorScheme.primaryContainer.withOpacity(0.25),
+                          color: colorScheme.primaryContainer.withValues(alpha: 0.25),
                         ),
                         child: Icon(
                           Icons.star_rate_rounded,
@@ -483,7 +483,7 @@ class _PremiumShortcuts extends StatelessWidget {
                   Text(
                     'Acesse rapidamente o Laboratório de Ingredientes e o plano nutricional para organizar sua semana.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.72),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                       height: 1.5,
                     ),
                   ),
@@ -512,7 +512,7 @@ class _PremiumShortcuts extends StatelessWidget {
                                 'Teste substituições e receba relatórios do chef IA.',
                             width: itemWidth,
                             backgroundColor:
-                                colorScheme.secondaryContainer.withOpacity(0.35),
+                                colorScheme.secondaryContainer.withValues(alpha: 0.35),
                             onTap: controller.openIngredientLab,
                           ),
                         ],
@@ -562,9 +562,9 @@ class _PremiumShortcutButton extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.55),
+            color: backgroundColor ?? colorScheme.surfaceVariant.withValues(alpha: 0.55),
             border: Border.all(
-              color: colorScheme.primary.withOpacity(0.08),
+              color: colorScheme.primary.withValues(alpha: 0.08),
             ),
           ),
           child: Column(
@@ -576,7 +576,7 @@ class _PremiumShortcutButton extends StatelessWidget {
                 width: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: colorScheme.primary.withOpacity(0.12),
+                  color: colorScheme.primary.withValues(alpha: 0.12),
                 ),
                 child: Icon(
                   icon,
@@ -594,7 +594,7 @@ class _PremiumShortcutButton extends StatelessWidget {
               Text(
                 description,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   height: 1.45,
                 ),
               ),
@@ -651,7 +651,7 @@ class _IngredientComposer extends StatelessWidget {
             Text(
               'Digite um ingrediente por vez, confirme com Enter ou no botão ao lado e acompanhe abaixo a lista montada.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.68),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
                 height: 1.5,
               ),
             ),
@@ -682,7 +682,7 @@ class _IngredientComposer extends StatelessWidget {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
                           borderSide: BorderSide(
-                            color: theme.colorScheme.outline.withOpacity(0.4),
+                            color: theme.colorScheme.outline.withValues(alpha: 0.4),
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -721,13 +721,13 @@ class _IngredientComposer extends StatelessWidget {
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   decoration: BoxDecoration(
                     color:
-                        (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.35),
+                        (surfaces?.high ?? theme.colorScheme.surfaceVariant).withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(22),
                   ),
                   child: Text(
                     'empty_ingredient_hint'.tr,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.64),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.64),
                       height: 1.45,
                     ),
                   ),
@@ -812,7 +812,7 @@ class _HelperFooter extends StatelessWidget {
     return Text(
       'Pronto para explorar? Gere receitas, organize favoritos e compartilhe artes exclusivas quando estiver autenticado.',
       style: theme.textTheme.bodySmall?.copyWith(
-        color: theme.colorScheme.onSurface.withOpacity(0.66),
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.66),
         height: 1.5,
       ),
     );
@@ -858,7 +858,7 @@ class _HistoryShortcut extends StatelessWidget {
                         width: 44,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: colorScheme.primary.withOpacity(0.12),
+                          color: colorScheme.primary.withValues(alpha: 0.12),
                         ),
                         child: Icon(
                           Icons.history_toggle_off_rounded,
@@ -880,7 +880,7 @@ class _HistoryShortcut extends StatelessWidget {
                   Text(
                     'Última busca: $ingredients',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.8),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       height: 1.5,
                     ),
                   ),
@@ -888,7 +888,7 @@ class _HistoryShortcut extends StatelessWidget {
                   Text(
                     '$relativeTime • ${latest.totalRecipes} receita${latest.totalRecipes == 1 ? '' : 's'} salvas',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 18),

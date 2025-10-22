@@ -65,7 +65,7 @@ class SkillJourneyDetailPage extends GetView<SkillJourneyDetailController> {
                           Text(
                             journey.description,
                             style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.75),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                               height: 1.45,
                             ),
                           ),
@@ -151,7 +151,7 @@ class _InfoChip extends StatelessWidget {
     return Chip(
       avatar: Icon(icon, color: color, size: 18),
       label: Text(label),
-      backgroundColor: color.withOpacity(0.12),
+      backgroundColor: color.withValues(alpha: 0.12),
       shape: const StadiumBorder(),
       labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: color,
@@ -191,7 +191,7 @@ class _JourneyStepCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: colorScheme.primary.withOpacity(0.14),
+                  backgroundColor: colorScheme.primary.withValues(alpha: 0.14),
                   child: Text(
                     index.toString().padLeft(2, '0'),
                     style: theme.textTheme.titleSmall?.copyWith(
@@ -213,7 +213,7 @@ class _JourneyStepCard extends StatelessWidget {
             Text(
               description,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.75),
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
                 height: 1.45,
               ),
             ),

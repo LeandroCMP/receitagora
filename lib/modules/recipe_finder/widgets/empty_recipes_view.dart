@@ -27,9 +27,9 @@ class EmptyRecipesView extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: [
-                    theme.colorScheme.primaryContainer.withOpacity(0.35),
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
                     (surfaces?.surface ?? theme.colorScheme.surface)
-                        .withOpacity(0.9),
+                        .withValues(alpha: 0.9),
                   ],
                 ),
               ),
@@ -44,7 +44,7 @@ class EmptyRecipesView extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                 height: 1.55,
               ),
             ),

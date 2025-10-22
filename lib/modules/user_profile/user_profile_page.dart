@@ -52,7 +52,7 @@ class UserProfilePage extends GetView<UserProfileController> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Color.alphaBlend(
-                    theme.colorScheme.primary.withOpacity(0.05),
+                    theme.colorScheme.primary.withValues(alpha: 0.05),
                     surfaces?.lowest ?? background,
                   ),
                   background,
@@ -193,8 +193,8 @@ class _ProfileHeader extends StatelessWidget {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        colorScheme.primaryContainer.withOpacity(0.95),
-        colorScheme.primary.withOpacity(0.9),
+        colorScheme.primaryContainer.withValues(alpha: 0.95),
+        colorScheme.primary.withValues(alpha: 0.9),
       ],
     );
 
@@ -228,7 +228,7 @@ class _ProfileHeader extends StatelessWidget {
                     : 'Revise seus dados, personalize seu nome e gerencie sua sessão.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimary.withOpacity(0.85),
+                  color: colorScheme.onPrimary.withValues(alpha: 0.85),
                 ),
               ),
             ],
@@ -269,7 +269,7 @@ class _ProfileHeader extends StatelessWidget {
                           user.email,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontSize: emailSize,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         if (user.hasBio) ...[
@@ -278,7 +278,7 @@ class _ProfileHeader extends StatelessWidget {
                             user.bio!,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontSize: bioSize,
-                              color: theme.colorScheme.onSurface.withOpacity(0.72),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                               height: 1.5,
                             ),
                           ),
@@ -381,7 +381,7 @@ class _ProfileFormCard extends StatelessWidget {
               Text(
                 'Este nome aparece nas telas, no card compartilhado e em sugestões personalizadas.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 24),
@@ -412,7 +412,7 @@ class _ProfileFormCard extends StatelessWidget {
               Text(
                 'Use esta área para compartilhar preferências gerais, restrições ou o que mais representa seu estilo na cozinha.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 16),
@@ -503,7 +503,7 @@ class _OnboardingNotice extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      color: theme.colorScheme.primaryContainer.withOpacity(0.35),
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -520,7 +520,7 @@ class _OnboardingNotice extends StatelessWidget {
             Text(
               'Revise seu nome e, se quiser, adicione bio e preferências. Essas informações deixam as recomendações mais relevantes, e você pode alterá-las depois.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer.withOpacity(0.85),
+                color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
                 height: 1.45,
               ),
             ),
@@ -577,7 +577,7 @@ class _PreferenceSection extends StatelessWidget {
           Text(
             description,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.45,
             ),
           ),
@@ -593,7 +593,7 @@ class _PreferenceSection extends StatelessWidget {
             Text(
               'Itens personalizados',
               style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
               ),
             ),
             const SizedBox(height: 8),
@@ -668,7 +668,7 @@ class _UsageInsightsCard extends StatelessWidget {
                 Text(
                   'Acompanhe sua sequência de dias ativos e veja quando foi a última vez que explorou receitas.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     height: 1.5,
                   ),
                 ),
@@ -688,7 +688,7 @@ class _UsageInsightsCard extends StatelessWidget {
                           subtitle: 'Sequência atual',
                           backgroundColor:
                               (surfaces?.surface ?? colorScheme.surfaceVariant)
-                                  .withOpacity(0.6),
+                                  .withValues(alpha: 0.6),
                           width: itemWidth,
                         ),
                         _UsageMetricTile(
@@ -697,7 +697,7 @@ class _UsageInsightsCard extends StatelessWidget {
                           title: longestStreakText,
                           subtitle: 'Recorde pessoal',
                           backgroundColor:
-                              colorScheme.primaryContainer.withOpacity(0.45),
+                              colorScheme.primaryContainer.withValues(alpha: 0.45),
                           width: itemWidth,
                         ),
                         _UsageMetricTile(
@@ -706,7 +706,7 @@ class _UsageInsightsCard extends StatelessWidget {
                           title: totalOpensText,
                           subtitle: 'Aberturas totais',
                           backgroundColor:
-                              colorScheme.secondaryContainer.withOpacity(0.4),
+                              colorScheme.secondaryContainer.withValues(alpha: 0.4),
                           width: itemWidth,
                         ),
                         _UsageMetricTile(
@@ -715,7 +715,7 @@ class _UsageInsightsCard extends StatelessWidget {
                           title: lastOpenText,
                           subtitle: 'Último acesso',
                           backgroundColor:
-                              colorScheme.tertiaryContainer.withOpacity(0.45),
+                              colorScheme.tertiaryContainer.withValues(alpha: 0.45),
                           width: itemWidth,
                         ),
                       ],
@@ -821,7 +821,7 @@ class _UsageMetricTile extends StatelessWidget {
               Text(
                 subtitle,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.7),
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                   height: 1.4,
                 ),
               ),
@@ -878,7 +878,7 @@ class _UsageAchievementsSection extends StatelessWidget {
                     ),
                     label: Text(achievement.title),
                     backgroundColor:
-                        colorScheme.primaryContainer.withOpacity(0.4),
+                        colorScheme.primaryContainer.withValues(alpha: 0.4),
                   ),
                 )
                 .toList(),
@@ -925,7 +925,7 @@ class _AchievementProgressCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        color: colorScheme.surfaceVariant.withOpacity(0.55),
+        color: colorScheme.surfaceVariant.withValues(alpha: 0.55),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -951,7 +951,7 @@ class _AchievementProgressCard extends StatelessWidget {
                       Text(
                         achievement.description,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.75),
+                          color: colorScheme.onSurface.withValues(alpha: 0.75),
                           height: 1.4,
                         ),
                       ),
@@ -961,7 +961,7 @@ class _AchievementProgressCard extends StatelessWidget {
                 Text(
                   '${achievement.current}/${achievement.target}',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -973,7 +973,7 @@ class _AchievementProgressCard extends StatelessWidget {
                 value: achievement.progress.clamp(0, 1),
                 minHeight: 6,
                 backgroundColor:
-                    colorScheme.surface.withOpacity(0.4),
+                    colorScheme.surface.withValues(alpha: 0.4),
                 valueColor: AlwaysStoppedAnimation<Color>(
                   colorScheme.primary,
                 ),
@@ -983,7 +983,7 @@ class _AchievementProgressCard extends StatelessWidget {
             Text(
               '$percent% concluído',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.65),
+                color: colorScheme.onSurface.withValues(alpha: 0.65),
               ),
             ),
           ],
@@ -1050,7 +1050,7 @@ class _WellnessRoutinesCallout extends StatelessWidget {
             Text(
               'Combine lembretes automáticos de hidratação, pausas ativas e preparo para o sono em pacotes prontos.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.72),
+                color: colorScheme.onSurface.withValues(alpha: 0.72),
                 height: 1.5,
               ),
             ),
@@ -1102,7 +1102,7 @@ class _MoodJournalCallout extends StatelessWidget {
             Text(
               'Registre como você se sente ao cozinhar e acompanhe sua energia ao longo da semana.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.75),
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
                 height: 1.45,
               ),
             ),
@@ -1154,7 +1154,7 @@ class _SkillJourneysCallout extends StatelessWidget {
             Text(
               'Siga sequências guiadas para evoluir técnicas, organizar rotinas e ganhar confiança na cozinha.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.75),
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
                 height: 1.45,
               ),
             ),
@@ -1337,7 +1337,7 @@ class _ProfileActions extends StatelessWidget {
         Text(
           'Caso queira usar outra conta, você pode encerrar esta sessão a qualquer momento.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 24),
@@ -1392,7 +1392,7 @@ class _ProfileActions extends StatelessWidget {
                 subtitle: Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 trailing: trailing,
@@ -1460,7 +1460,7 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: 42,
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
       backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
           ? NetworkImage(user.avatarUrl!)
           : null,
@@ -1500,8 +1500,8 @@ class _InfoChip extends StatelessWidget {
     final theme = Theme.of(context);
     return Chip(
       avatar: Icon(icon, size: 18, color: theme.colorScheme.primary),
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
-      side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.12)),
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.08),
+      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.12)),
       label: Text(
         label,
         style: theme.textTheme.labelMedium?.copyWith(
@@ -1534,7 +1534,7 @@ class _InfoTile extends StatelessWidget {
       title: Text(
         label,
         style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurface.withOpacity(0.7),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           fontWeight: FontWeight.w600,
         ),
       ),

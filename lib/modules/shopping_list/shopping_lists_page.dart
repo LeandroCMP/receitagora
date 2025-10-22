@@ -150,13 +150,13 @@ class _ShoppingListSummary extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primaryContainer.withOpacity(0.88),
-            (surfaces?.surface ?? colorScheme.surfaceVariant).withOpacity(0.9),
+            colorScheme.primaryContainer.withValues(alpha: 0.88),
+            (surfaces?.surface ?? colorScheme.surfaceVariant).withValues(alpha: 0.9),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withOpacity(0.08),
+            color: colorScheme.primary.withValues(alpha: 0.08),
             blurRadius: 22,
             offset: const Offset(0, 14),
           ),
@@ -180,7 +180,7 @@ class _ShoppingListSummary extends StatelessWidget {
                   ? '1 lista criada com base nas suas últimas buscas.'
                   : '$totalLists listas criadas com base nas suas últimas buscas.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onPrimary.withOpacity(0.85),
+                color: colorScheme.onPrimary.withValues(alpha: 0.85),
                 height: 1.5,
               ),
             ),
@@ -195,7 +195,7 @@ class _ShoppingListSummary extends StatelessWidget {
                   value: activeLists.toString(),
                   icon: Icons.checklist_rtl,
                   backgroundColor:
-                      colorScheme.secondaryContainer.withOpacity(0.45),
+                      colorScheme.secondaryContainer.withValues(alpha: 0.45),
                 ),
                 _SummaryTile(
                   theme: theme,
@@ -203,7 +203,7 @@ class _ShoppingListSummary extends StatelessWidget {
                   value: pendingItems.toString(),
                   icon: Icons.pending_actions_outlined,
                   backgroundColor:
-                      colorScheme.tertiaryContainer.withOpacity(0.45),
+                      colorScheme.tertiaryContainer.withValues(alpha: 0.45),
                 ),
               ],
             ),
@@ -258,7 +258,7 @@ class _SummaryTile extends StatelessWidget {
                 Text(
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -311,7 +311,7 @@ class _ShoppingListCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color:
-                          colorScheme.primaryContainer.withOpacity(0.35),
+                          colorScheme.primaryContainer.withValues(alpha: 0.35),
                     ),
                     child: Icon(
                       list.isCompleted
@@ -335,7 +335,7 @@ class _ShoppingListCard extends StatelessWidget {
                         Text(
                           '${list.completedItems} de ${list.totalItems} itens concluídos • Atualizada em $formattedDate',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -350,8 +350,8 @@ class _ShoppingListCard extends StatelessWidget {
                   value: progress,
                   minHeight: 8,
                   backgroundColor: (surfaces?.surface ??
-                          colorScheme.surfaceVariant.withOpacity(0.4))
-                      .withOpacity(0.4),
+                          colorScheme.surfaceVariant.withValues(alpha: 0.4))
+                      .withValues(alpha: 0.4),
                   valueColor: AlwaysStoppedAnimation<Color>(
                     list.isCompleted
                         ? colorScheme.secondary
@@ -397,12 +397,12 @@ class _EmptyShoppingLists extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            (surfaces?.lowest ?? colorScheme.surfaceVariant).withOpacity(0.85),
+            (surfaces?.lowest ?? colorScheme.surfaceVariant).withValues(alpha: 0.85),
             colorScheme.background,
           ],
         ),
         border: Border.all(
-          color: (surfaces?.high ?? colorScheme.surfaceVariant).withOpacity(0.35),
+          color: (surfaces?.high ?? colorScheme.surfaceVariant).withValues(alpha: 0.35),
         ),
       ),
       child: Column(
@@ -426,7 +426,7 @@ class _EmptyShoppingLists extends StatelessWidget {
             'Aproveite as combinações do histórico para organizar compras por receita e evitar esquecimentos no mercado.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.72),
+              color: colorScheme.onSurface.withValues(alpha: 0.72),
               height: 1.5,
             ),
           ),

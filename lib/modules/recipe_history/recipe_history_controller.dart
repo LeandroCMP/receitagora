@@ -156,4 +156,12 @@ class RecipeHistoryController extends GetxController {
     final minute = local.minute.toString().padLeft(2, '0');
     return '$day/$month/$year às $hour:$minute';
   }
+
+  String _formatDate(DateTime timestamp) {
+    final local = timestamp.toLocal();
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year.toString();
+    return '$day/$month/$year';
+  }
 }

@@ -39,7 +39,7 @@ class NutritionPlanPage extends GetView<NutritionPlanController> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Color.alphaBlend(
-                    theme.colorScheme.primary.withOpacity(0.05),
+                    theme.colorScheme.primary.withValues(alpha: 0.05),
                     background,
                   ),
                   background,
@@ -83,7 +83,7 @@ class NutritionPlanPage extends GetView<NutritionPlanController> {
               end: Alignment.bottomCenter,
               colors: [
                 Color.alphaBlend(
-                  theme.colorScheme.primary.withOpacity(0.05),
+                  theme.colorScheme.primary.withValues(alpha: 0.05),
                   background,
                 ),
                 background,
@@ -151,7 +151,7 @@ class _EmptyPlanView extends StatelessWidget {
                 'Responda um questionário rápido para que nossa IA calcule metas personalizadas e gere uma dieta completa com lista de compras.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: onCard.withOpacity(0.75),
+                  color: onCard.withValues(alpha: 0.75),
                 ),
               ),
               const SizedBox(height: 24),
@@ -305,7 +305,7 @@ class _PlanUpdateSheet extends StatelessWidget {
             Text(
               'Escolha se prefere apenas variar as receitas mantendo as metas atuais ou se quer responder o questionário novamente.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
               ),
             ),
             const SizedBox(height: 20),
@@ -372,7 +372,7 @@ class _WeightHistoryCard extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.6),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 6),
@@ -391,7 +391,7 @@ class _WeightHistoryCard extends StatelessWidget {
     Color deltaColor;
     if (delta.abs() < 0.05) {
       deltaLabel = 'Sem variação relevante';
-      deltaColor = theme.colorScheme.onSurface.withOpacity(0.6);
+      deltaColor = theme.colorScheme.onSurface.withValues(alpha: 0.6);
     } else {
       final prefix = delta > 0 ? '+' : '-';
       deltaLabel = '$prefix${delta.abs().toStringAsFixed(1).replaceAll('.', ',')} kg';
@@ -497,7 +497,7 @@ class _WeightHistoryTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.fitness_center, color: theme.colorScheme.primary.withOpacity(0.8)),
+          Icon(Icons.fitness_center, color: theme.colorScheme.primary.withValues(alpha: 0.8)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -608,7 +608,7 @@ class _PlanStatusCard extends StatelessWidget {
           Text(
             'Peso inicial: ${plan.startingWeightKg.toStringAsFixed(1)} kg · Último registro: ${plan.lastWeighInKg.toStringAsFixed(1)} kg',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 16),
@@ -672,7 +672,7 @@ class _MacroSummaryCard extends StatelessWidget {
           Text(
             plan.hydrationGoal,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -698,7 +698,7 @@ class _HydrationCoachCard extends StatelessWidget {
         child: Text(
           'Ative os lembretes no questionário para receber metas calculadas e avisos de hidratação sem esforço.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       );
@@ -737,7 +737,7 @@ class _HydrationCoachCard extends StatelessWidget {
           Text(
             hydrationPlan.tip,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
           if (reminders.isNotEmpty) ...[
@@ -769,7 +769,7 @@ class _MovementCoachCard extends StatelessWidget {
         child: Text(
           'Ative as pausas ativas no questionário para receber lembretes automáticos de alongamentos e mobilidade.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       );
@@ -787,7 +787,7 @@ class _MovementCoachCard extends StatelessWidget {
           Text(
             info.summary,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
           if (slots.isNotEmpty) ...[
@@ -882,7 +882,7 @@ class _SunlightCoachCard extends StatelessWidget {
         child: Text(
           'Ative o coach de luz natural no questionário para receber lembretes seguros de exposição ao sol.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       );
@@ -917,7 +917,7 @@ class _SunlightCoachCard extends StatelessWidget {
           Text(
             info.message,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
           if (info.benefits.isNotEmpty) ...[
@@ -1008,7 +1008,7 @@ class _MindfulBreakCard extends StatelessWidget {
         child: Text(
           'Quer receber um lembrete diário para alongar e respirar? Ative a pausa de bem-estar no questionário do plano.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       );
@@ -1030,7 +1030,7 @@ class _MindfulBreakCard extends StatelessWidget {
           Text(
             plan.plan.mindfulBreakMessage,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
         ],
@@ -1059,7 +1059,7 @@ class _SleepRoutineCard extends StatelessWidget {
         child: Text(
           'Ative a rotina do sono no questionário para receber um aviso automático antes de dormir e sugestões de relaxamento.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       );
@@ -1096,7 +1096,7 @@ class _SleepRoutineCard extends StatelessWidget {
           Text(
             summary,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
           if (tips.isNotEmpty) ...[
@@ -1120,7 +1120,7 @@ class _SleepRoutineCard extends StatelessWidget {
                       child: Text(
                         tip,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.75),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                         ),
                       ),
                     ),
@@ -1152,7 +1152,7 @@ class _WellnessDigestCard extends StatelessWidget {
         child: Text(
           'Ative o resumo automático para receber um lembrete com os principais destaques do plano antes do próximo check-in.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       );
@@ -1188,7 +1188,7 @@ class _WellnessDigestCard extends StatelessWidget {
             Text(
               digest.summary,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
               ),
             ),
           if (highlights.isNotEmpty) ...[
@@ -1212,7 +1212,7 @@ class _WellnessDigestCard extends StatelessWidget {
                       child: Text(
                         item,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.75),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                         ),
                       ),
                     ),
@@ -1260,7 +1260,7 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.65),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
             ),
           ),
           Text(
@@ -1272,7 +1272,7 @@ class _InfoChip extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+      backgroundColor: theme.colorScheme.surfaceVariant.withValues(alpha: 0.6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     );
   }
@@ -1297,7 +1297,7 @@ class _HydrationReminderTile extends StatelessWidget {
             child: Text(
               '${slot.formattedTime} · ${slot.amountMl} ml',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.8),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
               ),
             ),
           ),
@@ -1384,14 +1384,14 @@ class _DailyFocusCard extends StatelessWidget {
           Text(
             info.dayFocus,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 16),
           Text(
             'Progresso de hoje',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
           const SizedBox(height: 8),
@@ -1400,7 +1400,7 @@ class _DailyFocusCard extends StatelessWidget {
             child: LinearProgressIndicator(
               minHeight: 12,
               value: info.completionRatio.clamp(0.0, 1.0),
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
           ),
@@ -1408,7 +1408,7 @@ class _DailyFocusCard extends StatelessWidget {
           Text(
             '$completionPercent% do dia concluído',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1459,7 +1459,7 @@ class _DailyFocusCard extends StatelessWidget {
             Text(
               'Distribuição estimada de macros',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
               ),
             ),
             const SizedBox(height: 12),
@@ -1474,7 +1474,7 @@ class _DailyFocusCard extends StatelessWidget {
             Text(
               plan.plan.hydrationGoal,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -1507,7 +1507,7 @@ class _DailyMetricTile extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1515,7 +1515,7 @@ class _DailyMetricTile extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.65),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1532,7 +1532,7 @@ class _DailyMetricTile extends StatelessWidget {
             Text(
               subtitle!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
               ),
             ),
           ],
@@ -1542,7 +1542,7 @@ class _DailyMetricTile extends StatelessWidget {
             child: LinearProgressIndicator(
               minHeight: 10,
               value: ratio,
-              backgroundColor: color.withOpacity(0.15),
+              backgroundColor: color.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -1578,7 +1578,7 @@ class _DailyMacroIndicator extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1596,7 +1596,7 @@ class _DailyMacroIndicator extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 10),
@@ -1605,7 +1605,7 @@ class _DailyMacroIndicator extends StatelessWidget {
             child: LinearProgressIndicator(
               minHeight: 10,
               value: ratio.clamp(0.0, 1.0),
-              backgroundColor: color.withOpacity(0.15),
+              backgroundColor: color.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation<Color>(color),
             ),
           ),
@@ -1644,7 +1644,7 @@ class _DailyCoachBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -1667,7 +1667,7 @@ class _DailyCoachBanner extends StatelessWidget {
                 Text(
                   message.subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.75),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                   ),
                 ),
               ],
@@ -1694,11 +1694,11 @@ class _StatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final baseColor = color ?? theme.colorScheme.primary;
-    final textColor = theme.colorScheme.onSurface.withOpacity(0.75);
+    final textColor = theme.colorScheme.onSurface.withValues(alpha: 0.75);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: baseColor.withOpacity(0.12),
+        color: baseColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -1778,7 +1778,7 @@ class _ProgressOverviewCard extends StatelessWidget {
           Text(
             'Progresso geral do ciclo',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
           const SizedBox(height: 8),
@@ -1787,7 +1787,7 @@ class _ProgressOverviewCard extends StatelessWidget {
             child: LinearProgressIndicator(
               minHeight: 12,
               value: ratio,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
             ),
           ),
@@ -1795,7 +1795,7 @@ class _ProgressOverviewCard extends StatelessWidget {
           Text(
             ratioLabel,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1806,7 +1806,7 @@ class _ProgressOverviewCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: (alertColor ?? theme.colorScheme.primary)
-                    .withOpacity(alertColor == theme.colorScheme.error ? 0.12 : 0.15),
+                    .withValues(alpha: alertColor == theme.colorScheme.error ? 0.12 : 0.15),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -1834,7 +1834,7 @@ class _ProgressOverviewCard extends StatelessWidget {
                         Text(
                           alertMessage!,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.72),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                           ),
                         ),
                       ],
@@ -1868,13 +1868,13 @@ class _WeightTrendChart extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+          color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           'Registre pelo menos dois pesos para visualizar a evolução.',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       );
@@ -1934,7 +1934,7 @@ class _WeightTrendPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final backgroundPaint = Paint()
-      ..color = color.withOpacity(0.06)
+      ..color = color.withValues(alpha: 0.06)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Offset.zero & size, backgroundPaint);
 
@@ -1965,7 +1965,7 @@ class _WeightTrendPainter extends CustomPainter {
     }
 
     final gridPaint = Paint()
-      ..color = color.withOpacity(0.18)
+      ..color = color.withValues(alpha: 0.18)
       ..strokeWidth = 1;
     canvas.drawLine(
       Offset(0, size.height - verticalPadding),
@@ -1977,7 +1977,7 @@ class _WeightTrendPainter extends CustomPainter {
         .clamp(0.0, 1.0);
     final baselineY = size.height - verticalPadding - (baselineNormalized * chartHeight);
     final baselinePaint = Paint()
-      ..color = color.withOpacity(0.25)
+      ..color = color.withValues(alpha: 0.25)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
     canvas.drawLine(
@@ -2036,7 +2036,7 @@ class _MacroChip extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 120),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2051,7 +2051,7 @@ class _MacroChip extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           if (subtitle != null) ...[
@@ -2059,7 +2059,7 @@ class _MacroChip extends StatelessWidget {
             Text(
               subtitle!,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.55),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
               ),
             ),
           ],
@@ -2142,7 +2142,7 @@ class _PlanDayTile extends StatelessWidget {
             Text(
               day.focus,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             if (totalCalories != null && targetCalories > 0)
@@ -2153,7 +2153,7 @@ class _PlanDayTile extends StatelessWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: difference != null && difference.abs() > 80
                         ? theme.colorScheme.error
-                        : theme.colorScheme.onSurface.withOpacity(0.7),
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -2166,7 +2166,7 @@ class _PlanDayTile extends StatelessWidget {
                     Text(
                       completionLabel,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -2176,7 +2176,7 @@ class _PlanDayTile extends StatelessWidget {
                         value: completionRatio,
                         minHeight: 6,
                         backgroundColor:
-                            theme.colorScheme.primary.withOpacity(0.12),
+                            theme.colorScheme.primary.withValues(alpha: 0.12),
                         valueColor: AlwaysStoppedAnimation<Color>(
                           theme.colorScheme.primary,
                         ),
@@ -2281,7 +2281,7 @@ class _PlanMealTile extends StatelessWidget {
             const SizedBox(width: 4),
             Icon(
               Icons.restaurant_menu,
-              color: theme.colorScheme.primary.withOpacity(0.8),
+              color: theme.colorScheme.primary.withValues(alpha: 0.8),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -2305,7 +2305,7 @@ class _PlanMealTile extends StatelessWidget {
                       Text(
                         meal.macroFocus!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.65),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                         ),
                       ),
                     ],
@@ -2459,7 +2459,7 @@ class _MealProgressSummary extends StatelessWidget {
           child: LinearProgressIndicator(
             minHeight: 10,
             value: ratio,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.08),
             valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
           ),
         ),
@@ -2467,7 +2467,7 @@ class _MealProgressSummary extends StatelessWidget {
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -2476,7 +2476,7 @@ class _MealProgressSummary extends StatelessWidget {
           Text(
             'Observação: ${note!.trim()}',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.65),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
             ),
           ),
         ],
@@ -2526,7 +2526,7 @@ class _MealLogSheet extends StatelessWidget {
           Text(
             meal.name,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.75),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
             ),
           ),
           const SizedBox(height: 20),
@@ -2556,7 +2556,7 @@ class _MealLogSheet extends StatelessWidget {
                   Text(
                     label,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -2636,7 +2636,7 @@ class _DailyProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             minHeight: 10,
             value: progress > 1 ? 1 : progress,
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(indicatorColor),
           ),
         ),
@@ -2645,7 +2645,7 @@ class _DailyProgressBar extends StatelessWidget {
           differenceLabel,
           style: theme.textTheme.bodySmall?.copyWith(
             color: withinRange
-                ? theme.colorScheme.onSurface.withOpacity(0.7)
+                ? theme.colorScheme.onSurface.withValues(alpha: 0.7)
                 : indicatorColor,
             fontWeight: withinRange ? FontWeight.w500 : FontWeight.w600,
           ),
@@ -2671,7 +2671,7 @@ class _MealMetaChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        color: theme.colorScheme.primary.withOpacity(0.08),
+        color: theme.colorScheme.primary.withValues(alpha: 0.08),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2748,7 +2748,7 @@ class _CheckInCard extends StatelessWidget {
           Text(
             'Próximo registro sugerido: ${plan.nextCheckInAt.day.toString().padLeft(2, '0')}/${plan.nextCheckInAt.month.toString().padLeft(2, '0')}/${plan.nextCheckInAt.year}',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
           if (!canRecord) ...[
@@ -2756,7 +2756,7 @@ class _CheckInCard extends StatelessWidget {
             Text(
               'O check-in será liberado quando o ciclo atual terminar. Continue seguindo o cardápio até a data indicada.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ],
@@ -2819,7 +2819,7 @@ class _PlanSectionCard extends StatelessWidget {
               Text(
                 description!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 20),

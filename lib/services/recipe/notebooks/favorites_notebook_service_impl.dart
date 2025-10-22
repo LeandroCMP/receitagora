@@ -350,7 +350,7 @@ class FavoritesNotebookServiceImpl extends GetxService
     final doc = _userCollection(user.uid).doc();
     final sanitizedTitle = title.trim().isEmpty ? 'Novo caderno' : title.trim();
     final sanitizedDescription = description?.trim();
-    final ownerName = _sessionService.user?.displayName ??
+    final ownerName = _sessionService.user?.name ??
         user.displayName ??
         'Você';
 
@@ -526,7 +526,7 @@ class FavoritesNotebookServiceImpl extends GetxService
     }
 
     final commentId = '${DateTime.now().microsecondsSinceEpoch}';
-    final authorName = _sessionService.user?.displayName ??
+    final authorName = _sessionService.user?.name ??
         user?.displayName ??
         'Colaborador';
 
@@ -566,7 +566,7 @@ class FavoritesNotebookServiceImpl extends GetxService
         'members': FieldValue.arrayUnion(<Map<String, String>>[
           <String, String>{
             'id': user.uid,
-            'name': _sessionService.user?.displayName ??
+            'name': _sessionService.user?.name ??
                 user.displayName ??
                 'Você',
           },
@@ -630,7 +630,7 @@ class FavoritesNotebookServiceImpl extends GetxService
       if (!alreadyMember) {
         members.add(<String, String>{
           'id': user.uid,
-          'name': _sessionService.user?.displayName ??
+          'name': _sessionService.user?.name ??
               user.displayName ??
               'Colaborador',
         });

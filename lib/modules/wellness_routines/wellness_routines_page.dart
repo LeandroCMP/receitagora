@@ -5,6 +5,7 @@ import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
+import 'package:receitagora/services/wellness/wellness_routine_service.dart';
 
 import 'wellness_routines_controller.dart';
 
@@ -106,8 +107,8 @@ class _WellnessIntroCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primaryContainer.withOpacity(0.85),
-            (surfaces?.surface ?? colorScheme.surfaceVariant).withOpacity(0.9),
+            colorScheme.primaryContainer.withValues(alpha: 0.85),
+            (surfaces?.surface ?? colorScheme.surfaceVariant).withValues(alpha: 0.9),
           ],
         ),
       ),
@@ -127,7 +128,7 @@ class _WellnessIntroCard extends StatelessWidget {
             Text(
               'Ative combinações de lembretes que equilibram hidratação, movimento, foco e descanso sem sobrecarregar seu dia.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onPrimary.withOpacity(0.85),
+                color: colorScheme.onPrimary.withValues(alpha: 0.85),
                 height: 1.5,
               ),
             ),
@@ -182,7 +183,7 @@ class _WellnessRoutineCard extends StatelessWidget {
                       Text(
                         routine.description,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.72),
+                          color: colorScheme.onSurface.withValues(alpha: 0.72),
                           height: 1.5,
                         ),
                       ),
@@ -201,7 +202,7 @@ class _WellnessRoutineCard extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 color: (surfaces?.surface ?? colorScheme.surfaceVariant)
-                    .withOpacity(0.55),
+                    .withValues(alpha: 0.55),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -224,7 +225,7 @@ class _WellnessRoutineCard extends StatelessWidget {
                                 child: Text(
                                   highlight,
                                   style: theme.textTheme.bodySmall?.copyWith(
-                                    color: colorScheme.onSurface.withOpacity(0.75),
+                                    color: colorScheme.onSurface.withValues(alpha: 0.75),
                                     height: 1.4,
                                   ),
                                 ),

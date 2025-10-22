@@ -48,7 +48,7 @@ class FavoritesPage extends GetView<FavoritesController> {
             end: Alignment.bottomCenter,
             colors: [
               Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.05),
+                theme.colorScheme.primary.withValues(alpha: 0.05),
                 surfaces?.lowest ?? background,
               ),
               background,
@@ -185,17 +185,17 @@ class _FavoritesHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            theme.colorScheme.primaryContainer.withOpacity(0.85),
-            theme.colorScheme.secondaryContainer.withOpacity(0.55),
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.85),
+            theme.colorScheme.secondaryContainer.withValues(alpha: 0.55),
           ],
         ),
         border: Border.all(
           color:
-              (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4),
+              (surfaces?.high ?? theme.colorScheme.surfaceVariant).withValues(alpha: 0.4),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 12),
           ),
@@ -214,7 +214,7 @@ class _FavoritesHeader extends StatelessWidget {
                   width: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: theme.colorScheme.primary.withOpacity(0.18),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.18),
                   ),
                   child: Icon(
                     Icons.bookmarks_outlined,
@@ -232,7 +232,7 @@ class _FavoritesHeader extends StatelessWidget {
                         style: theme.textTheme.labelLarge?.copyWith(
                           letterSpacing: 0.2,
                           color:
-                              theme.colorScheme.onPrimaryContainer.withOpacity(0.9),
+                              theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.9),
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -265,17 +265,17 @@ class _FavoritesHeader extends StatelessWidget {
                       ),
                     ),
                     backgroundColor:
-                        theme.colorScheme.surface.withOpacity(0.18),
+                        theme.colorScheme.surface.withValues(alpha: 0.18),
                   ),
                   Chip(
                     label: Text(
                       '${analytics.countForTag(activeTag!)} receita${analytics.countForTag(activeTag!) == 1 ? '' : 's'} na categoria',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer.withOpacity(0.9),
+                        color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.9),
                       ),
                     ),
                     backgroundColor:
-                        theme.colorScheme.surface.withOpacity(0.14),
+                        theme.colorScheme.surface.withValues(alpha: 0.14),
                   ),
                 ],
               ),
@@ -284,7 +284,7 @@ class _FavoritesHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface.withOpacity(0.72),
+                color: theme.colorScheme.surface.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -300,7 +300,7 @@ class _FavoritesHeader extends StatelessWidget {
                     child: Text(
                       'Remova com cuidado: ao confirmar, a receita sai da lista instantaneamente.',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.78),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
                         height: 1.45,
                       ),
                     ),
@@ -434,7 +434,7 @@ class _FavoriteRecipeCard extends StatelessWidget {
                     style: theme.textTheme.labelSmall?.copyWith(
                       letterSpacing: 1.2,
                       fontWeight: FontWeight.w600,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -465,7 +465,7 @@ class _FavoriteRecipeCard extends StatelessWidget {
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.74),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.74),
                 height: 1.55,
               ),
             ),
@@ -474,7 +474,7 @@ class _FavoriteRecipeCard extends StatelessWidget {
               'Toque para abrir ingredientes e modo de preparo completo.',
               style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
               ),
             ),
             const SizedBox(height: 18),
@@ -522,11 +522,11 @@ class _FavoriteRecipeCard extends StatelessWidget {
                   ],
                 ),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withOpacity(0.35),
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.05),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                   ),
@@ -560,7 +560,7 @@ class _InfoChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -594,7 +594,7 @@ class _FavoriteTagsFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final infoStyle = theme.textTheme.bodyMedium?.copyWith(
-      color: theme.colorScheme.onSurface.withOpacity(0.7),
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
       height: 1.5,
     );
 
@@ -605,7 +605,7 @@ class _FavoriteTagsFooter extends StatelessWidget {
             avatar: const Icon(Icons.tag, size: 16),
             onPressed: onEdit,
             backgroundColor:
-                theme.colorScheme.secondaryContainer.withOpacity(0.4),
+                theme.colorScheme.secondaryContainer.withValues(alpha: 0.4),
             labelStyle: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSecondaryContainer,
               fontWeight: FontWeight.w600,
@@ -647,7 +647,7 @@ class _FavoriteTagsFooter extends StatelessWidget {
         Text(
           'Você pode cadastrar até ${RecipeFavoritesService.maxTagsPerRecipe} tags por receita.',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],
@@ -740,7 +740,7 @@ class _FavoriteTagEditorDialogState extends State<_FavoriteTagEditorDialog> {
               Text(
                 'Adicione palavras-chave para facilitar buscas futuras.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               )
             else
@@ -888,13 +888,13 @@ class _MetricTile extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
-        color: (surfaces?.high ?? theme.colorScheme.surface).withOpacity(0.92),
+        color: (surfaces?.high ?? theme.colorScheme.surface).withValues(alpha: 0.92),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.12),
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
         ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.04),
+            color: theme.colorScheme.primary.withValues(alpha: 0.04),
             blurRadius: 18,
             offset: const Offset(0, 10),
           ),
@@ -909,7 +909,7 @@ class _MetricTile extends StatelessWidget {
               width: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: theme.colorScheme.primary.withOpacity(0.12),
+                color: theme.colorScheme.primary.withValues(alpha: 0.12),
               ),
               alignment: Alignment.center,
               child: Icon(
@@ -926,7 +926,7 @@ class _MetricTile extends StatelessWidget {
                   Text(
                     data.label,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.72),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                       letterSpacing: 0.1,
                     ),
                   ),
@@ -980,7 +980,7 @@ class _TagFilterSection extends StatelessWidget {
             Text(
               'Selecione uma tag para filtrar rapidamente as receitas que compartilham a mesma categoria.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                 height: 1.45,
               ),
             ),
@@ -1047,7 +1047,7 @@ class _EmptyFilteredFavorites extends StatelessWidget {
                   ? 'Nenhuma receita corresponde ao filtro aplicado.'
                   : 'Não encontramos receitas com a tag "$selectedTag". Experimente limpar o filtro ou adicionar a tag a outras receitas.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.72),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                 height: 1.45,
               ),
             ),
@@ -1110,7 +1110,7 @@ class _EmptyFavorites extends StatelessWidget {
                     'Elas aparecerão aqui para você acessar mais tarde.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.55,
-                      color: theme.colorScheme.onSurface.withOpacity(0.72),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -1164,7 +1164,7 @@ class _GuestNotice extends StatelessWidget {
                   'As receitas favoritas ficam vinculadas à sua conta. Faça login para visualizar ou gerenciar sua lista.',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     height: 1.5,
-                    color: theme.colorScheme.onSurface.withOpacity(0.72),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                   ),
                 ),
                 const SizedBox(height: 24),

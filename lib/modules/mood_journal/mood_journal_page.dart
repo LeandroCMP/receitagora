@@ -124,7 +124,7 @@ class _MoodJournalEmptyState extends StatelessWidget {
             Icon(
               Icons.auto_awesome_outlined,
               size: 88,
-              color: theme.colorScheme.primary.withOpacity(0.4),
+              color: theme.colorScheme.primary.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 24),
             Text(
@@ -137,7 +137,7 @@ class _MoodJournalEmptyState extends StatelessWidget {
               'Acompanhe como você se sente ao cozinhar e veja padrões para ajustar sua rotina.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 height: 1.4,
               ),
             ),
@@ -184,7 +184,7 @@ class _MoodEntryTile extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: color.withOpacity(0.15),
+                backgroundColor: color.withValues(alpha: 0.15),
                 child: Icon(entry.mood.icon, color: color, size: 30),
               ),
               const SizedBox(width: 16),
@@ -200,7 +200,7 @@ class _MoodEntryTile extends StatelessWidget {
                     Text(
                       formatter.format(entry.date),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.65),
+                        color: colorScheme.onSurface.withValues(alpha: 0.65),
                       ),
                     ),
                     if (entry.note != null && entry.note!.isNotEmpty) ...[
@@ -208,7 +208,7 @@ class _MoodEntryTile extends StatelessWidget {
                       Text(
                         entry.note!,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.8),
+                          color: colorScheme.onSurface.withValues(alpha: 0.8),
                           height: 1.35,
                         ),
                       ),
@@ -283,7 +283,7 @@ class _MoodEntrySheetState extends State<_MoodEntrySheet> {
               width: 44,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withOpacity(0.2),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
@@ -321,11 +321,11 @@ class _MoodEntrySheetState extends State<_MoodEntrySheet> {
                           setState(() => selectedMood = level);
                         }
                       },
-                selectedColor: color.withOpacity(0.2),
+                selectedColor: color.withValues(alpha: 0.2),
                 labelStyle: theme.textTheme.labelLarge?.copyWith(
                   color: isSelected
                       ? color
-                      : theme.colorScheme.onSurface.withOpacity(0.8),
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w600,
                 ),
               );

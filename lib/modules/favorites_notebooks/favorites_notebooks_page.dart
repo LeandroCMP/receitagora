@@ -8,6 +8,7 @@ import 'package:receitagora/application/ui/widgets/app_page_background.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/application/utils/app_snackbar.dart';
 import 'package:receitagora/modules/favorites/favorited_recipe_entity.dart';
+import 'package:receitagora/services/recipe/notebooks/favorites_notebook_service.dart';
 
 import 'favorites_notebook_detail_controller.dart';
 import 'favorites_notebooks_controller.dart';
@@ -184,7 +185,7 @@ class FavoritesNotebooksPage extends GetView<FavoritesNotebooksController> {
         },
       ),
       barrierDismissible: false,
-      barrierColor: theme.colorScheme.scrim.withOpacity(0.35),
+      barrierColor: theme.colorScheme.scrim.withValues(alpha: 0.35),
     );
 
     if (result != null) {
@@ -223,7 +224,7 @@ class FavoritesNotebooksPage extends GetView<FavoritesNotebooksController> {
         ],
       ),
       barrierDismissible: false,
-      barrierColor: theme.colorScheme.scrim.withOpacity(0.35),
+      barrierColor: theme.colorScheme.scrim.withValues(alpha: 0.35),
     );
 
     if (result != null && result.isNotEmpty) {
@@ -261,8 +262,8 @@ class _NotebooksIntroCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            colorScheme.primaryContainer.withOpacity(0.85),
-            (surfaces?.surface ?? colorScheme.surfaceVariant).withOpacity(0.9),
+            colorScheme.primaryContainer.withValues(alpha: 0.85),
+            (surfaces?.surface ?? colorScheme.surfaceVariant).withValues(alpha: 0.9),
           ],
         ),
       ),
@@ -282,7 +283,7 @@ class _NotebooksIntroCard extends StatelessWidget {
             Text(
               'Agrupe favoritos por tema, marque comentários rápidos e compartilhe um código para montar cardápios colaborativos.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onPrimary.withOpacity(0.85),
+                color: colorScheme.onPrimary.withValues(alpha: 0.85),
                 height: 1.5,
               ),
             ),
@@ -347,7 +348,7 @@ class _NotebookCard extends StatelessWidget {
                       Text(
                         notebook.description ?? 'Sem descrição. Use este espaço para resumir o objetivo do caderno.',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.7),
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                           height: 1.5,
                         ),
                       ),
@@ -399,14 +400,14 @@ class _NotebookCard extends StatelessWidget {
                     (name) => Chip(
                       label: Text(name),
                       backgroundColor:
-                          colorScheme.surfaceVariant.withOpacity(0.45),
+                          colorScheme.surfaceVariant.withValues(alpha: 0.45),
                     ),
                   ),
                   if (remaining > 0)
                     Chip(
                       label: Text('+$remaining'),
                       backgroundColor:
-                          colorScheme.surfaceVariant.withOpacity(0.3),
+                          colorScheme.surfaceVariant.withValues(alpha: 0.3),
                     ),
                 ],
               ),
@@ -487,7 +488,7 @@ class _InfoChip extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.55),
+        color: colorScheme.surfaceVariant.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Padding(
@@ -500,7 +501,7 @@ class _InfoChip extends StatelessWidget {
             Text(
               label,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurface.withOpacity(0.75),
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
               ),
             ),
           ],
@@ -524,7 +525,7 @@ class _EmptyNotebooks extends StatelessWidget {
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        color: (surfaces?.surface ?? colorScheme.surfaceVariant).withOpacity(0.6),
+        color: (surfaces?.surface ?? colorScheme.surfaceVariant).withValues(alpha: 0.6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -543,7 +544,7 @@ class _EmptyNotebooks extends StatelessWidget {
           Text(
             'Agrupe receitas favoritas em coleções temáticas e convide outras pessoas para comentar.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.72),
+              color: colorScheme.onSurface.withValues(alpha: 0.72),
               height: 1.5,
             ),
             textAlign: TextAlign.center,

@@ -149,7 +149,7 @@ class ShoppingListDetailPage extends GetView<ShoppingListDetailController> {
           ),
         ],
       ),
-      barrierColor: theme.colorScheme.scrim.withOpacity(0.35),
+      barrierColor: theme.colorScheme.scrim.withValues(alpha: 0.35),
     );
 
     if (result != null) {
@@ -197,7 +197,7 @@ class _ListMetadataCard extends StatelessWidget {
                   child: Text(
                     'Criada em $formattedCreated • Atualizada em $formattedUpdated',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.7),
+                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -207,7 +207,7 @@ class _ListMetadataCard extends StatelessWidget {
             DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: colorScheme.primaryContainer.withOpacity(0.35),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.35),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -248,7 +248,7 @@ class _ListMetadataCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: (surfaces?.surface ?? colorScheme.surfaceVariant)
-                      .withOpacity(0.6),
+                      .withValues(alpha: 0.6),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -305,9 +305,9 @@ class _ViewModeSelector extends StatelessWidget {
         style: ButtonStyle(
           backgroundColor: MaterialStateProperty.resolveWith((states) {
             if (states.contains(MaterialState.selected)) {
-              return theme.colorScheme.primary.withOpacity(0.15);
+              return theme.colorScheme.primary.withValues(alpha: 0.15);
             }
-            return theme.colorScheme.surfaceVariant.withOpacity(0.4);
+            return theme.colorScheme.surfaceVariant.withValues(alpha: 0.4);
           }),
         ),
       );
@@ -392,7 +392,7 @@ class _RecipeView extends StatelessWidget {
                           ? Text(
                               item.recipeName,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.65),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                               ),
                             )
                           : null,
@@ -477,7 +477,7 @@ class _MarketView extends StatelessWidget {
                       subtitle: Text(
                         item.recipeSummary,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.65),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                         ),
                       ),
                     ),
@@ -503,7 +503,7 @@ class _EmptyState extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(24),

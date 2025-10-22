@@ -273,7 +273,7 @@ class RecipeDetailPage extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.05),
+                theme.colorScheme.primary.withValues(alpha: 0.05),
                 surfaces?.lowest ?? background,
               ),
               background,
@@ -355,11 +355,11 @@ class _OverviewSection extends StatelessWidget {
         final baseSurface = surfaces?.high ?? theme.colorScheme.surface;
         final cardColors = [
           Color.alphaBlend(
-            theme.colorScheme.primary.withOpacity(0.08),
+            theme.colorScheme.primary.withValues(alpha: 0.08),
             baseSurface,
           ),
           Color.alphaBlend(
-            theme.colorScheme.secondary.withOpacity(0.04),
+            theme.colorScheme.secondary.withValues(alpha: 0.04),
             baseSurface,
           ),
         ];
@@ -417,7 +417,7 @@ class _OverviewSection extends StatelessWidget {
               Text(
                 description,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.78),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.78),
                   height: 1.55,
                 ),
               ),
@@ -435,11 +435,11 @@ class _OverviewSection extends StatelessWidget {
             ),
             border: Border.all(
               color: (surfaces?.high ?? theme.colorScheme.surfaceVariant)
-                  .withOpacity(0.35),
+                  .withValues(alpha: 0.35),
             ),
             boxShadow: [
               BoxShadow(
-                color: theme.colorScheme.shadow.withOpacity(0.05),
+                color: theme.colorScheme.shadow.withValues(alpha: 0.05),
                 blurRadius: 20,
                 offset: const Offset(0, 14),
               ),
@@ -491,10 +491,10 @@ class _OverviewStatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.85),
+        color: theme.colorScheme.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.12),
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
         ),
       ),
       child: Row(
@@ -505,7 +505,7 @@ class _OverviewStatChip extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.8),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -525,10 +525,10 @@ class _OverviewBadge extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withOpacity(0.12),
+        color: theme.colorScheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: theme.colorScheme.primary.withOpacity(0.24),
+          color: theme.colorScheme.primary.withValues(alpha: 0.24),
         ),
       ),
       child: Padding(
@@ -579,7 +579,7 @@ class _IngredientsSection extends StatelessWidget {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.12),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -594,7 +594,7 @@ class _IngredientsSection extends StatelessWidget {
                       ingredient,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         height: 1.55,
-                        color: theme.colorScheme.onSurface.withOpacity(0.8),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -639,8 +639,8 @@ class _StepsSection extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          theme.colorScheme.primary.withOpacity(0.18),
-                          theme.colorScheme.secondary.withOpacity(0.18),
+                          theme.colorScheme.primary.withValues(alpha: 0.18),
+                          theme.colorScheme.secondary.withValues(alpha: 0.18),
                         ],
                       ),
                     ),
@@ -658,7 +658,7 @@ class _StepsSection extends StatelessWidget {
                       step,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         height: 1.6,
-                        color: theme.colorScheme.onSurface.withOpacity(0.85),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
                       ),
                     ),
                   ),
@@ -689,7 +689,7 @@ class _DetailCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.03),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.03),
             blurRadius: 18,
             offset: const Offset(0, 12),
           ),
