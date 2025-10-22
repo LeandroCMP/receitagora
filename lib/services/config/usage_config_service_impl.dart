@@ -47,10 +47,8 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
     _isInitializing = true;
 
     try {
-      final hasRemoteConfig = await _loadInitialConfig();
-      if (hasRemoteConfig) {
-        _listenForUpdates();
-      }
+      await _loadInitialConfig();
+      _listenForUpdates();
     } finally {
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
@@ -59,7 +57,7 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
     }
   }
 
-  Future<bool> _loadInitialConfig() async {
+  Future<void> _loadInitialConfig() async {
     try {
       final snapshot = await _firestore.doc(_documentPath).get();
       if (snapshot.exists) {
@@ -68,13 +66,11 @@ class UsageConfigServiceImpl extends GetxService implements UsageConfigService {
           _config.value = UsageConfig.fromMap(data, _config.value);
         }
       }
-      return true;
     } on FirebaseException catch (error, stackTrace) {
       await _loadFallbackConfig(error, stackTrace);
     } catch (error, stackTrace) {
       await _loadFallbackConfig(error, stackTrace);
     }
-    return false;
   }
 
   void _listenForUpdates() {
