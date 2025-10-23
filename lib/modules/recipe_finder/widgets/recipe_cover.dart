@@ -28,7 +28,7 @@ class RecipeCover extends StatelessWidget {
     final tertiary = theme.colorScheme.tertiary;
     final surfaces = theme.extension<ReceitagoraSurfaceColors>();
     final outline =
-        (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.45);
+        (surfaces?.high ?? theme.colorScheme.surfaceVariant).withValues(alpha: 0.45);
 
     return Hero(
       tag: heroTag,
@@ -41,14 +41,14 @@ class RecipeCover extends StatelessWidget {
             center: const Alignment(-0.2, -0.25),
             radius: 0.85,
             colors: [
-              highlight.withOpacity(0.85),
-              secondary.withOpacity(0.55),
-              tertiary.withOpacity(0.45),
+              highlight.withValues(alpha: 0.85),
+              secondary.withValues(alpha: 0.55),
+              tertiary.withValues(alpha: 0.45),
             ],
           ),
           boxShadow: [
             BoxShadow(
-              color: highlight.withOpacity(0.24),
+              color: highlight.withValues(alpha: 0.24),
               blurRadius: 28,
               offset: const Offset(0, 18),
             ),
@@ -65,8 +65,8 @@ class RecipeCover extends StatelessWidget {
                     center: const Alignment(-0.35, -0.4),
                     radius: 1.05,
                     colors: [
-                      Colors.white.withOpacity(0.18),
-                      Colors.white.withOpacity(0.02),
+                      Colors.white.withValues(alpha: 0.18),
+                      Colors.white.withValues(alpha: 0.02),
                     ],
                   ),
                 ),
@@ -83,17 +83,17 @@ class RecipeCover extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      theme.colorScheme.onPrimary.withOpacity(0.22),
-                      Colors.white.withOpacity(0.08),
+                      theme.colorScheme.onPrimary.withValues(alpha: 0.22),
+                      Colors.white.withValues(alpha: 0.08),
                     ],
                   ),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.35),
+                    color: Colors.white.withValues(alpha: 0.35),
                     width: 1.4,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: Colors.black.withValues(alpha: 0.08),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
@@ -114,11 +114,11 @@ class RecipeCover extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: highlight.withOpacity(0.22),
+                        color: highlight.withValues(alpha: 0.22),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),

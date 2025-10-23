@@ -121,7 +121,7 @@ class _BrandHeader extends StatelessWidget {
                     'Descubra combinações pensadas para o seu momento e organize suas favoritas.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontSize: bodySize,
-                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.78),
+                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.78),
                       height: 1.55,
                     ),
                   ),
@@ -134,11 +134,11 @@ class _BrandHeader extends StatelessWidget {
                   alignment: Alignment.center,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface.withOpacity(0.94),
+                      color: theme.colorScheme.surface.withValues(alpha: 0.94),
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withOpacity(0.15),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.15),
                           blurRadius: 24,
                           offset: const Offset(0, 14),
                         ),
@@ -237,7 +237,7 @@ class _LoginOptions extends StatelessWidget {
                   Text(
                     'Experimente duas buscas por dia com sugestões curadas e veja como a experiência funciona antes de criar sua conta.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       height: 1.5,
                     ),
                   ),
@@ -302,7 +302,7 @@ class _LoginOptions extends StatelessWidget {
                   Text(
                     'Sincronize favoritos, histórico e preferências em todos os dispositivos. Você poderá ajustar seu perfil logo após o login.',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       height: 1.5,
                     ),
                   ),
@@ -377,7 +377,7 @@ class _PrivacyNote extends StatelessWidget {
     return Text(
       'Ao continuar, você concorda em compartilhar seu nome e e-mail apenas para manter seu perfil e seus favoritos sincronizados. Podemos enviar atualizações sobre novidades e dicas sazonais.',
       style: theme.textTheme.bodySmall?.copyWith(
-        color: theme.colorScheme.onSurface.withOpacity(0.6),
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
         height: 1.5,
       ),
       textAlign: TextAlign.center,

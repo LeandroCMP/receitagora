@@ -28,7 +28,7 @@ class NutritionShoppingListPage extends GetView<NutritionPlanController> {
                 child: Text(
                   'Gere um plano nutricional para visualizar a lista de compras detalhada.',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -127,7 +127,7 @@ class _ShoppingItemTile extends StatelessWidget {
                 Text(
                   item.quantity,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 if (item.notes != null && item.notes!.isNotEmpty) ...[
@@ -135,7 +135,7 @@ class _ShoppingItemTile extends StatelessWidget {
                   Text(
                     item.notes!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.65),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                     ),
                   ),
                 ],
@@ -160,7 +160,7 @@ class _ShoppingItemTile extends StatelessWidget {
                             child: Text(
                               alternative,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                           ),
@@ -174,7 +174,7 @@ class _ShoppingItemTile extends StatelessWidget {
                   Text(
                     item.substitutionNote!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.65),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                     ),
                   ),
                 ],

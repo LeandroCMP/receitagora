@@ -28,7 +28,7 @@ class AppPageBackground extends StatelessWidget {
           center: highlightAlignment,
           radius: 1.05,
           colors: [
-            theme.colorScheme.primary.withOpacity(0.26),
+            theme.colorScheme.primary.withValues(alpha: 0.26),
             surfaces?.lowest ?? theme.colorScheme.background,
           ],
           stops: const [0.0, 1.0],
@@ -41,7 +41,7 @@ class AppPageBackground extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               (surfaces?.highest ?? theme.colorScheme.background)
-                  .withOpacity(0.96),
+                  .withValues(alpha: 0.96),
               surfaces?.surface ?? theme.colorScheme.surface,
             ],
           ),
@@ -60,7 +60,7 @@ class AppPageBackground extends StatelessWidget {
                       center: const Alignment(0, 0),
                       radius: 0.9,
                       colors: [
-                        theme.colorScheme.tertiary.withOpacity(0.16),
+                        theme.colorScheme.tertiary.withValues(alpha: 0.16),
                         Colors.transparent,
                       ],
                     ),

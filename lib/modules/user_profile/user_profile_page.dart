@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:receitagora/application/routes/app_routes.dart';
 import 'package:receitagora/application/ui/theme_extensions.dart';
 import 'package:receitagora/application/utils/app_layout.dart';
 import 'package:receitagora/models/subscription_plan.dart';
 import 'package:receitagora/models/user_model.dart';
+import 'package:receitagora/services/usage/app_usage_service.dart';
+import 'package:receitagora/services/skill/skill_journey_service.dart';
+import 'package:receitagora/services/wellness/wellness_routine_service.dart';
+import 'package:receitagora/services/wellness/mood_journal_service.dart';
+import 'package:receitagora/services/restaurants/restaurant_discovery_service.dart';
 
 import 'user_profile_controller.dart';
 
@@ -47,7 +53,7 @@ class UserProfilePage extends GetView<UserProfileController> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Color.alphaBlend(
-                    theme.colorScheme.primary.withOpacity(0.05),
+                    theme.colorScheme.primary.withValues(alpha: 0.05),
                     surfaces?.lowest ?? background,
                   ),
                   background,
@@ -109,6 +115,20 @@ class _ProfileContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = controller.user;
+    final usageService =
+        Get.isRegistered<AppUsageService>() ? Get.find<AppUsageService>() : null;
+    final wellnessService = Get.isRegistered<WellnessRoutineService>()
+        ? Get.find<WellnessRoutineService>()
+        : null;
+    final moodJournalService = Get.isRegistered<MoodJournalService>()
+        ? Get.find<MoodJournalService>()
+        : null;
+    final skillJourneyService = Get.isRegistered<SkillJourneyService>()
+        ? Get.find<SkillJourneyService>()
+        : null;
+    final restaurantService = Get.isRegistered<RestaurantDiscoveryService>()
+        ? Get.find<RestaurantDiscoveryService>()
+        : null;
 
     if (user == null) {
       return Center(
@@ -134,6 +154,27 @@ class _ProfileContent extends StatelessWidget {
           controller: controller,
           isOnboarding: isOnboarding,
         ),
+        if (usageService != null) ...[
+          const SizedBox(height: 24),
+          _UsageInsightsCard(theme: theme, usageService: usageService),
+        ],
+        if (wellnessService != null) ...[
+          const SizedBox(height: 24),
+          _WellnessRoutinesCallout(theme: theme),
+        ],
+        if (moodJournalService != null) ...[
+          const SizedBox(height: 24),
+          _MoodJournalCallout(theme: theme),
+        ],
+        if (skillJourneyService != null) ...[
+          const SizedBox(height: 24),
+          _SkillJourneysCallout(theme: theme),
+        ],
+        if (restaurantService != null) ...[
+          const SizedBox(height: 24),
+          _RestaurantDiscoveryCallout(theme: theme),
+        ],
+        const SizedBox(height: 24),
         _AccountDetailsCard(theme: theme, user: user),
         const SizedBox(height: 24),
         _ProfileActions(theme: theme, controller: controller),
@@ -160,8 +201,8 @@ class _ProfileHeader extends StatelessWidget {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        colorScheme.primaryContainer.withOpacity(0.95),
-        colorScheme.primary.withOpacity(0.9),
+        colorScheme.primaryContainer.withValues(alpha: 0.95),
+        colorScheme.primary.withValues(alpha: 0.9),
       ],
     );
 
@@ -195,7 +236,7 @@ class _ProfileHeader extends StatelessWidget {
                     : 'Revise seus dados, personalize seu nome e gerencie sua sessão.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onPrimary.withOpacity(0.85),
+                  color: colorScheme.onPrimary.withValues(alpha: 0.85),
                 ),
               ),
             ],
@@ -236,7 +277,7 @@ class _ProfileHeader extends StatelessWidget {
                           user.email,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             fontSize: emailSize,
-                            color: theme.colorScheme.onSurface.withOpacity(0.7),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                         if (user.hasBio) ...[
@@ -245,7 +286,7 @@ class _ProfileHeader extends StatelessWidget {
                             user.bio!,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontSize: bioSize,
-                              color: theme.colorScheme.onSurface.withOpacity(0.72),
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                               height: 1.5,
                             ),
                           ),
@@ -348,7 +389,7 @@ class _ProfileFormCard extends StatelessWidget {
               Text(
                 'Este nome aparece nas telas, no card compartilhado e em sugestões personalizadas.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 24),
@@ -379,7 +420,7 @@ class _ProfileFormCard extends StatelessWidget {
               Text(
                 'Use esta área para compartilhar preferências gerais, restrições ou o que mais representa seu estilo na cozinha.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 16),
@@ -470,7 +511,7 @@ class _OnboardingNotice extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      color: theme.colorScheme.primaryContainer.withOpacity(0.35),
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -487,7 +528,7 @@ class _OnboardingNotice extends StatelessWidget {
             Text(
               'Revise seu nome e, se quiser, adicione bio e preferências. Essas informações deixam as recomendações mais relevantes, e você pode alterá-las depois.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onPrimaryContainer.withOpacity(0.85),
+                color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.85),
                 height: 1.45,
               ),
             ),
@@ -544,7 +585,7 @@ class _PreferenceSection extends StatelessWidget {
           Text(
             description,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               height: 1.45,
             ),
           ),
@@ -560,7 +601,7 @@ class _PreferenceSection extends StatelessWidget {
             Text(
               'Itens personalizados',
               style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
               ),
             ),
             const SizedBox(height: 8),
@@ -590,6 +631,706 @@ class _PreferenceSection extends StatelessWidget {
       );
     });
   }
+}
+
+class _UsageInsightsCard extends StatelessWidget {
+  const _UsageInsightsCard({
+    required this.theme,
+    required this.usageService,
+  });
+
+  final ThemeData theme;
+  final AppUsageService usageService;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final surfaces = theme.extension<ReceitagoraSurfaceColors>();
+
+    return StreamBuilder<AppUsageMetrics>(
+      stream: usageService.metricsStream,
+      initialData: usageService.metrics,
+      builder: (context, snapshot) {
+        final metrics = snapshot.data ?? usageService.metrics;
+
+        final currentStreakText = _formatDayCount(metrics.currentStreak);
+        final longestStreakText = _formatDayCount(metrics.longestStreak);
+        final totalOpensText = _formatCount(metrics.totalOpens, 'abertura');
+        final lastOpenText = _formatLastOpen(metrics.lastOpenDate);
+
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          elevation: 0,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Seu ritmo no app',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Acompanhe sua sequência de dias ativos e veja quando foi a última vez que explorou receitas.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final maxWidth = constraints.maxWidth;
+                    final itemWidth = maxWidth >= 520 ? 240.0 : maxWidth;
+                    return Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.local_fire_department_outlined,
+                          title: currentStreakText,
+                          subtitle: 'Sequência atual',
+                          backgroundColor:
+                              (surfaces?.surface ?? colorScheme.surfaceVariant)
+                                  .withValues(alpha: 0.6),
+                          width: itemWidth,
+                        ),
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.emoji_events_outlined,
+                          title: longestStreakText,
+                          subtitle: 'Recorde pessoal',
+                          backgroundColor:
+                              colorScheme.primaryContainer.withValues(alpha: 0.45),
+                          width: itemWidth,
+                        ),
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.auto_graph_rounded,
+                          title: totalOpensText,
+                          subtitle: 'Aberturas totais',
+                          backgroundColor:
+                              colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                          width: itemWidth,
+                        ),
+                        _UsageMetricTile(
+                          theme: theme,
+                          icon: Icons.schedule_outlined,
+                          title: lastOpenText,
+                          subtitle: 'Último acesso',
+                          backgroundColor:
+                              colorScheme.tertiaryContainer.withValues(alpha: 0.45),
+                          width: itemWidth,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                _UsageAchievementsSection(
+                  theme: theme,
+                  achievements: _buildUsageAchievements(metrics),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDayCount(int value) {
+    final sanitized = value < 0 ? 0 : value;
+    if (sanitized == 1) {
+      return '1 dia';
+    }
+    return '$sanitized dias';
+  }
+
+  String _formatCount(int value, String noun) {
+    final sanitized = value < 0 ? 0 : value;
+    if (sanitized == 1) {
+      return '1 $noun';
+    }
+    return '$sanitized ${noun}s';
+  }
+
+  String _formatLastOpen(DateTime? date) {
+    if (date == null) {
+      return 'Ainda não registrado';
+    }
+    final local = date.toLocal();
+    final today = DateTime.now();
+    final normalizedToday = DateTime(today.year, today.month, today.day);
+    final normalizedDate =
+        DateTime(local.year, local.month, local.day);
+    final difference = normalizedToday.difference(normalizedDate).inDays;
+
+    if (difference == 0) {
+      return 'Hoje';
+    }
+    if (difference == 1) {
+      return 'Ontem';
+    }
+    final day = local.day.toString().padLeft(2, '0');
+    final month = local.month.toString().padLeft(2, '0');
+    final year = local.year.toString();
+    return '$day/$month/$year';
+  }
+}
+
+class _UsageMetricTile extends StatelessWidget {
+  const _UsageMetricTile({
+    required this.theme,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.backgroundColor,
+    required this.width,
+  });
+
+  final ThemeData theme;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color backgroundColor;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: width),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: colorScheme.onPrimaryContainer),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UsageAchievementsSection extends StatelessWidget {
+  const _UsageAchievementsSection({
+    required this.theme,
+    required this.achievements,
+  });
+
+  final ThemeData theme;
+  final List<_UsageAchievement> achievements;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final unlocked = achievements.where((item) => item.unlocked).toList();
+    final upcoming = achievements
+        .where((item) => !item.unlocked)
+        .toList()
+      ..sort((a, b) => a.progress.compareTo(b.progress));
+
+    if (unlocked.isEmpty && upcoming.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (unlocked.isNotEmpty) ...[
+          Text(
+            'Conquistas desbloqueadas',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: unlocked
+                .map(
+                  (achievement) => Chip(
+                    avatar: Icon(
+                      achievement.icon,
+                      color: colorScheme.onPrimaryContainer,
+                    ),
+                    label: Text(achievement.title),
+                    backgroundColor:
+                        colorScheme.primaryContainer.withValues(alpha: 0.4),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 20),
+        ],
+        if (upcoming.isNotEmpty) ...[
+          Text(
+            'Próximas metas',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...upcoming.take(3).map(
+                (achievement) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _AchievementProgressCard(
+                    theme: theme,
+                    achievement: achievement,
+                  ),
+                ),
+              ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AchievementProgressCard extends StatelessWidget {
+  const _AchievementProgressCard({
+    required this.theme,
+    required this.achievement,
+  });
+
+  final ThemeData theme;
+  final _UsageAchievement achievement;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+    final percent = (achievement.progress * 100).clamp(0, 100).round();
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: colorScheme.surfaceVariant.withValues(alpha: 0.55),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(achievement.icon, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        achievement.title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        achievement.description,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.75),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${achievement.current}/${achievement.target}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: achievement.progress.clamp(0, 1),
+                minHeight: 6,
+                backgroundColor:
+                    colorScheme.surface.withValues(alpha: 0.4),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  colorScheme.primary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$percent% concluído',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.65),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UsageAchievement {
+  const _UsageAchievement({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.unlocked,
+    required this.progress,
+    required this.current,
+    required this.target,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final IconData icon;
+  final bool unlocked;
+  final double progress;
+  final int current;
+  final int target;
+}
+
+class _WellnessRoutinesCallout extends StatelessWidget {
+  const _WellnessRoutinesCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.self_improvement_outlined, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Rotinas guiadas de bem-estar',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Combine lembretes automáticos de hidratação, pausas ativas e preparo para o sono em pacotes prontos.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.72),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.wellnessRoutines),
+              icon: const Icon(Icons.tune_outlined),
+              label: const Text('Configurar rotinas'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MoodJournalCallout extends StatelessWidget {
+  const _MoodJournalCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.favorite_border, color: colorScheme.secondary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Diário de bem-estar',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Registre como você se sente ao cozinhar e acompanhe sua energia ao longo da semana.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.tonalIcon(
+              onPressed: () => Get.toNamed(AppRoutes.moodJournal),
+              icon: const Icon(Icons.edit_note_outlined),
+              label: const Text('Abrir diário'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkillJourneysCallout extends StatelessWidget {
+  const _SkillJourneysCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.menu_book_outlined, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Trilhas de habilidades',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Siga sequências guiadas para evoluir técnicas, organizar rotinas e ganhar confiança na cozinha.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.skillJourneys),
+              icon: const Icon(Icons.map_outlined),
+              label: const Text('Explorar trilhas'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RestaurantDiscoveryCallout extends StatelessWidget {
+  const _RestaurantDiscoveryCallout({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.map_outlined, color: colorScheme.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Mapa de restaurantes recomendados',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Descubra restaurantes perto de você ou em outra cidade com cardápios alinhados ao seu plano ou à vontade do momento.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withValues(alpha: 0.75),
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => Get.toNamed(AppRoutes.restaurantDiscovery),
+              icon: const Icon(Icons.near_me_outlined),
+              label: const Text('Abrir mapa de restaurantes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _UsageAchievementDefinition {
+  const _UsageAchievementDefinition({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.target,
+    required this.metricResolver,
+  });
+
+  final String id;
+  final String title;
+  final String description;
+  final IconData icon;
+  final int target;
+  final int Function(AppUsageMetrics) metricResolver;
+}
+
+List<_UsageAchievement> _buildUsageAchievements(AppUsageMetrics metrics) {
+  int _sanitize(int value) => value < 0 ? 0 : value;
+
+  final definitions = <_UsageAchievementDefinition>[
+    _UsageAchievementDefinition(
+      id: 'streak_start',
+      title: 'Primeiros passos',
+      description: 'Complete 3 dias seguidos de uso para solidificar o hábito.',
+      icon: Icons.flag_outlined,
+      target: 3,
+      metricResolver: (value) => value.currentStreak,
+    ),
+    _UsageAchievementDefinition(
+      id: 'streak_week',
+      title: 'Semana consistente',
+      description: 'Bata o recorde de 7 dias consecutivos explorando receitas.',
+      icon: Icons.calendar_month_outlined,
+      target: 7,
+      metricResolver: (value) => value.longestStreak,
+    ),
+    _UsageAchievementDefinition(
+      id: 'streak_pro',
+      title: 'Rotina campeã',
+      description:
+          'Mantenha 14 dias de sequência para mostrar que a cozinha já faz parte do seu dia a dia.',
+      icon: Icons.local_fire_department_outlined,
+      target: 14,
+      metricResolver: (value) => value.longestStreak,
+    ),
+    _UsageAchievementDefinition(
+      id: 'opener_explorer',
+      title: 'Explorador',
+      description: 'Abra o Receitagora 10 vezes para desbloquear mais sugestões.',
+      icon: Icons.travel_explore_outlined,
+      target: 10,
+      metricResolver: (value) => value.totalOpens,
+    ),
+    _UsageAchievementDefinition(
+      id: 'opener_master',
+      title: 'Maratona gourmet',
+      description: 'Chegue a 30 aberturas acumuladas e mantenha o ritmo criativo.',
+      icon: Icons.bolt_outlined,
+      target: 30,
+      metricResolver: (value) => value.totalOpens,
+    ),
+    _UsageAchievementDefinition(
+      id: 'fresh_today',
+      title: 'Dia em dia',
+      description: 'Volte hoje mesmo para não deixar sua sequência esfriar.',
+      icon: Icons.refresh_outlined,
+      target: 1,
+      metricResolver: (value) {
+        final lastOpen = value.lastOpenDate;
+        if (lastOpen == null) {
+          return 0;
+        }
+        final local = lastOpen.toLocal();
+        final today = DateTime.now();
+        if (local.year == today.year &&
+            local.month == today.month &&
+            local.day == today.day) {
+          return 1;
+        }
+        return 0;
+      },
+    ),
+  ];
+
+  return definitions.map((definition) {
+    final currentValue = _sanitize(definition.metricResolver(metrics));
+    final progress = currentValue / definition.target;
+    return _UsageAchievement(
+      id: definition.id,
+      title: definition.title,
+      description: definition.description,
+      icon: definition.icon,
+      unlocked: currentValue >= definition.target,
+      progress: progress.isFinite ? progress : 0,
+      current: currentValue,
+      target: definition.target,
+    );
+  }).toList();
 }
 
 class _AccountDetailsCard extends StatelessWidget {
@@ -656,7 +1397,7 @@ class _ProfileActions extends StatelessWidget {
         Text(
           'Caso queira usar outra conta, você pode encerrar esta sessão a qualquer momento.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 24),
@@ -711,7 +1452,7 @@ class _ProfileActions extends StatelessWidget {
                 subtitle: Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
                 trailing: trailing,
@@ -779,7 +1520,7 @@ class _Avatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return CircleAvatar(
       radius: 42,
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
       backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
           ? NetworkImage(user.avatarUrl!)
           : null,
@@ -819,8 +1560,8 @@ class _InfoChip extends StatelessWidget {
     final theme = Theme.of(context);
     return Chip(
       avatar: Icon(icon, size: 18, color: theme.colorScheme.primary),
-      backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
-      side: BorderSide(color: theme.colorScheme.primary.withOpacity(0.12)),
+      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.08),
+      side: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.12)),
       label: Text(
         label,
         style: theme.textTheme.labelMedium?.copyWith(
@@ -853,7 +1594,7 @@ class _InfoTile extends StatelessWidget {
       title: Text(
         label,
         style: theme.textTheme.labelMedium?.copyWith(
-          color: theme.colorScheme.onSurface.withOpacity(0.7),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           fontWeight: FontWeight.w600,
         ),
       ),

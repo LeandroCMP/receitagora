@@ -46,7 +46,7 @@ class SplashPage extends GetView<SplashController> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.22),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.22),
                         blurRadius: 34,
                         offset: const Offset(0, 20),
                       ),
@@ -71,7 +71,7 @@ class SplashPage extends GetView<SplashController> {
                 Text(
                   'Sabores afetivos, criatividade e praticidade em cada sugestão.',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onBackground.withOpacity(0.68),
+                    color: theme.colorScheme.onBackground.withValues(alpha: 0.68),
                     height: 1.5,
                   ),
                   textAlign: TextAlign.center,

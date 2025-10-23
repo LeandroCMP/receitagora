@@ -215,7 +215,7 @@ class RecipeResultsPage extends StatelessWidget {
                                                 color: isAuthenticated && isFavorite
                                                     ? theme.colorScheme.primary
                                                     : theme.colorScheme.onSurface
-                                                        .withOpacity(
+                                                        .withValues(alpha: 
                                                             isAuthenticated ? 0.6 : 0.35),
                                               ),
                                               onPressed: () => toggleFavorite(recipe),
@@ -259,21 +259,21 @@ class _ResultsSummaryCard extends StatelessWidget {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        theme.colorScheme.primary.withOpacity(0.26),
+        theme.colorScheme.primary.withValues(alpha: 0.26),
         (surfaces?.low ?? theme.colorScheme.primaryContainer)
-            .withOpacity(0.85),
+            .withValues(alpha: 0.85),
       ],
     );
 
     final foregroundColor = theme.colorScheme.onPrimaryContainer;
-    final shadowColor = theme.colorScheme.primary.withOpacity(0.16);
+    final shadowColor = theme.colorScheme.primary.withValues(alpha: 0.16);
 
     return Container(
       decoration: BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withOpacity(0.45),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.45),
         ),
         boxShadow: [
           BoxShadow(
@@ -296,9 +296,9 @@ class _ResultsSummaryCard extends StatelessWidget {
                   width: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: theme.colorScheme.primary.withOpacity(0.2),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
                     border: Border.all(
-                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.12),
+                      color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.12),
                     ),
                   ),
                   child: Icon(
@@ -323,7 +323,7 @@ class _ResultsSummaryCard extends StatelessWidget {
                       Text(
                         'Receitas alinhadas aos ingredientes escolhidos para hoje.',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: foregroundColor.withOpacity(0.72),
+                          color: foregroundColor.withValues(alpha: 0.72),
                           height: 1.42,
                         ),
                       ),
@@ -335,7 +335,7 @@ class _ResultsSummaryCard extends StatelessWidget {
             const SizedBox(height: 22),
             Divider(
               height: 1,
-              color: foregroundColor.withOpacity(0.16),
+              color: foregroundColor.withValues(alpha: 0.16),
             ),
             const SizedBox(height: 22),
             if (args.ingredients.isEmpty)
@@ -344,13 +344,13 @@ class _ResultsSummaryCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onPrimaryContainer.withOpacity(0.12),
+                  color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Text(
                   'Nenhum ingrediente informado nesta busca.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: foregroundColor.withOpacity(0.78),
+                    color: foregroundColor.withValues(alpha: 0.78),
                   ),
                 ),
               )
@@ -400,10 +400,10 @@ class _IngredientPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withOpacity(0.35),
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: foregroundColor.withOpacity(0.22),
+          color: foregroundColor.withValues(alpha: 0.22),
         ),
       ),
       child: Row(
@@ -440,7 +440,7 @@ class _InfoBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: (surfaces?.high ?? theme.colorScheme.surfaceVariant).withOpacity(0.4),
+        color: (surfaces?.high ?? theme.colorScheme.surfaceVariant).withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -452,7 +452,7 @@ class _InfoBanner extends StatelessWidget {
             child: Text(
               message,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                 height: 1.45,
               ),
             ),
@@ -475,7 +475,7 @@ class _GuestFooter extends StatelessWidget {
       child: Text(
         'Crie uma conta para favoritar e acompanhar suas receitas preferidas.',
         style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurface.withOpacity(0.62),
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
         ),
       ),
     );

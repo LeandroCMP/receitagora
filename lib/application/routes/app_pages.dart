@@ -2,13 +2,20 @@ import 'package:get/get.dart';
 
 import 'package:receitagora/application/modules/module.dart';
 import 'package:receitagora/modules/favorites/favorites_module.dart';
+import 'package:receitagora/modules/favorites_notebooks/favorites_notebooks_module.dart';
 import 'package:receitagora/modules/login/login_module.dart';
+import 'package:receitagora/modules/mood_journal/mood_journal_module.dart';
 import 'package:receitagora/modules/recipe_finder/recipe_finder_module.dart';
+import 'package:receitagora/modules/recipe_history/recipe_history_module.dart';
+import 'package:receitagora/modules/shopping_list/shopping_list_module.dart';
+import 'package:receitagora/modules/skill_journeys/skill_journeys_module.dart';
+import 'package:receitagora/modules/wellness_routines/wellness_routines_module.dart';
 import 'package:receitagora/modules/splash/splash_module.dart';
 import 'package:receitagora/modules/user_profile/user_profile_module.dart';
 import 'package:receitagora/modules/billing/premium_plans_module.dart';
 import 'package:receitagora/modules/ingredient_lab/ingredient_lab_module.dart';
 import 'package:receitagora/modules/nutrition_plan/nutrition_plan_module.dart';
+import 'package:receitagora/modules/restaurant_discovery/restaurant_discovery_module.dart';
 
 import 'app_routes.dart';
 
@@ -19,7 +26,14 @@ class AppPages {
     SplashModule(),
     LoginModule(),
     RecipeFinderModule(),
+    RecipeHistoryModule(),
     FavoritesModule(),
+    FavoritesNotebooksModule(),
+    MoodJournalModule(),
+    ShoppingListModule(),
+    RestaurantDiscoveryModule(),
+    SkillJourneysModule(),
+    WellnessRoutinesModule(),
     UserProfileModule(),
     PremiumPlansModule(),
     IngredientLabModule(),

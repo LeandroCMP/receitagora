@@ -10,11 +10,24 @@ import 'recipe_history_service.dart';
 class RecipeHistoryServiceImpl extends GetxService
     implements RecipeHistoryService {
   RecipeHistoryServiceImpl({required SharedPreferences preferences})
-      : _preferences = preferences;
+      : _preferences = preferences {
+    _hydrateHistory();
+  }
 
   final SharedPreferences _preferences;
 
   static const String _prefix = 'recipes.history';
+  static const String _historyIndexKey = 'recipes.history.index';
+  static const int _maxEntries = 20;
+
+  final RxList<RecipeHistoryEntry> _history = <RecipeHistoryEntry>[].obs;
+
+  @override
+  List<RecipeHistoryEntry> get history =>
+      List<RecipeHistoryEntry>.unmodifiable(_history);
+
+  @override
+  Stream<List<RecipeHistoryEntry>> get historyStream => _history.stream;
 
   @override
   Future<void> cacheResult({
@@ -31,8 +44,9 @@ class RecipeHistoryServiceImpl extends GetxService
         .where((ingredient) => ingredient.isNotEmpty)
         .toList();
 
+    final now = DateTime.now();
     final payload = <String, dynamic>{
-      'timestamp': DateTime.now().toIso8601String(),
+      'timestamp': now.toUtc().toIso8601String(),
       'ingredients': sanitizedIngredients,
       'recipes': recipes
           .map((recipe) => <String, dynamic>{
@@ -48,6 +62,14 @@ class RecipeHistoryServiceImpl extends GetxService
 
     final key = _buildKey(cacheKey);
     await _preferences.setString(key, jsonEncode(payload));
+
+    final entry = RecipeHistoryEntry(
+      cacheKey: cacheKey,
+      ingredients: sanitizedIngredients,
+      timestamp: now,
+      totalRecipes: recipes.length,
+    );
+    await _upsertEntry(entry);
   }
 
   @override
@@ -63,7 +85,7 @@ class RecipeHistoryServiceImpl extends GetxService
       final timestampRaw = decoded['timestamp'] as String?;
       final timestamp = timestampRaw == null
           ? DateTime.now()
-          : DateTime.tryParse(timestampRaw) ?? DateTime.now();
+          : DateTime.tryParse(timestampRaw)?.toLocal() ?? DateTime.now();
       final ingredientsRaw = decoded['ingredients'];
       final ingredients = ingredientsRaw is Iterable
           ? ingredientsRaw.map((dynamic item) => item.toString()).toList()
@@ -106,6 +128,25 @@ class RecipeHistoryServiceImpl extends GetxService
     }
   }
 
+  @override
+  Future<void> removeEntry(String cacheKey) async {
+    final updated = List<RecipeHistoryEntry>.from(_history)
+      ..removeWhere((entry) => entry.cacheKey == cacheKey);
+    _history.assignAll(updated);
+    await _preferences.remove(_buildKey(cacheKey));
+    await _persistHistory(updated);
+  }
+
+  @override
+  Future<void> clearHistory() async {
+    final entries = List<RecipeHistoryEntry>.from(_history);
+    for (final entry in entries) {
+      await _preferences.remove(_buildKey(entry.cacheKey));
+    }
+    _history.clear();
+    await _preferences.remove(_historyIndexKey);
+  }
+
   String _buildKey(String cacheKey) => '$_prefix::$cacheKey';
 
   List<String> _readList(dynamic value) {
@@ -113,5 +154,94 @@ class RecipeHistoryServiceImpl extends GetxService
       return value.map((dynamic item) => item.toString()).toList();
     }
     return const <String>[];
+  }
+
+  void _hydrateHistory() {
+    final raw = _preferences.getString(_historyIndexKey);
+    if (raw == null || raw.isEmpty) {
+      _history.clear();
+      return;
+    }
+
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Iterable) {
+        _history.clear();
+        return;
+      }
+
+      final List<RecipeHistoryEntry> entries = <RecipeHistoryEntry>[];
+      for (final dynamic item in decoded) {
+        if (item is Map<String, dynamic>) {
+          final cacheKey = item['cacheKey'] as String?;
+          final timestampRaw = item['timestamp'] as String?;
+          final timestamp =
+              timestampRaw == null ? null : DateTime.tryParse(timestampRaw);
+          if (cacheKey == null || timestamp == null) {
+            continue;
+          }
+          entries.add(
+            RecipeHistoryEntry(
+              cacheKey: cacheKey,
+              ingredients: _readList(item['ingredients']),
+              timestamp: timestamp.toLocal(),
+              totalRecipes: item['totalRecipes'] as int? ?? 0,
+            ),
+          );
+        } else if (item is Map) {
+          final map = Map<String, dynamic>.from(item as Map);
+          final cacheKey = map['cacheKey'] as String?;
+          final timestampRaw = map['timestamp'] as String?;
+          final timestamp =
+              timestampRaw == null ? null : DateTime.tryParse(timestampRaw);
+          if (cacheKey == null || timestamp == null) {
+            continue;
+          }
+          entries.add(
+            RecipeHistoryEntry(
+              cacheKey: cacheKey,
+              ingredients: _readList(map['ingredients']),
+              timestamp: timestamp.toLocal(),
+              totalRecipes: map['totalRecipes'] as int? ?? 0,
+            ),
+          );
+        }
+      }
+
+      entries.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      if (entries.length > _maxEntries) {
+        entries.removeRange(_maxEntries, entries.length);
+      }
+      _history.assignAll(entries);
+    } catch (error, stackTrace) {
+      Get.log(
+        'Falha ao carregar índice do histórico: $error\n$stackTrace',
+        isError: true,
+      );
+      _history.clear();
+    }
+  }
+
+  Future<void> _upsertEntry(RecipeHistoryEntry entry) async {
+    final updated = List<RecipeHistoryEntry>.from(_history)
+      ..removeWhere((item) => item.cacheKey == entry.cacheKey);
+    updated.insert(0, entry);
+    if (updated.length > _maxEntries) {
+      updated.removeRange(_maxEntries, updated.length);
+    }
+    _history.assignAll(updated);
+    await _persistHistory(updated);
+  }
+
+  Future<void> _persistHistory(List<RecipeHistoryEntry> entries) async {
+    final payload = entries
+        .map((entry) => <String, dynamic>{
+              'cacheKey': entry.cacheKey,
+              'ingredients': entry.ingredients,
+              'timestamp': entry.timestamp.toUtc().toIso8601String(),
+              'totalRecipes': entry.totalRecipes,
+            })
+        .toList();
+    await _preferences.setString(_historyIndexKey, jsonEncode(payload));
   }
 }

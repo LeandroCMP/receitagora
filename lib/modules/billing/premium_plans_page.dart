@@ -27,7 +27,7 @@ class PremiumPlansPage extends GetView<PremiumPlansController> {
             end: Alignment.bottomCenter,
             colors: [
               Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.05),
+                theme.colorScheme.primary.withValues(alpha: 0.05),
                 surfaces?.lowest ?? background,
               ),
               background,
@@ -86,7 +86,7 @@ class PremiumPlansPage extends GetView<PremiumPlansController> {
                               Text(
                                 'Assinando o Receita Agora Premium você libera limites ampliados, recomendações exclusivas e histórico completo.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.72),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
                                 ),
                               ),
                               const SizedBox(height: 24),
@@ -105,7 +105,7 @@ class PremiumPlansPage extends GetView<PremiumPlansController> {
                               Text(
                                 'Ao continuar, a cobrança é processada pela Stripe com segurança e você poderá gerenciar ou cancelar quando quiser.',
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                                 ),
                               ),
                             ],
@@ -144,7 +144,7 @@ class _PlanCard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       color: highlight
           ? Color.alphaBlend(
-              colorScheme.primary.withOpacity(0.08),
+              colorScheme.primary.withValues(alpha: 0.08),
               theme.colorScheme.surface,
             )
           : null,
@@ -184,7 +184,7 @@ class _PlanCard extends StatelessWidget {
               Text(
                 plan.description!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.75),
+                  color: colorScheme.onSurface.withValues(alpha: 0.75),
                 ),
               ),
             ],
@@ -239,7 +239,7 @@ class _EmptyState extends StatelessWidget {
         Text(
           'Não encontramos opções de assinatura. Volte mais tarde ou contate o suporte.',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.72),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
           ),
           textAlign: TextAlign.center,
         ),

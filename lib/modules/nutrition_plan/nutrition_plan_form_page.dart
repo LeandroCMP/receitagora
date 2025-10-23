@@ -58,7 +58,7 @@ class NutritionPlanFormPage extends GetView<NutritionPlanController> {
             end: Alignment.bottomCenter,
             colors: [
               Color.alphaBlend(
-                theme.colorScheme.primary.withOpacity(0.05),
+                theme.colorScheme.primary.withValues(alpha: 0.05),
                 background,
               ),
               background,
@@ -82,7 +82,7 @@ class NutritionPlanFormPage extends GetView<NutritionPlanController> {
                       ? 'Revise suas informações para atualizar metas e cardápio.'
                       : 'Preencha o questionário para receber um cardápio equilibrado com metas calóricas, macros e lista de compras automática.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.75),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -189,13 +189,13 @@ class _ProfileForm extends StatelessWidget {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.lock_outline, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                          Icon(Icons.lock_outline, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               'Cardápio ativo. Use os botões da página principal para gerar uma nova variação ou escolha editar os dados para recalibrar o plano.',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                               ),
                             ),
                           ),
@@ -261,7 +261,7 @@ class _ChoiceSection<T> extends StatelessWidget {
         Text(
           description,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 12),
@@ -308,7 +308,7 @@ class _MetabolismSelector extends StatelessWidget {
         Text(
           'Escolha a opção que melhor descreve como seu corpo reage às dietas.',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         const SizedBox(height: 8),
@@ -332,7 +332,7 @@ class _MetabolismSelector extends StatelessWidget {
                       subtitle: Text(
                         option.subtitle,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                       dense: true,
@@ -424,7 +424,7 @@ class _DynamicRecommendationBanner extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -455,7 +455,7 @@ class _DynamicRecommendationBanner extends StatelessWidget {
                         child: Text(
                           hint,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withOpacity(0.75),
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                           ),
                         ),
                       ),
@@ -494,7 +494,7 @@ class _OptionalPreferences extends StatelessWidget {
         subtitle: Text(
           'Ajuste sabores, lanches e recados se quiser personalizar ainda mais.',
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         children: [
@@ -664,7 +664,7 @@ class _PlanSectionCard extends StatelessWidget {
               Text(
                 description!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 20),

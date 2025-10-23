@@ -111,7 +111,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
   }
 
   void _paintDecorations(Canvas canvas, double width, double height) {
-    final highlightPaint = Paint()..color = Colors.white.withOpacity(0.08);
+    final highlightPaint = Paint()..color = Colors.white.withValues(alpha: 0.08);
     canvas.drawCircle(
       Offset(width * 0.8, height * 0.15),
       width * 0.4,
@@ -152,9 +152,9 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
       const Radius.circular(48),
     );
 
-    final shadowPaint = Paint()..color = Colors.black.withOpacity(0.14);
+    final shadowPaint = Paint()..color = Colors.black.withValues(alpha: 0.14);
     canvas.drawRRect(contentRect.shift(const Offset(0, 18)), shadowPaint);
-    final cardPaint = Paint()..color = _contentBackground.withOpacity(0.96);
+    final cardPaint = Paint()..color = _contentBackground.withValues(alpha: 0.96);
     canvas.drawRRect(contentRect, cardPaint);
 
     var cursorY = cardTop + 80;
@@ -244,7 +244,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
       Rect.fromLTWH(88, topPadding, 140, 140),
       const Radius.circular(40),
     );
-    final logoPaint = Paint()..color = Colors.white.withOpacity(0.15);
+    final logoPaint = Paint()..color = Colors.white.withValues(alpha: 0.15);
     canvas.drawRRect(logoRect, logoPaint);
 
     final innerCircle = Paint()..color = Colors.white;
@@ -296,7 +296,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
 
     final startX = offset.dx;
     var currentX = startX;
-    final chipPaint = Paint()..color = _accentColor.withOpacity(0.22);
+    final chipPaint = Paint()..color = _accentColor.withValues(alpha: 0.22);
 
     void drawChip(String text, double chipWidth) {
       final rect = RRect.fromRectAndRadius(
@@ -355,7 +355,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
     TextStyle style,
   ) {
     final underlinePaint = Paint()
-      ..color = _accentColor.withOpacity(0.6)
+      ..color = _accentColor.withValues(alpha: 0.6)
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
 
@@ -383,7 +383,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
 
     for (final item in items) {
       final bulletCenter = Offset(offset.dx, cursorY + style.fontSize! / 1.6);
-      final bulletPaint = Paint()..color = _backgroundTop.withOpacity(0.9);
+      final bulletPaint = Paint()..color = _backgroundTop.withValues(alpha: 0.9);
       canvas.drawCircle(bulletCenter, bulletRadius, bulletPaint);
       final height = _drawText(
         canvas,
@@ -419,7 +419,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
         ),
         const Radius.circular(12),
       );
-      final badgePaint = Paint()..color = _backgroundTop.withOpacity(0.12);
+      final badgePaint = Paint()..color = _backgroundTop.withValues(alpha: 0.12);
       canvas.drawRRect(badgeRect, badgePaint);
       _drawText(
         canvas,
@@ -427,7 +427,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
         badgeSize.width,
         '${index + 1}',
         style.copyWith(
-          color: _backgroundTop.withOpacity(0.9),
+          color: _backgroundTop.withValues(alpha: 0.9),
           fontWeight: FontWeight.w700,
         ),
       );
@@ -459,7 +459,7 @@ class RecipeShareServiceImpl extends GetxService implements RecipeShareService {
       ),
       const Radius.circular(32),
     );
-    final footerPaint = Paint()..color = Colors.white.withOpacity(0.16);
+    final footerPaint = Paint()..color = Colors.white.withValues(alpha: 0.16);
     canvas.drawRRect(footerRect, footerPaint);
 
     _drawText(
