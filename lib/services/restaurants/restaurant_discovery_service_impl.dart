@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:receitagora/models/nutrition/diet_plan.dart';
@@ -15,16 +16,22 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     http.Client? httpClient,
     Duration httpTimeout = const Duration(seconds: 20),
     this.searchRadiusMeters = 4000,
+    String? googlePlacesApiKey,
   })  : _httpClient = httpClient ?? http.Client(),
-        _httpTimeout = httpTimeout;
+        _httpTimeout = httpTimeout,
+        _apiKey =
+            (googlePlacesApiKey ?? dotenv.maybeGet('GOOGLE_PLACES_API_KEY') ?? '')
+                .trim();
 
   final http.Client _httpClient;
   final Duration _httpTimeout;
   final int searchRadiusMeters;
+  final String _apiKey;
 
-  static const String _overpassEndpoint = 'https://overpass-api.de/api/interpreter';
-  static const String _nominatimSearchEndpoint = 'https://nominatim.openstreetmap.org/search';
-  static const String _nominatimReverseEndpoint = 'https://nominatim.openstreetmap.org/reverse';
+  static const String _placesBaseUrl =
+      'https://maps.googleapis.com/maps/api/place';
+  static const String _geocodeEndpoint =
+      'https://maps.googleapis.com/maps/api/geocode/json';
 
   static const Map<String, String> _defaultHeaders = {
     'Accept': 'application/json',
@@ -171,6 +178,16 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     ),
   ];
 
+  static const Map<String, List<String>> _focusQueryOverrides = {
+    'balanced': ['saladas', 'bowls', 'refeições saudáveis'],
+    'high_protein': ['churrascaria', 'carnes', 'grelhados'],
+    'comfort_br': ['comida caseira', 'pf', 'prato feito'],
+    'italian': ['massas', 'cantina italiana'],
+    'seafood': ['frutos do mar', 'peixes'],
+    'vegetarian': ['vegetariano', 'vegano'],
+    'light': ['refeições leves', 'saladas'],
+  };
+
   final Map<String, Set<String>> _focusKeywordCache = {};
 
   @override
@@ -200,16 +217,12 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
         break;
     }
 
-    if (profile.prefersBrazilianCuisine) {
-      ids.add('comfort_br');
-    }
-
-    if (profile.prefersSeasonalProduce) {
+    if (profile.foodPreference.isVegetarian) {
       ids.add('vegetarian');
     }
 
-    if (profile.goal == DietGoal.gainMass && profile.exercisesRegularly) {
-      ids.add('high_protein');
+    if (profile.foodPreference.isPescetarian) {
+      ids.add('seafood');
     }
 
     return _focusCatalog.where((focus) => ids.contains(focus.id)).toList(growable: false);
@@ -222,15 +235,19 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     RestaurantFocus? focus,
     int limit = 20,
   }) async {
+    _ensureApiKey();
+
     final reference = LocationCoordinates(latitude: latitude, longitude: longitude);
-    final rawResults = await _fetchRestaurantsByCoordinates(
+    final resolvedLabel =
+        await _reverseGeocodeLabel(latitude: latitude, longitude: longitude) ??
+            'Sua localização';
+
+    final rawResults = await _fetchNearbyPlaces(
       latitude: latitude,
       longitude: longitude,
+      focus: focus,
       limitHint: limit,
     );
-
-    final resolvedLabel =
-        await _reverseGeocodeLabel(latitude: latitude, longitude: longitude) ?? 'Sua região';
 
     final suggestions = _buildSuggestions(
       rawResults,
@@ -254,16 +271,17 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     RestaurantFocus? focus,
     int limit = 20,
   }) async {
+    _ensureApiKey();
+
     final geocode = await _geocodeCity(city);
     if (geocode == null) {
       throw Exception('Cidade não encontrada');
     }
 
-    final rawResults = await _fetchRestaurantsByCoordinates(
-      latitude: geocode.coordinates.latitude,
-      longitude: geocode.coordinates.longitude,
+    final rawResults = await _fetchCityPlaces(
+      geocode: geocode,
+      focus: focus,
       limitHint: limit,
-      radiusOverride: geocode.suggestedRadiusMeters,
     );
 
     final suggestions = _buildSuggestions(
@@ -282,197 +300,293 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     );
   }
 
-  Future<List<_RawRestaurant>> _fetchRestaurantsByCoordinates({
+  void _ensureApiKey() {
+    if (_apiKey.isEmpty) {
+      throw Exception(
+        'A chave da API do Google Places não foi configurada. Defina GOOGLE_PLACES_API_KEY no .env.',
+      );
+    }
+  }
+
+  Future<List<_GooglePlace>> _fetchNearbyPlaces({
     required double latitude,
     required double longitude,
     required int limitHint,
-    int? radiusOverride,
+    RestaurantFocus? focus,
   }) async {
-    final radius = radiusOverride != null && radiusOverride > 0
-        ? radiusOverride
-        : searchRadiusMeters;
-    final sampleSize = math.max(limitHint * 6, 120);
+    final params = {
+      'key': _apiKey,
+      'location': '$latitude,$longitude',
+      'radius': searchRadiusMeters.toString(),
+      'type': 'restaurant',
+      'language': 'pt-BR',
+    };
 
-    final query = '''
-[out:json][timeout:25];
-(
-  node["amenity"="restaurant"](around:$radius,$latitude,$longitude);
-  way["amenity"="restaurant"](around:$radius,$latitude,$longitude);
-  relation["amenity"="restaurant"](around:$radius,$latitude,$longitude);
-);
-out center tags $sampleSize;
-''';
+    final keyword = _keywordForFocus(focus);
+    if (keyword != null) {
+      params['keyword'] = keyword;
+    }
 
-    final response = await _httpClient
-        .post(
-          Uri.parse(_overpassEndpoint),
-          headers: _defaultHeaders,
-          body: {'data': query},
-        )
-        .timeout(_httpTimeout);
+    final results = await _fetchPlaces(
+      endpoint: 'nearbysearch',
+      baseParams: params,
+      limitHint: limitHint,
+    );
+
+    return results;
+  }
+
+  Future<List<_GooglePlace>> _fetchCityPlaces({
+    required _GeocodeResult geocode,
+    required int limitHint,
+    RestaurantFocus? focus,
+  }) async {
+    final params = {
+      'key': _apiKey,
+      'query': _composeCityQuery(geocode.label, focus),
+      'language': 'pt-BR',
+      'type': 'restaurant',
+      'location':
+          '${geocode.coordinates.latitude},${geocode.coordinates.longitude}',
+      'radius': (geocode.suggestedRadiusMeters ?? searchRadiusMeters).toString(),
+    };
+
+    final results = await _fetchPlaces(
+      endpoint: 'textsearch',
+      baseParams: params,
+      limitHint: limitHint,
+    );
+
+    return results;
+  }
+
+  Future<List<_GooglePlace>> _fetchPlaces({
+    required String endpoint,
+    required Map<String, String> baseParams,
+    required int limitHint,
+  }) async {
+    final aggregated = <_GooglePlace>[];
+    String? nextPageToken;
+    var page = 0;
+
+    do {
+      final params = Map<String, String>.from(baseParams);
+      if (nextPageToken != null) {
+        params['pagetoken'] = nextPageToken;
+      }
+
+      final response = await _performPlacesRequest(endpoint, params);
+      aggregated.addAll(response.results);
+      nextPageToken = response.nextPageToken;
+      page += 1;
+
+      if (nextPageToken != null && aggregated.length < limitHint) {
+        await Future<void>.delayed(const Duration(seconds: 2));
+      } else {
+        break;
+      }
+    } while (aggregated.length < limitHint && nextPageToken != null && page < 3);
+
+    return aggregated;
+  }
+
+  Future<_PlacesResponse> _performPlacesRequest(
+    String endpoint,
+    Map<String, String> params,
+  ) async {
+    final uri = Uri.parse('$_placesBaseUrl/$endpoint/json')
+        .replace(queryParameters: params);
+    final response =
+        await _httpClient.get(uri, headers: _defaultHeaders).timeout(_httpTimeout);
 
     if (response.statusCode != 200) {
-      throw Exception('Falha ao consultar restaurantes (status ${response.statusCode}).');
+      throw Exception(
+        'Falha ao consultar restaurantes (status ${response.statusCode}).',
+      );
     }
 
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
-    final elements = payload['elements'] as List<dynamic>? ?? const [];
+    final status = payload['status'] as String? ?? 'UNKNOWN';
 
-    return elements
-        .map((element) => _RawRestaurant.fromJson(element as Map<String, dynamic>?))
-        .whereType<_RawRestaurant>()
+    if (status == 'ZERO_RESULTS') {
+      return const _PlacesResponse(results: <_GooglePlace>[]);
+    }
+
+    if (status != 'OK') {
+      final message = payload['error_message'] as String?;
+      throw Exception(
+        'Google Places retornou "$status"${message != null ? ': $message' : ''}.',
+      );
+    }
+
+    final results = (payload['results'] as List<dynamic>? ?? const [])
+        .map((item) => _GooglePlace.fromJson(item as Map<String, dynamic>?))
+        .whereType<_GooglePlace>()
         .toList(growable: false);
+
+    return _PlacesResponse(
+      results: results,
+      nextPageToken: payload['next_page_token'] as String?,
+    );
   }
 
   Future<String?> _reverseGeocodeLabel({
     required double latitude,
     required double longitude,
   }) async {
-    final uri = Uri.parse(_nominatimReverseEndpoint).replace(queryParameters: {
-      'format': 'jsonv2',
-      'lat': '$latitude',
-      'lon': '$longitude',
-      'addressdetails': '1',
-      'accept-language': 'pt-BR',
+    final uri = Uri.parse(_geocodeEndpoint).replace(queryParameters: {
+      'latlng': '$latitude,$longitude',
+      'language': 'pt-BR',
+      'key': _apiKey,
+      'result_type': 'locality|administrative_area_level_3|administrative_area_level_2',
     });
 
-    final response = await _httpClient
-        .get(uri, headers: _defaultHeaders)
-        .timeout(_httpTimeout);
-
+    final response =
+        await _httpClient.get(uri, headers: _defaultHeaders).timeout(_httpTimeout);
     if (response.statusCode != 200) {
       return null;
     }
 
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final address = data['address'] as Map<String, dynamic>?;
-    return _composeGeocodeLabel(address, data['display_name'] as String?);
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final status = payload['status'] as String? ?? 'UNKNOWN';
+    if (status != 'OK') {
+      return null;
+    }
+
+    final results = payload['results'] as List<dynamic>?;
+    if (results == null || results.isEmpty) {
+      return null;
+    }
+
+    final first = results.first as Map<String, dynamic>;
+    final components = first['address_components'] as List<dynamic>?;
+    final label = _composeLabelFromComponents(components);
+    return label ?? (first['formatted_address'] as String?);
   }
 
   Future<_GeocodeResult?> _geocodeCity(String city) async {
-    final uri = Uri.parse(_nominatimSearchEndpoint).replace(queryParameters: {
-      'q': city,
-      'format': 'jsonv2',
-      'limit': '1',
-      'addressdetails': '1',
-      'accept-language': 'pt-BR',
+    final uri = Uri.parse(_geocodeEndpoint).replace(queryParameters: {
+      'address': city,
+      'language': 'pt-BR',
+      'key': _apiKey,
     });
 
-    final response = await _httpClient
-        .get(uri, headers: _defaultHeaders)
-        .timeout(_httpTimeout);
-
+    final response =
+        await _httpClient.get(uri, headers: _defaultHeaders).timeout(_httpTimeout);
     if (response.statusCode != 200) {
-      throw Exception('Falha ao consultar localização da cidade.');
-    }
-
-    final results = jsonDecode(response.body);
-    if (results is! List || results.isEmpty) {
       return null;
     }
 
-    final data = results.first as Map<String, dynamic>;
-    final lat = double.tryParse(data['lat'] as String? ?? '');
-    final lon = double.tryParse(data['lon'] as String? ?? '');
-    if (lat == null || lon == null) {
+    final payload = jsonDecode(response.body) as Map<String, dynamic>;
+    final status = payload['status'] as String? ?? 'UNKNOWN';
+    if (status != 'OK' || payload['results'] == null) {
       return null;
     }
 
-    final address = data['address'] as Map<String, dynamic>?;
-    final label = _composeGeocodeLabel(address, data['display_name'] as String?) ??
-        _titleCase(city.trim());
+    final results = payload['results'] as List<dynamic>;
+    if (results.isEmpty) {
+      return null;
+    }
 
-    final radius = _radiusFromBoundingBox(
-      data['boundingbox'] as List<dynamic>?,
-      lat,
-      lon,
-    );
+    final first = results.first as Map<String, dynamic>;
+    final geometry = first['geometry'] as Map<String, dynamic>?;
+    final location = geometry?['location'] as Map<String, dynamic>?;
+    final lat = (location?['lat'] as num?)?.toDouble();
+    final lng = (location?['lng'] as num?)?.toDouble();
+    if (lat == null || lng == null) {
+      return null;
+    }
+
+    final label = _composeLabelFromComponents(
+          (first['address_components'] as List<dynamic>?),
+        ) ??
+        (first['formatted_address'] as String?) ??
+        city.trim();
+
+    final viewport = geometry?['viewport'] as Map<String, dynamic>?;
+    final suggestedRadius = _radiusFromViewport(viewport, lat, lng);
 
     return _GeocodeResult(
-      coordinates: LocationCoordinates(latitude: lat, longitude: lon),
+      coordinates: LocationCoordinates(latitude: lat, longitude: lng),
       label: label,
-      suggestedRadiusMeters: radius,
+      suggestedRadiusMeters: suggestedRadius,
     );
   }
 
-  String? _composeGeocodeLabel(Map<String, dynamic>? address, String? displayName) {
-    final city = address?['city'] ??
-        address?['town'] ??
-        address?['municipality'] ??
-        address?['village'] ??
-        address?['suburb'];
-    final state = address?['state'] ?? address?['region'];
-    if (city is String && state is String) {
-      return '$city, $state';
+  String _composeCityQuery(String label, RestaurantFocus? focus) {
+    final parts = <String>['restaurantes'];
+    final keyword = _keywordForFocus(focus);
+    if (keyword != null) {
+      parts.add(keyword);
     }
-    if (city is String) {
-      return city;
-    }
-    if (state is String) {
-      return state;
-    }
-    if (displayName != null && displayName.isNotEmpty) {
-      final parts = displayName
-          .split(',')
-          .map((part) => part.trim())
-          .where((part) => part.isNotEmpty)
-          .toList();
-      if (parts.length >= 2) {
-        return '${parts[0]}, ${parts[1]}';
-      }
-      if (parts.isNotEmpty) {
-        return parts.first;
-      }
-    }
-    return null;
+    parts.add('em $label');
+    return parts.join(' ');
   }
 
-  int? _radiusFromBoundingBox(List<dynamic>? boundingBox, double lat, double lon) {
-    if (boundingBox == null || boundingBox.length != 4) {
+  String? _keywordForFocus(RestaurantFocus? focus) {
+    if (focus == null) {
       return null;
     }
 
-    final south = double.tryParse(boundingBox[0].toString());
-    final north = double.tryParse(boundingBox[1].toString());
-    final west = double.tryParse(boundingBox[2].toString());
-    final east = double.tryParse(boundingBox[3].toString());
+    final seen = <String>{};
+    final parts = <String>[];
 
-    if (south == null || north == null || west == null || east == null) {
+    final override = _focusQueryOverrides[focus.id];
+    if (override != null) {
+      for (final item in override) {
+        final normalized = item.trim();
+        if (normalized.isEmpty) {
+          continue;
+        }
+        if (seen.add(normalized.toLowerCase())) {
+          parts.add(normalized);
+        }
+      }
+    }
+
+    final focusLabel = focus.label.trim();
+    if (focusLabel.isNotEmpty && seen.add(focusLabel.toLowerCase())) {
+      parts.add(focusLabel);
+    }
+
+    final tagList = focus.tags.toList()..sort();
+    for (final tag in tagList) {
+      final normalized = tag.replaceAll('_', ' ').trim();
+      if (normalized.isEmpty) {
+        continue;
+      }
+      if (seen.add(normalized.toLowerCase())) {
+        parts.add(normalized);
+      }
+      if (parts.length >= 4) {
+        break;
+      }
+    }
+
+    if (parts.isEmpty) {
       return null;
     }
 
-    final latSpan = (north - south).abs();
-    final lonSpan = (east - west).abs();
-
-    final latRadius = latSpan * 111000 / 2;
-    final lonRadius = lonSpan * 111000 * math.cos(lat * math.pi / 180) / 2;
-    final averageRadius = math.max(latRadius, lonRadius);
-
-    if (averageRadius.isNaN || averageRadius <= 0) {
-      return null;
-    }
-
-    final clamped = averageRadius.clamp(2000, 12000).toInt();
-    return clamped;
+    return parts.join(' ');
   }
 
   List<RestaurantSuggestion> _buildSuggestions(
-    List<_RawRestaurant> entries, {
+    List<_GooglePlace> places, {
     required RestaurantFocus? focus,
     required int limit,
     required LocationCoordinates? reference,
     required String fallbackCityLabel,
   }) {
-    if (limit <= 0) {
+    if (limit <= 0 || places.isEmpty) {
       return const [];
     }
 
     final focusMatches = <_SuggestionCandidate>[];
     final generalMatches = <_SuggestionCandidate>[];
 
-    for (final entry in entries) {
+    for (final place in places) {
       final candidate = _buildCandidate(
-        entry,
+        place,
         reference: reference,
         fallbackCityLabel: fallbackCityLabel,
       );
@@ -480,7 +594,7 @@ out center tags $sampleSize;
         continue;
       }
 
-      if (_matchesFocus(focus, candidate)) {
+      if (focus == null || _matchesFocus(focus, candidate)) {
         focusMatches.add(candidate);
       } else {
         generalMatches.add(candidate);
@@ -503,48 +617,40 @@ out center tags $sampleSize;
   }
 
   _SuggestionCandidate? _buildCandidate(
-    _RawRestaurant restaurant, {
+    _GooglePlace place, {
     required LocationCoordinates? reference,
     required String fallbackCityLabel,
   }) {
-    final tags = restaurant.tags;
-    final name = _resolveDisplayName(tags);
-    if (name == null || name.isEmpty) {
+    final name = place.name.trim();
+    if (name.isEmpty) {
       return null;
     }
 
-    final cuisines = _extractCuisines(tags);
-    final cuisineKeywords = <String>{};
-    for (final cuisine in cuisines) {
-      cuisineKeywords.addAll(cuisine.normalizedKeywords);
-    }
-
-    final cityLabel = _resolveCityLabel(tags) ?? fallbackCityLabel;
-    final address = _composeAddress(tags);
-    final priceRange = _resolvePriceRange(tags);
-    final rating = _parseRating(tags);
-    final dietHighlights = _buildDietHighlights(tags);
-    final services = _buildServices(tags);
-    final specialties = _buildSpecialties(tags, cuisines);
-
-    double? distanceKm;
-    if (reference != null) {
-      distanceKm = _distanceKm(
-        reference.latitude,
-        reference.longitude,
-        restaurant.latitude,
-        restaurant.longitude,
-      );
-    }
+    final city = place.city ?? fallbackCityLabel;
+    final address = place.vicinity ??
+        place.formattedAddress ??
+        'Endereço não informado';
+    final cuisine = _derivePrimaryCuisine(place.types);
+    final priceRange = _describePriceRange(place.priceLevel);
+    final rating = place.rating ?? 0;
+    final specialties = _collectSpecialtyLabels(place, cuisine);
+    final dietHighlights = _collectDietHighlights(place);
+    final services = _collectServiceLabels(place);
+    final distanceKm = reference != null
+        ? _distanceInKm(
+            reference.latitude,
+            reference.longitude,
+            place.latitude,
+            place.longitude,
+          )
+        : null;
 
     final suggestion = RestaurantSuggestion(
-      id: restaurant.id,
+      id: place.placeId,
       name: name,
-      city: cityLabel,
+      city: city,
       address: address,
-      primaryCuisine: cuisines.isNotEmpty
-          ? cuisines.first.displayName
-          : 'Culinária variada',
+      primaryCuisine: cuisine,
       priceRange: priceRange,
       rating: rating,
       specialties: specialties,
@@ -554,137 +660,222 @@ out center tags $sampleSize;
     );
 
     final featureTags = <String>{
-      ...cuisineKeywords,
-      ..._normalizeKeywords(_stringTag(tags, 'amenity')),
-      ..._normalizeKeywords(_stringTag(tags, 'cuisine:primary')),
-      ..._collectNameKeywords(tags),
+      ..._normalizeKeywords(name),
+      ..._normalizeKeywords(cuisine),
+      for (final specialty in specialties) ..._normalizeKeywords(specialty),
+      for (final diet in dietHighlights) ..._normalizeKeywords(diet),
+      for (final service in services) ..._normalizeKeywords(service),
+      for (final type in place.types) ..._normalizeKeywords(type),
+      ...place.keywordBoost,
     };
-
-    if (_boolTag(tags, 'diet:vegan')) {
-      featureTags.addAll(_normalizeKeywords('vegano'));
-    }
-    if (_boolTag(tags, 'diet:vegetarian')) {
-      featureTags.addAll(_normalizeKeywords('vegetariano'));
-    }
-    if (_boolTag(tags, 'diet:gluten_free')) {
-      featureTags.addAll(_normalizeKeywords('sem gluten'));
-    }
-    if (_boolTag(tags, 'diet:lactose_free')) {
-      featureTags.addAll(_normalizeKeywords('sem lactose'));
-    }
-
-    final normalizedAddress = _normalize([
-      _stringTag(tags, 'addr:street'),
-      _stringTag(tags, 'addr:housenumber'),
-      _stringTag(tags, 'addr:suburb'),
-      _stringTag(tags, 'addr:district'),
-    ].whereType<String>().join(' '));
 
     return _SuggestionCandidate(
-      raw: restaurant,
+      place: place,
       suggestion: suggestion,
-      normalizedName: _normalize(name),
-      normalizedAddress: normalizedAddress,
       featureTags: featureTags,
     );
-  }
-
-  String? _resolveDisplayName(Map<String, dynamic> tags) {
-    final candidates = <String?>[
-      _stringTag(tags, 'name'),
-      _stringTag(tags, 'brand'),
-      _stringTag(tags, 'official_name'),
-      _stringTag(tags, 'alt_name'),
-      _stringTag(tags, 'operator'),
-    ];
-
-    for (final candidate in candidates) {
-      if (candidate != null && candidate.trim().isNotEmpty) {
-        return candidate.trim();
-      }
-    }
-
-    return null;
-  }
-
-  Set<String> _collectNameKeywords(Map<String, dynamic> tags) {
-    final keys = <String>{
-      'name',
-      'brand',
-      'official_name',
-      'alt_name',
-      'operator',
-      'name:pt',
-      'name:en',
-    };
-
-    final keywords = <String>{};
-    for (final key in keys) {
-      keywords.addAll(_normalizeKeywords(_stringTag(tags, key)));
-    }
-    return keywords;
   }
 
   bool _matchesFocus(RestaurantFocus? focus, _SuggestionCandidate candidate) {
     if (focus == null) {
       return true;
     }
+
     final focusKeywords = _focusKeywordCache.putIfAbsent(
       focus.id,
       () => {
         ..._normalizeKeywords(focus.id),
         for (final tag in focus.tags) ..._normalizeKeywords(tag),
+        ..._normalizeKeywords(focus.label),
       },
     );
 
     return candidate.featureTags.any(focusKeywords.contains);
   }
 
-  List<_CuisineInfo> _extractCuisines(Map<String, dynamic> tags) {
-    final rawValues = <String>[];
-    final cuisine = tags['cuisine'];
-    if (cuisine is String) {
-      rawValues.addAll(cuisine.split(RegExp(r'[;,]')));
-    } else if (cuisine is Iterable) {
-      rawValues.addAll(cuisine.map((value) => value.toString()));
+  double? _distanceInKm(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
+    const earthRadiusKm = 6371.0;
+    final dLat = _toRadians(lat2 - lat1);
+    final dLon = _toRadians(lon2 - lon1);
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(_toRadians(lat1)) *
+            math.cos(_toRadians(lat2)) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    final distance = earthRadiusKm * c;
+    if (distance.isNaN || distance.isInfinite) {
+      return null;
     }
-
-    tags.forEach((key, value) {
-      if (key.startsWith('cuisine:') && value is String) {
-        rawValues.add(value);
-      }
-    });
-
-    final results = <_CuisineInfo>[];
-    final seen = <String>{};
-    for (final raw in rawValues) {
-      final normalized = _normalize(raw);
-      if (normalized.isEmpty) {
-        continue;
-      }
-      final condensed = normalized.replaceAll(' ', '');
-      if (!seen.add(condensed)) {
-        continue;
-      }
-      final keywords = _normalizeKeywords(raw);
-      if (keywords.isEmpty) {
-        continue;
-      }
-      final display =
-          _cuisineLabels[normalized] ?? _cuisineLabels[condensed] ?? _beautifyLabel(raw);
-      results.add(_CuisineInfo(normalizedKeywords: keywords, displayName: display));
-    }
-
-    return results;
+    return (distance * 100).roundToDouble() / 100;
   }
 
-  String? _resolveCityLabel(Map<String, dynamic> tags) {
-    final city = _stringTag(tags, 'addr:city') ??
-        _stringTag(tags, 'addr:town') ??
-        _stringTag(tags, 'addr:municipality') ??
-        _stringTag(tags, 'addr:village') ??
-        _stringTag(tags, 'addr:suburb');
-    final state = _stringTag(tags, 'addr:state') ?? _stringTag(tags, 'addr:region');
+  double _toRadians(double degrees) => degrees * math.pi / 180;
+
+  String _derivePrimaryCuisine(List<String> types) {
+    for (final key in _primaryCuisinePriority) {
+      if (types.contains(key)) {
+        return _typeLabels[key] ?? _beautifyLabel(key);
+      }
+    }
+
+    for (final type in types) {
+      if (_genericTypes.contains(type)) {
+        continue;
+      }
+      final label = _typeLabels[type];
+      if (label != null) {
+        return label;
+      }
+    }
+
+    return 'Culinária variada';
+  }
+
+  List<String> _collectSpecialtyLabels(_GooglePlace place, String primaryCuisine) {
+    final labels = <String>[];
+    final seen = <String>{};
+
+    void addLabel(String? value) {
+      if (value == null) {
+        return;
+      }
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) {
+        return;
+      }
+      if (seen.add(trimmed)) {
+        labels.add(trimmed);
+      }
+    }
+
+    addLabel(primaryCuisine);
+
+    for (final type in place.types) {
+      if (_genericTypes.contains(type)) {
+        continue;
+      }
+      addLabel(_typeLabels[type]);
+    }
+
+    final normalizedName = _normalize(place.name);
+    if (normalizedName.contains('rodizio')) {
+      addLabel('Rodízio variado');
+    }
+    if (normalizedName.contains('parrilla')) {
+      addLabel('Parrilla argentina');
+    }
+    if (normalizedName.contains('churrasco')) {
+      addLabel('Churrasco');
+    }
+    if (normalizedName.contains('hamburg')) {
+      addLabel('Hambúrgueres artesanais');
+    }
+    if (normalizedName.contains('poke')) {
+      addLabel('Pokes e bowls');
+    }
+    if (normalizedName.contains('massas')) {
+      addLabel('Massas artesanais');
+    }
+
+    return labels.take(4).toList(growable: false);
+  }
+
+  List<String> _collectDietHighlights(_GooglePlace place) {
+    final highlights = <String>{};
+
+    for (final type in place.types) {
+      final label = _dietTypeLabels[type];
+      if (label != null) {
+        highlights.add(label);
+      }
+    }
+
+    final normalizedName = _normalize(place.name);
+    if (normalizedName.contains('vegano')) {
+      highlights.add('Opções veganas');
+    }
+    if (normalizedName.contains('vegetar')) {
+      highlights.add('Opções vegetarianas');
+    }
+    if (normalizedName.contains('fit') || normalizedName.contains('saudavel')) {
+      highlights.add('Refeições leves e saudáveis');
+    }
+    if (normalizedName.contains('gluten')) {
+      highlights.add('Alternativas sem glúten');
+    }
+
+    return highlights.take(3).toList(growable: false);
+  }
+
+  List<String> _collectServiceLabels(_GooglePlace place) {
+    final services = <String>{};
+
+    if (place.openNow == true) {
+      services.add('Aberto agora');
+    }
+
+    if (place.businessStatus == 'CLOSED_TEMPORARILY') {
+      services.add('Temporariamente fechado');
+    }
+
+    if (place.types.contains('meal_delivery')) {
+      services.add('Entrega');
+    }
+    if (place.types.contains('meal_takeaway')) {
+      services.add('Retirada no local');
+    }
+    if (place.types.contains('drive_thru')) {
+      services.add('Drive-thru');
+    }
+    if (place.types.contains('curbside_pickup')) {
+      services.add('Retirada na calçada');
+    }
+
+    services.add('Consumo no local');
+
+    return services.take(4).toList(growable: false);
+  }
+
+  String _describePriceRange(int? priceLevel) {
+    if (priceLevel == null) {
+      return 'Faixa de preço não informada';
+    }
+    return _priceLevelLabels[priceLevel] ?? 'Faixa de preço não informada';
+  }
+
+  String? _composeLabelFromComponents(List<dynamic>? components) {
+    if (components == null) {
+      return null;
+    }
+
+    String? city;
+    String? state;
+
+    for (final item in components) {
+      if (item is! Map<String, dynamic>) {
+        continue;
+      }
+      final types = (item['types'] as List<dynamic>? ?? const []).cast<String>();
+      final longName = item['long_name'] as String?;
+      final shortName = item['short_name'] as String?;
+
+      if (city == null &&
+          (types.contains('locality') ||
+              types.contains('administrative_area_level_3') ||
+              types.contains('administrative_area_level_2'))) {
+        city = longName;
+      }
+
+      if (state == null && types.contains('administrative_area_level_1')) {
+        state = shortName ?? longName;
+      }
+    }
 
     if (city != null && state != null) {
       return '$city, $state';
@@ -692,255 +883,69 @@ out center tags $sampleSize;
     return city ?? state;
   }
 
-  String _composeAddress(Map<String, dynamic> tags) {
-    final street = _stringTag(tags, 'addr:street');
-    final number = _stringTag(tags, 'addr:housenumber');
-    final suburb = _stringTag(tags, 'addr:suburb') ?? _stringTag(tags, 'addr:neighbourhood');
-    final district = _stringTag(tags, 'addr:district') ?? _stringTag(tags, 'addr:quarter');
-
-    final segments = <String>[];
-    if (street != null && street.isNotEmpty) {
-      segments.add(number != null && number.isNotEmpty ? '$street, $number' : street);
-    }
-    if (suburb != null && suburb.isNotEmpty) {
-      segments.add(suburb);
-    }
-    if (district != null && district.isNotEmpty && district != suburb) {
-      segments.add(district);
+  int? _radiusFromViewport(Map<String, dynamic>? viewport, double lat, double lon) {
+    if (viewport == null) {
+      return null;
     }
 
-    if (segments.isNotEmpty) {
-      return segments.join(' • ');
+    final northeast = viewport['northeast'] as Map<String, dynamic>?;
+    final southwest = viewport['southwest'] as Map<String, dynamic>?;
+    if (northeast == null || southwest == null) {
+      return null;
     }
 
-    final fullAddress = _stringTag(tags, 'addr:full');
-    if (fullAddress != null && fullAddress.isNotEmpty) {
-      return fullAddress;
+    final northLat = (northeast['lat'] as num?)?.toDouble();
+    final southLat = (southwest['lat'] as num?)?.toDouble();
+    final eastLon = (northeast['lng'] as num?)?.toDouble();
+    final westLon = (southwest['lng'] as num?)?.toDouble();
+
+    if (northLat == null || southLat == null || eastLon == null || westLon == null) {
+      return null;
     }
 
-    return 'Endereço não informado';
+    final latSpan = (northLat - southLat).abs();
+    final lonSpan = (eastLon - westLon).abs();
+    final latRadius = latSpan * 111000 / 2;
+    final lonRadius = lonSpan * 111000 * math.cos(lat * math.pi / 180) / 2;
+    final radius = math.max(latRadius, lonRadius);
+    if (radius.isNaN || radius <= 0) {
+      return null;
+    }
+
+    return radius.clamp(2000, 15000).toInt();
   }
 
-  String _resolvePriceRange(Map<String, dynamic> tags) {
-    final price = _stringTag(tags, 'price:range') ??
-        _stringTag(tags, 'price') ??
-        _stringTag(tags, 'charge');
-    if (price != null && price.isNotEmpty) {
-      return price;
-    }
-    final fee = _stringTag(tags, 'fee');
-    if (fee != null && fee.isNotEmpty) {
-      return fee;
-    }
-    return 'Faixa de preço não informada';
-  }
+  static String? _extractCityFromAddress(String? formatted, String? plusCode) {
+    final candidates = <String?>[
+      formatted,
+      if (plusCode != null)
+        plusCode.contains(' ')
+            ? plusCode.substring(plusCode.indexOf(' ') + 1)
+            : plusCode,
+    ];
 
-  double _parseRating(Map<String, dynamic> tags) {
-    final ratingValue = _stringTag(tags, 'rating') ??
-        _stringTag(tags, 'rating:google') ??
-        _stringTag(tags, 'rating:food');
-    final starsValue = _stringTag(tags, 'stars');
-
-    double? rating = ratingValue != null ? double.tryParse(ratingValue.replaceAll(',', '.')) : null;
-    rating ??= starsValue != null ? double.tryParse(starsValue.replaceAll(',', '.')) : null;
-
-    if (rating == null) {
-      final michelin = _stringTag(tags, 'michelin');
-      if (michelin != null) {
-        rating = 5;
+    for (final candidate in candidates) {
+      if (candidate == null) {
+        continue;
+      }
+      final parts = candidate
+          .split(',')
+          .map((segment) => segment.trim())
+          .where((segment) => segment.isNotEmpty)
+          .toList();
+      if (parts.length >= 2) {
+        final city = parts[parts.length - 2];
+        final state = parts.last;
+        return '$city, $state';
       }
     }
 
-    if (rating == null) {
-      return 0;
-    }
-
-    if (rating.isNaN) {
-      return 0;
-    }
-
-    if (rating > 5) {
-      rating = 5;
-    }
-    if (rating < 0) {
-      rating = 0;
-    }
-
-    return double.parse(rating.toStringAsFixed(1));
-  }
-
-  List<String> _buildDietHighlights(Map<String, dynamic> tags) {
-    final highlights = <String>[];
-    if (_boolTag(tags, 'diet:vegan')) {
-      highlights.add('Opções veganas disponíveis');
-    }
-    if (_boolTag(tags, 'diet:vegetarian')) {
-      highlights.add('Pratos vegetarianos destacados');
-    }
-    if (_boolTag(tags, 'diet:gluten_free')) {
-      highlights.add('Preparos sem glúten sob demanda');
-    }
-    if (_boolTag(tags, 'diet:lactose_free')) {
-      highlights.add('Versões sem lactose disponíveis');
-    }
-    if (_boolTag(tags, 'organic')) {
-      highlights.add('Ingredientes orgânicos e frescos');
-    }
-    if (_boolTag(tags, 'kosher')) {
-      highlights.add('Certificação kosher disponível');
-    }
-    if (_boolTag(tags, 'halal')) {
-      highlights.add('Preparos compatíveis com dieta halal');
-    }
-    return highlights;
-  }
-
-  List<String> _buildServices(Map<String, dynamic> tags) {
-    final services = <String>[];
-    if (_boolTag(tags, 'delivery') || _boolTag(tags, 'delivery:covid19')) {
-      services.add('Entrega disponível');
-    }
-    if (_boolTag(tags, 'takeaway')) {
-      services.add('Retirada para viagem');
-    }
-    if (_boolTag(tags, 'drive_through')) {
-      services.add('Drive-thru');
-    }
-    if (_boolTag(tags, 'wheelchair')) {
-      services.add('Acesso para cadeirantes');
-    }
-    if (_boolTag(tags, 'outdoor_seating')) {
-      services.add('Mesas ao ar livre');
-    }
-    if (_boolTag(tags, 'internet_access')) {
-      services.add('Wi-Fi disponível');
-    }
-    if (_boolTag(tags, 'reservation')) {
-      services.add('Aceita reservas');
-    }
-
-    final phone = _stringTag(tags, 'phone') ?? _stringTag(tags, 'contact:phone');
-    if (phone != null && phone.isNotEmpty) {
-      services.add('Contato: $phone');
-    }
-    final website = _stringTag(tags, 'website') ?? _stringTag(tags, 'contact:website');
-    if (website != null && website.isNotEmpty) {
-      services.add('Site: $website');
-    }
-
-    return services.take(6).toList(growable: false);
-  }
-
-  List<String> _buildSpecialties(Map<String, dynamic> tags, List<_CuisineInfo> cuisines) {
-    final specialties = <String>[];
-    final cuisineLabels = cuisines.map((cuisine) => cuisine.displayName).where((label) => label.isNotEmpty).toList();
-    if (cuisineLabels.isNotEmpty) {
-      specialties.add('Culinária destaque: ${_joinWithAnd(cuisineLabels.take(3).toList())}');
-    }
-
-    final speciality = _stringTag(tags, 'speciality') ?? _stringTag(tags, 'specialty');
-    if (speciality != null && speciality.isNotEmpty) {
-      specialties.add(_beautifySentence('Especialidade da casa: $speciality'));
-    }
-
-    final description = _stringTag(tags, 'description') ?? _stringTag(tags, 'note');
-    if (description != null && description.isNotEmpty) {
-      specialties.add(_beautifySentence(description));
-    }
-
-    final openingHours = _stringTag(tags, 'opening_hours');
-    if (openingHours != null && openingHours.isNotEmpty) {
-      specialties.add('Horário: $openingHours');
-    }
-
-    return specialties.take(4).toList(growable: false);
-  }
-
-  double _distanceKm(double lat1, double lon1, double lat2, double lon2) {
-    const earthRadius = 6371.0;
-    final dLat = _degToRad(lat2 - lat1);
-    final dLon = _degToRad(lon2 - lon1);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
-        math.cos(_degToRad(lat1)) * math.cos(_degToRad(lat2)) *
-            math.sin(dLon / 2) * math.sin(dLon / 2);
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    final distance = earthRadius * c;
-    return double.parse(distance.toStringAsFixed(2));
-  }
-
-  double _degToRad(double degree) => degree * (math.pi / 180);
-
-  bool _boolTag(Map<String, dynamic> tags, String key) {
-    final value = tags[key];
-    if (value is bool) {
-      return value;
-    }
-    if (value is num) {
-      return value != 0;
-    }
-    if (value is String) {
-      final normalized = value.trim().toLowerCase();
-      return normalized == 'yes' ||
-          normalized == 'true' ||
-          normalized == 'sim' ||
-          normalized == '1';
-    }
-    return false;
-  }
-
-  String? _stringTag(Map<String, dynamic> tags, String key) {
-    final value = tags[key];
-    if (value == null) {
-      return null;
-    }
-    if (value is String) {
-      return value.trim();
-    }
-    if (value is num || value is bool) {
-      return value.toString();
-    }
     return null;
   }
 
   String _beautifyLabel(String raw) {
-    final cleaned = raw.replaceAll(RegExp(r'[_-]'), ' ').trim();
-    if (cleaned.isEmpty) {
-      return 'Culinária variada';
-    }
-    final words = cleaned.split(RegExp(r'\s+')).map((word) {
-      final lower = word.toLowerCase();
-      if (lower.isEmpty) {
-        return '';
-      }
-      if (lower.length == 1) {
-        return lower.toUpperCase();
-      }
-      return lower[0].toUpperCase() + lower.substring(1);
-    }).where((word) => word.isNotEmpty);
-    return words.join(' ');
-  }
-
-  String _beautifySentence(String raw) {
-    final trimmed = raw.trim();
-    if (trimmed.isEmpty) {
-      return trimmed;
-    }
-    final normalized = trimmed[0].toUpperCase() + trimmed.substring(1);
-    return normalized;
-  }
-
-  String _joinWithAnd(List<String> values) {
-    if (values.isEmpty) {
-      return '';
-    }
-    if (values.length == 1) {
-      return values.first;
-    }
-    if (values.length == 2) {
-      return '${values[0]} e ${values[1]}';
-    }
-    final first = values.sublist(0, values.length - 1).join(', ');
-    return '$first e ${values.last}';
+    final normalized = raw.replaceAll('_', ' ');
+    return _titleCase(normalized);
   }
 
   String _titleCase(String input) {
@@ -1011,49 +1016,122 @@ out center tags $sampleSize;
     'ñ': 'n',
   };
 
-  static const Map<String, String> _cuisineLabels = {
-    'brazilian': 'Culinária brasileira',
-    'regional': 'Sabores regionais',
-    'northeastern': 'Comida nordestina',
-    'italian': 'Culinária italiana',
-    'pizza': 'Pizzas artesanais',
-    'pasta': 'Massas frescas',
-    'risotto': 'Risotos especiais',
-    'steak': 'Carnes grelhadas',
-    'steakhouse': 'Carnes e parrilla',
-    'bbq': 'Churrasco e BBQ',
-    'barbecue': 'Churrasco e parrilla',
-    'grill': 'Grelhados',
-    'japanese': 'Culinária japonesa',
-    'sushi': 'Sushi e sashimi',
-    'seafood': 'Frutos do mar',
-    'fish': 'Peixes frescos',
-    'vegetarian': 'Culinária vegetariana',
-    'vegan': 'Cozinha vegana',
-    'plantbased': 'Plant-based criativo',
-    'healthy': 'Comida saudável',
-    'salad': 'Saladas e bowls',
-    'poke': 'Pokes e bowls havaianos',
-    'burger': 'Hambúrgueres artesanais',
-    'sandwich': 'Sanduíches especiais',
-    'mexican': 'Culinária mexicana',
-    'arab': 'Sabores árabes',
-    'arabic': 'Sabores árabes',
-    'chinese': 'Culinária chinesa',
-    'thai': 'Culinária tailandesa',
-    'indian': 'Culinária indiana',
-    'french': 'Culinária francesa',
-    'spanish': 'Culinária espanhola',
-    'mediterranean': 'Culinária mediterrânea',
-    'peruvian': 'Culinária peruana',
-    'korean': 'Culinária coreana',
-    'german': 'Culinária alemã',
-    'greek': 'Culinária grega',
-    'tapas': 'Tapas e petiscos',
-    'rodizio': 'Rodízio variado',
-    'parrilla': 'Parrilla argentina',
-    'churrasco': 'Churrasco brasileiro',
+  static const List<String> _primaryCuisinePriority = [
+    'steak_house',
+    'barbecue_restaurant',
+    'pizza_restaurant',
+    'italian_restaurant',
+    'seafood_restaurant',
+    'japanese_restaurant',
+    'sushi_restaurant',
+    'thai_restaurant',
+    'indian_restaurant',
+    'brazilian_restaurant',
+    'vegan_restaurant',
+    'vegetarian_restaurant',
+    'healthy_food_restaurant',
+    'hamburger_restaurant',
+    'peruvian_restaurant',
+    'mexican_restaurant',
+    'spanish_restaurant',
+    'french_restaurant',
+    'mediterranean_restaurant',
+  ];
+
+  static const Map<String, String> _typeLabels = {
+    'restaurant': 'Restaurante',
+    'food': 'Alimentação variada',
+    'point_of_interest': 'Ponto gastronômico',
+    'establishment': 'Estabelecimento',
+    'steak_house': 'Churrascaria e grelhados',
+    'barbecue_restaurant': 'BBQ e defumados',
+    'pizza_restaurant': 'Pizzaria',
+    'italian_restaurant': 'Cozinha italiana',
+    'seafood_restaurant': 'Frutos do mar',
+    'japanese_restaurant': 'Culinária japonesa',
+    'sushi_restaurant': 'Sushi e sashimi',
+    'thai_restaurant': 'Culinária tailandesa',
+    'indian_restaurant': 'Culinária indiana',
+    'brazilian_restaurant': 'Culinária brasileira',
+    'hamburger_restaurant': 'Hambúrgueres artesanais',
+    'vegan_restaurant': 'Cozinha vegana',
+    'vegetarian_restaurant': 'Culinária vegetariana',
+    'healthy_food_restaurant': 'Comida leve e saudável',
+    'peruvian_restaurant': 'Culinária peruana',
+    'mexican_restaurant': 'Culinária mexicana',
+    'french_restaurant': 'Culinária francesa',
+    'spanish_restaurant': 'Culinária espanhola',
+    'mediterranean_restaurant': 'Culinária mediterrânea',
+    'greek_restaurant': 'Culinária grega',
+    'korean_restaurant': 'Culinária coreana',
+    'chinese_restaurant': 'Culinária chinesa',
+    'fast_food_restaurant': 'Fast-food',
+    'coffee_shop': 'Cafeteria',
+    'bakery': 'Padaria e confeitaria',
+    'ice_cream_shop': 'Sorveteria',
+    'gastropub': 'Gastropub',
+    'pub': 'Pub e drinks',
+    'bar': 'Bar e petiscos',
   };
+
+  static const Map<String, String> _dietTypeLabels = {
+    'vegan_restaurant': 'Opções veganas',
+    'vegetarian_restaurant': 'Opções vegetarianas',
+    'healthy_food_restaurant': 'Comida leve e saudável',
+    'gluten_free_restaurant': 'Opções sem glúten',
+    'halal_restaurant': 'Opções halal',
+    'kosher_restaurant': 'Opções kosher',
+  };
+
+  static const Map<int, String> _priceLevelLabels = {
+    0: 'Muito acessível',
+    1: 'Econômico',
+    2: 'Moderado',
+    3: 'Mais sofisticado',
+    4: 'Alta gastronomia',
+  };
+
+  static const Set<String> _genericTypes = {
+    'restaurant',
+    'food',
+    'point_of_interest',
+    'establishment',
+  };
+
+  static const Map<String, Set<String>> _typeKeywordBoost = {
+    'steak_house': {'carne', 'carnes', 'churrasco', 'parrilla'},
+    'barbecue_restaurant': {'bbq', 'defumados', 'churrasco'},
+    'pizza_restaurant': {'pizza', 'pizzaria', 'massas'},
+    'italian_restaurant': {'italiano', 'massas', 'risoto'},
+    'seafood_restaurant': {'peixe', 'frutos', 'mar'},
+    'japanese_restaurant': {'sushi', 'japonesa'},
+    'sushi_restaurant': {'sushi', 'temaki'},
+    'thai_restaurant': {'thai', 'asiatica'},
+    'indian_restaurant': {'indiana', 'especiarias'},
+    'brazilian_restaurant': {'brasileira', 'caseira', 'pf'},
+    'hamburger_restaurant': {'hamburguer', 'burger'},
+    'vegan_restaurant': {'vegano', 'plantbased'},
+    'vegetarian_restaurant': {'vegetariano', 'sem carne'},
+    'healthy_food_restaurant': {'saudavel', 'leve', 'fit'},
+    'peruvian_restaurant': {'peruana', 'ceviche'},
+    'mexican_restaurant': {'mexicana', 'tacos'},
+    'french_restaurant': {'francesa', 'bistrô'},
+    'spanish_restaurant': {'espanhola', 'tapas'},
+    'mediterranean_restaurant': {'mediterranea'},
+    'greek_restaurant': {'grega'},
+    'korean_restaurant': {'coreana'},
+    'chinese_restaurant': {'chinesa'},
+  };
+}
+
+class _PlacesResponse {
+  const _PlacesResponse({
+    required this.results,
+    this.nextPageToken,
+  });
+
+  final List<_GooglePlace> results;
+  final String? nextPageToken;
 }
 
 class _GeocodeResult {
@@ -1068,92 +1146,108 @@ class _GeocodeResult {
   final int? suggestedRadiusMeters;
 }
 
-class _CuisineInfo {
-  const _CuisineInfo({
-    required this.normalizedKeywords,
-    required this.displayName,
-  });
-
-  final Set<String> normalizedKeywords;
-  final String displayName;
-}
-
-class _RawRestaurant {
-  const _RawRestaurant({
-    required this.id,
+class _GooglePlace {
+  const _GooglePlace({
+    required this.placeId,
+    required this.name,
     required this.latitude,
     required this.longitude,
-    required this.tags,
+    required this.types,
+    this.vicinity,
+    this.formattedAddress,
+    this.rating,
+    this.userRatingsTotal,
+    this.priceLevel,
+    this.openNow,
+    this.businessStatus,
+    this.plusCode,
   });
 
-  final String id;
+  final String placeId;
+  final String name;
   final double latitude;
   final double longitude;
-  final Map<String, dynamic> tags;
+  final List<String> types;
+  final String? vicinity;
+  final String? formattedAddress;
+  final double? rating;
+  final int? userRatingsTotal;
+  final int? priceLevel;
+  final bool? openNow;
+  final String? businessStatus;
+  final String? plusCode;
 
-  static _RawRestaurant? fromJson(Map<String, dynamic>? json) {
+  String? get city =>
+      RestaurantDiscoveryServiceImpl._extractCityFromAddress(formattedAddress, plusCode);
+
+  Set<String> get keywordBoost {
+    final tokens = <String>{};
+    for (final type in types) {
+      final boost = RestaurantDiscoveryServiceImpl._typeKeywordBoost[type];
+      if (boost != null) {
+        tokens.addAll(boost);
+      }
+    }
+    return tokens;
+  }
+
+  static _GooglePlace? fromJson(Map<String, dynamic>? json) {
     if (json == null) {
       return null;
     }
 
-    double? latitude = (json['lat'] as num?)?.toDouble();
-    double? longitude = (json['lon'] as num?)?.toDouble();
-
-    if (latitude == null || longitude == null) {
-      final center = json['center'] as Map<String, dynamic>?;
-      latitude = (center?['lat'] as num?)?.toDouble();
-      longitude = (center?['lon'] as num?)?.toDouble();
-    }
-
-    if (latitude == null || longitude == null) {
+    final placeId = json['place_id'] as String?;
+    final name = json['name'] as String?;
+    if (placeId == null || name == null || name.trim().isEmpty) {
       return null;
     }
 
-    final id = json['id']?.toString();
-    if (id == null) {
+    final geometry = json['geometry'] as Map<String, dynamic>?;
+    final location = geometry?['location'] as Map<String, dynamic>?;
+    final lat = (location?['lat'] as num?)?.toDouble();
+    final lng = (location?['lng'] as num?)?.toDouble();
+    if (lat == null || lng == null) {
       return null;
     }
 
-    final rawTags = json['tags'];
-    final tags = <String, dynamic>{};
-    if (rawTags is Map) {
-      rawTags.forEach((key, value) {
-        if (key == null) {
-          return;
-        }
-        tags[key.toString()] = value;
-      });
-    }
+    final types = (json['types'] as List<dynamic>? ?? const [])
+        .map((item) => item.toString())
+        .where((item) => item.isNotEmpty)
+        .toList(growable: false);
 
-    return _RawRestaurant(
-      id: id,
-      latitude: latitude,
-      longitude: longitude,
-      tags: tags,
+    final openingHours = json['opening_hours'] as Map<String, dynamic>?;
+    final plusCode = json['plus_code'] as Map<String, dynamic>?;
+
+    return _GooglePlace(
+      placeId: placeId,
+      name: name,
+      latitude: lat,
+      longitude: lng,
+      types: types,
+      vicinity: json['vicinity'] as String?,
+      formattedAddress: json['formatted_address'] as String?,
+      rating: (json['rating'] as num?)?.toDouble(),
+      userRatingsTotal: (json['user_ratings_total'] as num?)?.toInt(),
+      priceLevel: (json['price_level'] as num?)?.toInt(),
+      openNow: openingHours != null ? openingHours['open_now'] as bool? : null,
+      businessStatus: json['business_status'] as String?,
+      plusCode: plusCode != null ? plusCode['compound_code'] as String? : null,
     );
   }
 }
 
 class _SuggestionCandidate {
   const _SuggestionCandidate({
-    required this.raw,
+    required this.place,
     required this.suggestion,
-    required this.normalizedName,
-    required this.normalizedAddress,
     required this.featureTags,
   });
 
-  final _RawRestaurant raw;
+  final _GooglePlace place;
   final RestaurantSuggestion suggestion;
-  final String normalizedName;
-  final String normalizedAddress;
   final Set<String> featureTags;
 
-  String get key {
-    final latKey = raw.latitude.toStringAsFixed(4);
-    final lonKey = raw.longitude.toStringAsFixed(4);
-    return '$normalizedName|$normalizedAddress|$latKey|$lonKey';
-  }
+  String get key => place.placeId;
 
   int compareTo(_SuggestionCandidate other) {
     final aDistance = suggestion.distanceKm;
@@ -1172,6 +1266,12 @@ class _SuggestionCandidate {
     final ratingDiff = other.suggestion.rating.compareTo(suggestion.rating);
     if (ratingDiff != 0) {
       return ratingDiff;
+    }
+
+    final reviewCountDiff =
+        (other.place.userRatingsTotal ?? 0).compareTo(place.userRatingsTotal ?? 0);
+    if (reviewCountDiff != 0) {
+      return reviewCountDiff;
     }
 
     return suggestion.name.compareTo(other.suggestion.name);

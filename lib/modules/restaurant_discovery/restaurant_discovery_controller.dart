@@ -167,12 +167,15 @@ class RestaurantDiscoveryController extends GetxController {
       } else {
         feedbackMessage.value = 'Resultados próximos em ${result.resolvedLocationLabel}.';
       }
-    } catch (_) {
-      feedbackMessage.value = 'Não foi possível buscar restaurantes agora. Tente novamente em instantes.';
+    } catch (error, stackTrace) {
+      final resolvedMessage = _resolveSearchError(error);
+      feedbackMessage.value = resolvedMessage;
       AppSnackbar.error(
         title: 'Falha ao buscar restaurantes',
-        message: 'Tivemos um problema ao consultar as sugestões próximas.',
+        message: resolvedMessage,
       );
+      debugPrint('Restaurant nearby search failed: $error');
+      debugPrint('$stackTrace');
     } finally {
       isLoading.value = false;
     }
@@ -203,15 +206,35 @@ class RestaurantDiscoveryController extends GetxController {
       } else {
         feedbackMessage.value = 'Sugestões em ${result.resolvedLocationLabel}.';
       }
-    } catch (_) {
-      feedbackMessage.value = 'Não foi possível buscar restaurantes para a cidade informada.';
+    } catch (error, stackTrace) {
+      final resolvedMessage = _resolveSearchError(error);
+      feedbackMessage.value = resolvedMessage;
       AppSnackbar.error(
-        title: 'Busca indisponível',
-        message: 'Verifique sua conexão e tente novamente.',
+        title: 'Falha ao buscar restaurantes',
+        message: resolvedMessage,
       );
+      debugPrint('Restaurant city search failed: $error');
+      debugPrint('$stackTrace');
     } finally {
       isLoading.value = false;
     }
+  }
+
+  String _resolveSearchError(Object error) {
+    final raw = error.toString();
+    final sanitized = raw.startsWith('Exception: ')
+        ? raw.substring('Exception: '.length).trim()
+        : raw.trim();
+
+    if (sanitized.contains('GOOGLE_PLACES_API_KEY')) {
+      return 'Configure a chave do Google Places (variável GOOGLE_PLACES_API_KEY no arquivo .env) para habilitar as buscas de restaurantes.';
+    }
+
+    if (sanitized.isEmpty || sanitized == 'null') {
+      return 'Não foi possível buscar restaurantes agora. Tente novamente em instantes.';
+    }
+
+    return sanitized;
   }
 
   Future<void> _loadPlanFocuses() async {
