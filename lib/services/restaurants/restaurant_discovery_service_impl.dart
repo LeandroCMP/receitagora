@@ -188,6 +188,67 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
     'light': ['refeições leves', 'saladas'],
   };
 
+  static const Map<String, Set<String>> _focusTokenHints = {
+    'vegetarian': <String>{
+      'vegetariano',
+      'vegetarianos',
+      'vegetariana',
+      'vegetarianas',
+      'vegetarian',
+      'vegano',
+      'vegana',
+      'veganos',
+      'veganas',
+      'vegan',
+      'plantbased',
+      'plantforward',
+      'semcarne',
+      'semcarnevermelha',
+      'semcarnevermelhas',
+      'semcarnevermelho',
+      'semcarnevermelhos',
+      'tofu',
+      'graodebico',
+      'lentilha',
+      'lentilhas',
+      'leguminosa',
+      'leguminosas',
+    },
+    'seafood': <String>{
+      'seafood',
+      'frutosdomar',
+      'peixe',
+      'peixes',
+      'peixebranco',
+      'peixegrelhado',
+      'peixeespada',
+      'salmao',
+      'tilapia',
+      'atum',
+      'sardinha',
+      'sardinhas',
+      'bacalhau',
+      'robalo',
+      'dourado',
+      'anchova',
+      'camarao',
+      'camaroes',
+      'camaraozinho',
+      'camaraozinhos',
+      'lula',
+      'polvo',
+      'ostra',
+      'ostras',
+      'vieira',
+      'vieiras',
+      'marisco',
+      'mariscos',
+      'moqueca',
+      'ceviche',
+      'sushi',
+    },
+  };
+
   final Map<String, Set<String>> _focusKeywordCache = {};
 
   @override
@@ -217,15 +278,98 @@ class RestaurantDiscoveryServiceImpl implements RestaurantDiscoveryService {
         break;
     }
 
-    if (profile.foodPreference.isVegetarian) {
-      ids.add('vegetarian');
-    }
-
-    if (profile.foodPreference.isPescetarian) {
-      ids.add('seafood');
-    }
+    ids.addAll(_inferFocusIdsFromPlan(plan));
 
     return _focusCatalog.where((focus) => ids.contains(focus.id)).toList(growable: false);
+  }
+
+  Set<String> _inferFocusIdsFromPlan(NutritionPlan plan) {
+    final tokens = _collectPlanTokens(plan);
+    final inferred = <String>{};
+
+    bool intersects(Set<String> hints) {
+      for (final token in tokens) {
+        if (hints.contains(token)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    for (final entry in _focusTokenHints.entries) {
+      if (intersects(entry.value)) {
+        inferred.add(entry.key);
+      }
+    }
+
+    return inferred;
+  }
+
+  Set<String> _collectPlanTokens(NutritionPlan plan) {
+    final tokens = <String>{};
+
+    void collect(String? text) {
+      if (text == null) {
+        return;
+      }
+      final trimmed = text.trim();
+      if (trimmed.isEmpty) {
+        return;
+      }
+      tokens.addAll(_normalizeKeywords(trimmed));
+    }
+
+    void collectAll(Iterable<String>? values) {
+      if (values == null) {
+        return;
+      }
+      for (final value in values) {
+        collect(value);
+      }
+    }
+
+    final dietPlan = plan.plan;
+
+    collect(plan.profile.additionalNotes);
+    collect(dietPlan.strategy);
+    collect(dietPlan.hydrationGoal);
+    collect(dietPlan.mindfulBreakMessage);
+    collect(dietPlan.sleepRoutine.message);
+    collect(dietPlan.sleepRoutine.windDownSummary);
+    collectAll(dietPlan.sleepRoutine.windDownTips);
+    collect(dietPlan.wellnessDigest.summary);
+    collect(dietPlan.wellnessDigest.callToAction);
+    collectAll(dietPlan.wellnessDigest.highlights);
+    collect(dietPlan.sunlightRoutine.message);
+    collectAll(dietPlan.sunlightRoutine.benefits);
+    collectAll(dietPlan.sunlightRoutine.cautions);
+    collectAll(dietPlan.followUpTips);
+    collectAll(dietPlan.highlights);
+    collectAll(dietPlan.movementRoutine.tips);
+    collectAll(dietPlan.hydrationPlan.reminders.map((slot) => slot.label));
+
+    for (final day in dietPlan.days) {
+      collect(day.focus);
+      collect(day.label);
+      for (final meal in day.meals) {
+        collect(meal.name);
+        collect(meal.description);
+        collect(meal.macroFocus);
+        collect(meal.prepNotes);
+        collectAll(meal.ingredients);
+        collectAll(meal.steps);
+      }
+    }
+
+    for (final item in dietPlan.shoppingList) {
+      collect(item.category);
+      collect(item.item);
+      collect(item.notes);
+      collect(item.substitutionNote);
+      collectAll(item.alternatives);
+    }
+
+    return tokens;
   }
 
   @override
